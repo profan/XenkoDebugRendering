@@ -3,20 +3,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Linq;
+
 using Xenko.Core;
-using Xenko.Core.Annotations;
 using Xenko.Core.Collections;
 using Xenko.Core.Mathematics;
+using Xenko.Core.Threading;
 using Xenko.Games;
 using Xenko.Graphics;
 using Xenko.Graphics.GeometricPrimitives;
 using Xenko.Rendering;
-using Xenko.Extensions;
+
 using Buffer = Xenko.Graphics.Buffer;
-using System.Runtime.InteropServices;
-using System.Linq;
-using Xenko.Engine;
-using Xenko.Core.Threading;
 
 namespace DebugRendering
 {

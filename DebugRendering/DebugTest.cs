@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Xenko.Core.Mathematics;
-using Xenko.Input;
-using Xenko.Engine;
-using Xenko.Rendering;
+
 using Xenko.Core;
-using Xenko.Core.Threading;
 using Xenko.Core.Collections;
+using Xenko.Core.Mathematics;
+using Xenko.Core.Threading;
+using Xenko.Engine;
 
 namespace DebugRendering 
 {
