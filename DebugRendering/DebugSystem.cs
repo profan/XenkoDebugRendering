@@ -413,7 +413,7 @@ namespace DebugRendering
 
     }
 
-    class DummyDebugRenderObject : RenderObject
+    internal class DummyDebugRenderObject : RenderObject
     {
 
     }
