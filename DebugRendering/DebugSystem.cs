@@ -584,7 +584,6 @@ namespace DebugRendering
         const float DEFAULT_CONE_HEIGHT = 1.0f;
 
         const int SPHERE_TESSELATION = 4;
-        const int CUBE_TESSELATION = 4;
         const int CAPSULE_TESSELATION = 2;
         const int CYLINDER_TESSELATION = 4;
         const int CONE_TESSELATION = 4;
