@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Linq;
 
@@ -39,49 +40,49 @@ namespace DebugRendering
         internal struct DebugRenderable
         {
 
-            public DebugRenderable(DebugDrawQuad q) : this()
+            public DebugRenderable(ref DebugDrawQuad q) : this()
             {
                 Type = DebugRenderableType.Quad;
                 QuadData = q;
             }
 
-            public DebugRenderable(DebugDrawCircle c) : this()
+            public DebugRenderable(ref DebugDrawCircle c) : this()
             {
                 Type = DebugRenderableType.Circle;
                 CircleData = c;
             }
 
-            public DebugRenderable(DebugDrawLine l) : this()
+            public DebugRenderable(ref DebugDrawLine l) : this()
             {
                 Type = DebugRenderableType.Line;
                 LineData = l;
             }
 
-            public DebugRenderable(DebugDrawBox b) : this()
+            public DebugRenderable(ref DebugDrawBox b) : this()
             {
                 Type = DebugRenderableType.Box;
                 BoxData = b;
             }
 
-            public DebugRenderable(DebugDrawSphere s) : this()
+            public DebugRenderable(ref DebugDrawSphere s) : this()
             {
                 Type = DebugRenderableType.Sphere;
                 SphereData = s;
             }
 
-            public DebugRenderable(DebugDrawCapsule c) : this()
+            public DebugRenderable(ref DebugDrawCapsule c) : this()
             {
                 Type = DebugRenderableType.Capsule;
                 CapsuleData = c;
             }
 
-            public DebugRenderable(DebugDrawCylinder c) : this()
+            public DebugRenderable(ref DebugDrawCylinder c) : this()
             {
                 Type = DebugRenderableType.Cylinder;
                 CylinderData = c;
             }
 
-            public DebugRenderable(DebugDrawCone c) : this()
+            public DebugRenderable(ref DebugDrawCone c) : this()
             {
                 Type = DebugRenderableType.Cone;
                 ConeData = c;
@@ -180,6 +181,7 @@ namespace DebugRendering
             Comparer<DebugRenderable>.Create((a, b) => a.Lifetime > b.Lifetime ? 1 : a.Lifetime < b.Lifetime  ? -1 : 0);
 
         private FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
+        private FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
 
         /* FIXME: this is set from outside atm, bit of a hack */
         public DebugRenderFeature PrimitiveRenderer;
@@ -199,6 +201,29 @@ namespace DebugRendering
             base.Destroy();
         }
 
+        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void PushMessage(ref DebugRenderable msg)
+        {
+            if (msg.Lifetime > 0.0f)
+            {
+                renderMessagesWithLifetime.Add(msg);
+                // drop one old message if the tail size has been reached
+                if (renderMessagesWithLifetime.Count > TailSize)
+                {
+                    renderMessages.RemoveAt(renderMessagesWithLifetime.Count - 1);
+                }
+            }
+            else
+            {
+                renderMessages.Add(msg);
+                // drop one old message if the tail size has been reached
+                if (renderMessages.Count > TailSize)
+                {
+                    renderMessages.RemoveAt(renderMessages.Count - 1);
+                }
+            }
+        }
+
         public void DrawLine(Vector3 start, Vector3 end, float duration = 0.0f, bool depthTest = true)
         {
             DrawLine(start, end, duration, depthTest);
@@ -207,14 +232,8 @@ namespace DebugRendering
         public void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawLine { Start = start, End = end, Color = color };
-            renderMessages.Add(new DebugRenderable(cmd) { Lifetime = duration });
-            renderMessages.Sort(renderableComparer);
-
-            //drop one old message if the tail size has been reached
-            if (renderMessages.Count > TailSize)
-            {
-                renderMessages.RemoveAt(renderMessages.Count - 1);
-            }
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
         }
 
         public void DrawLines(Vector3[] vertices, float duration = 0.0f, bool depthTest = true)
@@ -251,14 +270,8 @@ namespace DebugRendering
         public void DrawSphere(Vector3 position, float radius, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color };
-            renderMessages.Add(new DebugRenderable(cmd) { Lifetime = duration });
-            // renderMessages.Sort(renderableComparer);
-
-            //drop one old message if the tail size has been reached
-            if (renderMessages.Count > TailSize)
-            {
-                renderMessages.RemoveAt(renderMessages.Count - 1);
-            }
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
         }
 
         public void DrawSpheres(Vector3[] positions, float radius, float duration = 0.0f, bool depthTest = true)
@@ -283,14 +296,8 @@ namespace DebugRendering
         public void DrawBox(Vector3 start, Quaternion rotation, Vector3 size, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawBox { Position = start, End = start + size, Rotation = rotation, Color = color };
-            renderMessages.Add(new DebugRenderable(cmd) { Lifetime = duration });
-            // renderMessages.Sort(renderableComparer);
-
-            //drop one old message if the tail size has been reached
-            if (renderMessages.Count > TailSize)
-            {
-                renderMessages.RemoveAt(renderMessages.Count - 1);
-            }
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
         }
 
         public void DrawBoxes(Vector3[] positions, Quaternion[] rotations, Vector3 size, float duration = 0.0f, bool depthTest = true)
@@ -316,14 +323,8 @@ namespace DebugRendering
         public void DrawCapsule(Vector3 position, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCapsule { Position = position, Rotation = rotation, Color = color };
-            renderMessages.Add(new DebugRenderable(cmd) { Lifetime = duration });
-            // renderMessages.Sort(renderableComparer);
-
-            //drop one old message if the tail size has been reached
-            if (renderMessages.Count > TailSize)
-            {
-                renderMessages.RemoveAt(renderMessages.Count - 1);
-            }
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
         }
 
         public void DrawCylinder(Vector3 position, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
@@ -334,14 +335,8 @@ namespace DebugRendering
         public void DrawCylinder(Vector3 position, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCylinder { Position = position, Rotation = rotation, Color = color };
-            renderMessages.Add(new DebugRenderable(cmd) { Lifetime = duration });
-            // renderMessages.Sort(renderableComparer);
-
-            //drop one old message if the tail size has been reached
-            if (renderMessages.Count > TailSize)
-            {
-                renderMessages.RemoveAt(renderMessages.Count - 1);
-            }
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
         }
 
         public void DrawCone(Vector3 position, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
@@ -352,14 +347,8 @@ namespace DebugRendering
         public void DrawCone(Vector3 position, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCone { Position = position, Rotation = rotation, Color = color };
-            renderMessages.Add(new DebugRenderable(cmd) { Lifetime = duration });
-            // renderMessages.Sort(renderableComparer);
-
-            //drop one old message if the tail size has been reached
-            if (renderMessages.Count > TailSize)
-            {
-                renderMessages.RemoveAt(renderMessages.Count - 1);
-            }
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
         }
 
         public ref Color PrimitiveColor { get { return ref primitiveColor; } }
@@ -370,22 +359,28 @@ namespace DebugRendering
         public override void Update(GameTime gameTime)
         {
 
-            HandlePrimitives(gameTime);
+            HandlePrimitives(gameTime, renderMessages);
+            HandlePrimitives(gameTime, renderMessagesWithLifetime);
 
             float delta = (float)gameTime.Elapsed.TotalSeconds;
-            renderMessages.ForEach((msg) => msg.Lifetime -= delta);
-            renderMessages.RemoveAll((msg) => msg.Lifetime <= 0.0f);
+
+            /* clear out any messages with no lifetime left */
+            renderMessagesWithLifetime.ForEach((msg) => msg.Lifetime -= delta);
+            renderMessagesWithLifetime.RemoveAll((msg) => msg.Lifetime <= 0.0f);
+
+            /* just clear our per-frame array */
+            renderMessages.Clear(true);
 
         }
 
-        private void HandlePrimitives(GameTime gameTime)
+        private void HandlePrimitives(GameTime gameTime, FastList<DebugRenderable> messages)
         {
 
-            if (renderMessages.Count == 0) return; 
+            if (messages.Count == 0) return;
 
-            for (int i = 0; i < renderMessages.Count; ++i)
+            for (int i = 0; i < messages.Count; ++i)
             {
-                ref var msg = ref renderMessages.Items[i];
+                ref var msg = ref messages.Items[i];
                 switch (msg.Type) {
                     case DebugRenderableType.Quad:
                         // PrimitiveRenderer.DrawQuad
@@ -444,49 +439,49 @@ namespace DebugRendering
         internal struct Renderable
         {
 
-            public Renderable(Quad q) : this()
+            public Renderable(ref Quad q) : this()
             {
                 Type = RenderableType.Quad;
                 QuadData = q;
             }
 
-            public Renderable(Circle c) : this()
+            public Renderable(ref Circle c) : this()
             {
                 Type = RenderableType.Circle;
                 CircleData = c;
             }
 
-            public Renderable(Sphere s) : this()
+            public Renderable(ref Sphere s) : this()
             {
                 Type = RenderableType.Sphere;
                 SphereData = s;
             }
 
-            public Renderable(Cube c) : this()
+            public Renderable(ref Cube c) : this()
             {
                 Type = RenderableType.Cube;
                 CubeData = c;
             }
 
-            public Renderable(Capsule c) : this()
+            public Renderable(ref Capsule c) : this()
             {
                 Type = RenderableType.Capsule;
                 CapsuleData = c;
             }
 
-            public Renderable(Cylinder c) : this()
+            public Renderable(ref Cylinder c) : this()
             {
                 Type = RenderableType.Cylinder;
                 CylinderData = c;
             }
 
-            public Renderable(Cone c) : this()
+            public Renderable(ref Cone c) : this()
             {
                 Type = RenderableType.Cone;
                 ConeData = c;
             }
 
-            public Renderable(Line l) : this()
+            public Renderable(ref Line l) : this()
             {
                 Type = RenderableType.Line;
                 LineData = l;
@@ -663,7 +658,7 @@ namespace DebugRendering
         public void DrawQuad(ref Vector3 topLeft, ref Vector3 bottomRight, ref Color color, bool depthTest = true)
         {
             var cmd = new Quad() { TopLeft = topLeft, BottomRight = bottomRight, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalQuads++;
         }
 
@@ -679,42 +674,42 @@ namespace DebugRendering
         public void DrawSphere(ref Vector3 position, float radius, ref Color color, bool depthTest = true)
         {
             var cmd = new Sphere() { Position = position, Radius = radius, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalSpheres++;
         }
 
         public void DrawBox(ref Vector3 start, ref Vector3 end, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Cube() { Start = start, End = end, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalCubes++;
         }
 
         public void DrawCapsule(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Capsule() { Position = position, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalCapsules++;
         }
 
         public void DrawCylinder(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Cylinder() { Position = position, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalCylinders++;
         }
 
         public void DrawCone(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Cone() { Position = position, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalCones++;
         }
 
         public void DrawLine(ref Vector3 start, ref Vector3 end, ref Color color, bool depthTest = true)
         {
             var cmd = new Line() { Start = start, End = end, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalLines++;
         }
         
@@ -909,7 +904,7 @@ namespace DebugRendering
             conesToDraw = totalCones;
             linesToDraw = totalLines;
 
-            renderables.Clear();
+            renderables.Clear(true);
             totalQuads = 0;
             totalCircles = 0;
             totalSpheres = 0;
