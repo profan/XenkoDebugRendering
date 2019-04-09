@@ -178,7 +178,7 @@ namespace DebugRendering
         }
 
         static private Comparer<DebugRenderable> renderableComparer =
-            Comparer<DebugRenderable>.Create((a, b) => a.Lifetime > b.Lifetime ? 1 : a.Lifetime < b.Lifetime  ? -1 : 0);
+            Comparer<DebugRenderable>.Create((a, b) => a.Lifetime > b.Lifetime ? 1 : a.Lifetime < b.Lifetime ? -1 : 0);
 
         private FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
         private FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
@@ -266,7 +266,7 @@ namespace DebugRendering
         {
             DrawSphere(position, radius, PrimitiveColor, duration, depthTest);
         }
-        
+
         public void DrawSphere(Vector3 position, float radius, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color };
@@ -381,7 +381,8 @@ namespace DebugRendering
             for (int i = 0; i < messages.Count; ++i)
             {
                 ref var msg = ref messages.Items[i];
-                switch (msg.Type) {
+                switch (msg.Type)
+                {
                     case DebugRenderableType.Quad:
                         // PrimitiveRenderer.DrawQuad
                         break;
@@ -522,7 +523,7 @@ namespace DebugRendering
             public Vector3 BottomRight;
             public Color Color;
         }
-        
+
         internal struct Circle
         {
             public Vector3 Position;
@@ -669,7 +670,7 @@ namespace DebugRendering
             totalCircles++;
         }
         */
-        
+
         public void DrawSphere(ref Vector3 position, float radius, ref Color color, bool depthTest = true)
         {
             var cmd = new Sphere() { Position = position, Radius = radius, Color = color };
@@ -711,10 +712,10 @@ namespace DebugRendering
             renderables.Add(new Renderable(ref cmd));
             totalLines++;
         }
-        
+
         protected override void InitializeCore()
-        { 
-            
+        {
+
             var device = Context.GraphicsDevice;
 
             inputElements = VertexPositionNormalTexture.Layout.CreateInputElements();
@@ -729,7 +730,7 @@ namespace DebugRendering
             // TODO: create our associated effect
             primitiveEffect = new EffectInstance(Context.Effects.LoadEffect("PrimitiveShader").WaitForResult());
             primitiveEffect.UpdateEffect(device);
-            
+
             // create initial vertex and index buffers
             var vertexData = new VertexPositionNormalTexture[
                 plane.Vertices.Length +
@@ -787,7 +788,7 @@ namespace DebugRendering
             Array.Copy(plane.Indices, indexData, plane.Indices.Length);
             planeIndexOffset = indexBufferOffset;
             indexBufferOffset += plane.Indices.Length;
-           
+
             Array.Copy(sphere.Indices, 0, indexData, indexBufferOffset, sphere.Indices.Length);
             sphereIndexOffset = indexBufferOffset;
             indexBufferOffset += sphere.Indices.Length;
@@ -839,7 +840,7 @@ namespace DebugRendering
             positions.Resize(totalThingsToDraw, true);
             rotations.Resize(totalThingsToDraw - totalSpheres, true); // spheres have no rotation
             colors.Resize(totalThingsToDraw, true);
-            
+
             int sphereIndex = 0;
             int quadIndex = sphereIndex + totalSpheres;
             int circleIndex = quadIndex + totalQuads;
@@ -852,7 +853,8 @@ namespace DebugRendering
             for (int i = 0; i < renderables.Count; ++i)
             {
                 ref var cmd = ref renderables.Items[i];
-                switch (cmd.Type) {
+                switch (cmd.Type)
+                {
                     case RenderableType.Quad:
                         quadIndex++;
                         break;
@@ -938,7 +940,7 @@ namespace DebugRendering
                         transformBuffer = newTransformBuffer;
                     }
                 }
-            } 
+            }
             else
             {
                 unsafe
@@ -1003,12 +1005,24 @@ namespace DebugRendering
 
         }
 
+        private RenderStage FindOpaqueRenderStage(RenderSystem renderSystem)
+        {
+            for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
+            {
+                var stage = renderSystem.RenderStages[i];
+                if (stage.Name == "Opaque")
+                {
+                    return stage;
+                }
+            }
+            return null;
+        }
+
         public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
         {
 
             // we only want to render in the opaque stage
-            var renderStages = context.RenderContext.RenderSystem.RenderStages;
-            var opaqueRenderStage = renderStages.Where((s) => s.Name == "Opaque").First();
+            var opaqueRenderStage = FindOpaqueRenderStage(context.RenderContext.RenderSystem);
             var opaqueRenderStageIndex = opaqueRenderStage.Index;
 
             // bail out if it's any other stage, this is crude but alas
@@ -1037,14 +1051,14 @@ namespace DebugRendering
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.ViewProjection, renderView.ViewProjection);
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.Transforms, transformBuffer);
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.Colors, colorBuffer);
-            
+
             primitiveEffect.UpdateEffect(device);
             primitiveEffect.Apply(context.GraphicsContext);
 
             /* finally render */
 
             int curInstanceOffset = 0;
-            
+
             // draw spheres
             if (spheresToDraw > 0)
             {
@@ -1060,7 +1074,7 @@ namespace DebugRendering
             // draw quads
             if (quadsToDraw > 0)
             {
-                
+
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
@@ -1072,7 +1086,7 @@ namespace DebugRendering
             // draw cubes
             if (cubesToDraw > 0)
             {
-                
+
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
@@ -1084,7 +1098,7 @@ namespace DebugRendering
             // draw capsules
             if (capsulesToDraw > 0)
             {
-                
+
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
@@ -1096,7 +1110,7 @@ namespace DebugRendering
             // draw cylinders
             if (cylindersToDraw > 0)
             {
-                
+
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
@@ -1127,7 +1141,7 @@ namespace DebugRendering
                 // curIndexOffset += line.Indices.Length;
 
             }
-            
+
         }
 
         public override void Flush(RenderDrawContext context)
