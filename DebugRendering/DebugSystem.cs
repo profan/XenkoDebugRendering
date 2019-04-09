@@ -210,7 +210,7 @@ namespace DebugRendering
                 // drop one old message if the tail size has been reached
                 if (renderMessagesWithLifetime.Count > TailSize)
                 {
-                    renderMessages.RemoveAt(renderMessagesWithLifetime.Count - 1);
+                    renderMessagesWithLifetime.RemoveAt(renderMessagesWithLifetime.Count - 1);
                 }
             }
             else
