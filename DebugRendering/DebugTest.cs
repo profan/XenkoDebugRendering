@@ -182,7 +182,6 @@ namespace DebugRendering
                 }
             }
 
-            // debugSystem.DrawBoxes(boxPositions, boxRotations, new Vector3(1));
             debugSystem.Update(Game.UpdateTime);
 
         }

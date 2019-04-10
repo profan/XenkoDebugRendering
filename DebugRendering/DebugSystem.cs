@@ -985,69 +985,59 @@ namespace DebugRendering
             totalLines = 0;
 
         }
+        unsafe static void UpdateBufferIfNecessary(GraphicsDevice device, CommandList commandList, ref Buffer buffer, DataPointer dataPtr, int elementSize)
+        {
+            int neededBufferSize = dataPtr.Size / elementSize;
+            if (neededBufferSize > buffer.ElementCount)
+            {
+                buffer.Dispose();
+                var newBuffer = Xenko.Graphics.Buffer.Structured.New(
+                    device,
+                    dataPtr,
+                    buffer.StructureByteStride,
+                    isUnorderedAccess: true
+                );
+                buffer = newBuffer;
+            }
+            else
+            {
+                buffer.SetData(commandList, dataPtr);
+            }
+        }
 
         private void CheckBuffers(RenderDrawContext context)
         {
 
-            var device = context.GraphicsDevice;
-            var commandList = context.CommandList;
+            unsafe
+            {
 
-            int neededTransformBufferSize = transforms.Count;
-            if (neededTransformBufferSize > transformBuffer.ElementCount)
-            {
-                transformBuffer.Dispose(); // dispose old buffer first
-                unsafe
+                fixed (Matrix* transformsPtr = transforms.Items)
                 {
-                    fixed (Matrix* transformsPtr = transforms.Items)
-                    {
-                        var newTransformBuffer = Xenko.Graphics.Buffer.Structured.New(
-                            device,
-                            new DataPointer(transformsPtr, transforms.Count * Marshal.SizeOf<Matrix>()),
-                            Marshal.SizeOf<Matrix>(),
-                            isUnorderedAccess: true
-                        );
-                        transformBuffer = newTransformBuffer;
-                    }
+                    UpdateBufferIfNecessary(
+                        context.GraphicsDevice, context.CommandList, buffer: ref transformBuffer,
+                        dataPtr: new DataPointer(transformsPtr, transforms.Count * Marshal.SizeOf<Matrix>()),
+                        elementSize: Marshal.SizeOf<Matrix>()
+                    );
                 }
-            }
-            else
-            {
-                unsafe
-                {
-                    fixed (Matrix* transformsPtr = transforms.Items)
-                    {
-                        transformBuffer.SetData(commandList, new DataPointer(transformsPtr, transforms.Count * Marshal.SizeOf<Matrix>()));
-                    }
-                }
-            }
 
-            int neededColorBufferSize = colors.Count;
-            if (neededColorBufferSize > colorBuffer.ElementCount)
-            {
-                colorBuffer.Dispose(); // dispose old buffer first
-                unsafe
+                fixed (Vector3* scalesPtr = scales.Items)
                 {
-                    fixed (Color4* colorsPtr = colors.Items)
-                    {
-                        var newColorBuffer = Xenko.Graphics.Buffer.Structured.New(
-                            device,
-                            new DataPointer(colorsPtr, colors.Count * Marshal.SizeOf<Color4>()),
-                            Marshal.SizeOf<Color4>(),
-                            isUnorderedAccess: true
-                        );
-                        colorBuffer = newColorBuffer;
-                    }
+                    UpdateBufferIfNecessary(
+                        context.GraphicsDevice, context.CommandList, buffer: ref scaleBuffer,
+                        dataPtr: new DataPointer(scalesPtr, scales.Count * Marshal.SizeOf<Vector3>()),
+                        elementSize: Marshal.SizeOf<Vector3>()
+                    );
                 }
-            }
-            else
-            {
-                unsafe
+
+                fixed (Color4* colorsPtr = colors.Items)
                 {
-                    fixed (Color4* colorsPtr = colors.Items)
-                    {
-                        colorBuffer.SetData(commandList, new DataPointer(colorsPtr, colors.Count * Marshal.SizeOf<Color4>()));
-                    }
+                    UpdateBufferIfNecessary(
+                        context.GraphicsDevice, context.CommandList, buffer: ref colorBuffer,
+                        dataPtr: new DataPointer(colorsPtr, colors.Count * Marshal.SizeOf<Color4>()),
+                        elementSize: Marshal.SizeOf<Color4>()
+                    );
                 }
+
             }
 
         }
