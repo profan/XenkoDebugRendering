@@ -986,23 +986,17 @@ namespace DebugRendering
         public override void Prepare(RenderDrawContext context)
         {
 
-            void TransformSpheres(int i)
-            {
-                transforms[i] = Matrix.Translation(positions[i]);
-            }
-
-            void TransformTheRest(int i)
-            {
-                transforms[i] = Matrix.AffineTransformation(1.0f, rotations[i - spheresToDraw], positions[i]);
-            }
-
             transforms.Resize(positions.Count, true);
 
             /* transform only things without rotation first */
-            Dispatcher.For(0, spheresToDraw, TransformSpheres);
+            Dispatcher.For(0, spheresToDraw, (int i) => {
+                transforms[i] = Matrix.Translation(positions[i]);
+            });
 
             /* start next dispatch at lower bound for things that have rotation, at this point only spheres dont */
-            Dispatcher.For(spheresToDraw, transforms.Count, TransformTheRest);
+            Dispatcher.For(spheresToDraw, transforms.Count, (int i) => {
+                transforms[i] = Matrix.AffineTransformation(1.0f, rotations[i - spheresToDraw], positions[i]);
+            });
 
             CheckBuffers(context);
 
