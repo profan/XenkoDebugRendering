@@ -180,8 +180,8 @@ namespace DebugRendering
         static private Comparer<DebugRenderable> renderableComparer =
             Comparer<DebugRenderable>.Create((a, b) => a.Lifetime > b.Lifetime ? 1 : a.Lifetime < b.Lifetime ? -1 : 0);
 
-        private FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
-        private FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
+        private readonly FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
+        private readonly FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
 
         /* FIXME: this is set from outside atm, bit of a hack */
         public DebugRenderFeature PrimitiveRenderer;
@@ -226,7 +226,7 @@ namespace DebugRendering
 
         public void DrawLine(Vector3 start, Vector3 end, float duration = 0.0f, bool depthTest = true)
         {
-            DrawLine(start, end, duration, depthTest);
+            DrawLine(start, end, PrimitiveColor, duration, depthTest);
         }
 
         public void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.0f, bool depthTest = true)
@@ -624,7 +624,7 @@ namespace DebugRendering
         private Buffer colorBuffer;
 
         /* messages */
-        private FastList<Renderable> renderables = new FastList<Renderable>();
+        private readonly FastList<Renderable> renderables = new FastList<Renderable>();
 
         private int totalQuads = 0;
         private int totalCircles = 0;
@@ -645,11 +645,11 @@ namespace DebugRendering
         private int linesToDraw = 0;
 
         /* message related data */
-        private FastList<Matrix> transforms = new FastList<Matrix>(1);
-        private FastList<Vector3> positions = new FastList<Vector3>(1);
-        private FastList<Quaternion> rotations = new FastList<Quaternion>(1);
-        private FastList<Vector3> scales = new FastList<Vector3>(1);
-        private FastList<Color4> colors = new FastList<Color4>(1);
+        private readonly FastList<Matrix> transforms = new FastList<Matrix>(1);
+        private readonly FastList<Vector3> positions = new FastList<Vector3>(1);
+        private readonly FastList<Quaternion> rotations = new FastList<Quaternion>(1);
+        private readonly FastList<Vector3> scales = new FastList<Vector3>(1);
+        private readonly FastList<Color4> colors = new FastList<Color4>(1);
 
         public DebugRenderFeature()
         {
@@ -986,20 +986,23 @@ namespace DebugRendering
         public override void Prepare(RenderDrawContext context)
         {
 
-            transforms.Resize(positions.Count, true);
-
-            Dispatcher.For(0, spheresToDraw, i =>
+            void TransformSpheres(int i)
             {
                 transforms[i] = Matrix.Translation(positions[i]);
             }
-            );
 
-            /* start next dispatch at lower bound for things that have rotation, at this point only spheres dont */
-            Dispatcher.For(spheresToDraw, transforms.Count, i =>
+            void TransformTheRest(int i)
             {
                 transforms[i] = Matrix.AffineTransformation(1.0f, rotations[i - spheresToDraw], positions[i]);
             }
-            );
+
+            transforms.Resize(positions.Count, true);
+
+            /* transform only things without rotation first */
+            Dispatcher.For(0, spheresToDraw, TransformSpheres);
+
+            /* start next dispatch at lower bound for things that have rotation, at this point only spheres dont */
+            Dispatcher.For(spheresToDraw, transforms.Count, TransformTheRest);
 
             CheckBuffers(context);
 

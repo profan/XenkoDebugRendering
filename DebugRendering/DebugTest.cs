@@ -13,22 +13,22 @@ namespace DebugRendering
     public class DebugTest : SyncScript
     {
 
-        const int CHANGE_PER_SECOND = 8192 + 2048;
-        const int INITIAL_NUM_BOXES = 32768;
-        const int AREA_SIZE = 64;
+        const int ChangePerSecond = 8192 + 2048;
+        const int InitialNumBoxes = 32768;
+        const int AreaSize = 64;
         
         [DataMemberIgnore]
         DebugSystem debugSystem;
 
         int minNumberOfBoxes = 0;
-        int maxNumberOfBoxes = INITIAL_NUM_BOXES * 10;
-        int currentNumBoxes = INITIAL_NUM_BOXES;
+        int maxNumberOfBoxes = InitialNumBoxes * 10;
+        int currentNumBoxes = InitialNumBoxes;
 
-        FastList<Vector3> boxPositions = new FastList<Vector3>(INITIAL_NUM_BOXES);
-        FastList<Quaternion> boxRotations = new FastList<Quaternion>(INITIAL_NUM_BOXES);
-        FastList<Vector3> boxVelocities = new FastList<Vector3>(INITIAL_NUM_BOXES);
-        FastList<Vector3> boxRotVelocities = new FastList<Vector3>(INITIAL_NUM_BOXES);
-        FastList<Color> boxColors = new FastList<Color>(INITIAL_NUM_BOXES);
+        FastList<Vector3> boxPositions = new FastList<Vector3>(InitialNumBoxes);
+        FastList<Quaternion> boxRotations = new FastList<Quaternion>(InitialNumBoxes);
+        FastList<Vector3> boxVelocities = new FastList<Vector3>(InitialNumBoxes);
+        FastList<Vector3> boxRotVelocities = new FastList<Vector3>(InitialNumBoxes);
+        FastList<Color> boxColors = new FastList<Color>(InitialNumBoxes);
 
         private void InitializeBoxes(int from, int to)
         {
@@ -46,9 +46,9 @@ namespace DebugRendering
 
                 // initialize boxes
 
-                var randX = random.Next(-AREA_SIZE, AREA_SIZE);
-                var randY = random.Next(-AREA_SIZE, AREA_SIZE);
-                var randZ = random.Next(-AREA_SIZE, AREA_SIZE);
+                var randX = random.Next(-AreaSize, AreaSize);
+                var randY = random.Next(-AreaSize, AreaSize);
+                var randZ = random.Next(-AreaSize, AreaSize);
 
                 var velX = random.NextDouble() * 4.0;
                 var velY = random.NextDouble() * 4.0;
@@ -102,7 +102,7 @@ namespace DebugRendering
 
             var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
             
-            var newAmountOfBoxes = Clamp(currentNumBoxes + (int)(Input.MouseWheelDelta * CHANGE_PER_SECOND * dt), minNumberOfBoxes, maxNumberOfBoxes);
+            var newAmountOfBoxes = Clamp(currentNumBoxes + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberOfBoxes, maxNumberOfBoxes);
 
             if (newAmountOfBoxes > currentNumBoxes)
             {
@@ -126,17 +126,17 @@ namespace DebugRendering
                 ref var rotation = ref boxRotations.Items[i];
                 ref var color = ref boxColors.Items[i];
 
-                if (position.X > AREA_SIZE || position.X < -AREA_SIZE)
+                if (position.X > AreaSize || position.X < -AreaSize)
                 {
                     velocity.X = -velocity.X;
                 }
 
-                if (position.Y > AREA_SIZE || position.Y < -AREA_SIZE)
+                if (position.Y > AreaSize || position.Y < -AreaSize)
                 {
                     velocity.Y = -velocity.Y;
                 }
 
-                if (position.Z > AREA_SIZE || position.Z < -AREA_SIZE)
+                if (position.Z > AreaSize || position.Z < -AreaSize)
                 {
                     velocity.Z = -velocity.Z;
                 }
@@ -148,9 +148,9 @@ namespace DebugRendering
                     Quaternion.RotationY(rotVelocity.Y * dt) *
                     Quaternion.RotationZ(rotVelocity.Z * dt);
 
-                color.R = (byte)((((position.X / AREA_SIZE) + 1f) / 2.0f) * 255.0f);
-                color.G = (byte)((((position.Y / AREA_SIZE) + 1f) / 2.0f) * 255.0f);
-                color.B = (byte)((((position.Z / AREA_SIZE) + 1f) / 2.0f) * 255.0f);
+                color.R = (byte)((((position.X / AreaSize) + 1f) / 2.0f) * 255.0f);
+                color.G = (byte)((((position.Y / AreaSize) + 1f) / 2.0f) * 255.0f);
+                color.B = (byte)((((position.Z / AreaSize) + 1f) / 2.0f) * 255.0f);
 
             });
 
