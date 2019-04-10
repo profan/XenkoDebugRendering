@@ -165,7 +165,7 @@ namespace DebugRendering
                         debugSystem.DrawSphere(boxPositions.Items[i], 0.5f, boxColors.Items[i]);
                         break;
                     case 1: // cube
-                        debugSystem.DrawBox(boxPositions.Items[i], boxRotations.Items[i], new Vector3(1), boxColors.Items[i]);
+                        debugSystem.DrawCube(boxPositions.Items[i], new Vector3(1, 1, 1), boxRotations.Items[i], boxColors.Items[i]);
                         break;
                     case 2: // capsule
                         debugSystem.DrawCapsule(boxPositions.Items[i], boxRotations.Items[i], boxColors.Items[i]);

@@ -248,7 +248,7 @@ namespace DebugRendering
             {
                 ref var v1 = ref vertices[i];
                 ref var v2 = ref vertices[i];
-                DrawLine(v1, v2, duration);
+                DrawLine(v1, v2, color, duration);
             }
         }
 
@@ -260,6 +260,17 @@ namespace DebugRendering
         public void DrawRay(Vector3 start, Vector3 dir, Color color, float duration = 0.0f, bool depthTest = true)
         {
             DrawLine(start, start + dir, color, duration, depthTest);
+        }
+
+        public void DrawRays(Vector3[] vertices, Color color, float duration = 0.0f, bool depthTest = true)
+        {
+            var totalVertexPairs = vertices.Length - (vertices.Length % 2);
+            for (int i = 0; i < totalVertexPairs; i += 2)
+            {
+                ref var v1 = ref vertices[i];
+                ref var v2 = ref vertices[i];
+                DrawLine(v1, v1 + v2, color, duration);
+            }
         }
 
         public void DrawSphere(Vector3 position, float radius, float duration = 0.0f, bool depthTest = true)
@@ -284,34 +295,46 @@ namespace DebugRendering
             for (int i = 0; i < positions.Length; ++i)
             {
                 ref var pos = ref positions[i];
-                DrawSphere(pos, radius, duration, depthTest);
+                DrawSphere(pos, radius, color, duration, depthTest);
             }
         }
 
-        public void DrawBox(Vector3 start, Quaternion rotation, Vector3 size, float duration = 0.0f, bool depthTest = true)
+        public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
         {
-            DrawBox(start, rotation, size, PrimitiveColor, duration, depthTest);
+            DrawBounds(start, end, rotation, PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawBox(Vector3 start, Quaternion rotation, Vector3 size, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
+        {
+            var cmd = new DebugDrawBox { Position = start, End = end, Rotation = rotation, Color = color };
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
+        }
+
+        public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        {
+            DrawCube(start, size, rotation, PrimitiveColor, duration, depthTest);
+        }
+
+        public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawBox { Position = start, End = start + size, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawBoxes(Vector3[] positions, Quaternion[] rotations, Vector3 size, float duration = 0.0f, bool depthTest = true)
+        public void DrawCubes(Vector3[] positions, Quaternion[] rotations, Vector3 size, float duration = 0.0f, bool depthTest = true)
         {
-            DrawBoxes(positions, rotations, size, PrimitiveColor, duration, depthTest);
+            DrawCubes(positions, rotations, size, PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawBoxes(Vector3[] positions, Quaternion[] rotations, Vector3 size, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawCubes(Vector3[] positions, Quaternion[] rotations, Vector3 size, Color color, float duration = 0.0f, bool depthTest = true)
         {
             for (int i = 0; i < positions.Length; ++i)
             {
                 ref var pos = ref positions[i];
                 ref var rot = ref rotations[i];
-                DrawBox(pos, rot, size, duration, depthTest);
+                DrawCube(pos, size, rot, color, duration, depthTest);
             }
         }
 
@@ -621,11 +644,13 @@ namespace DebugRendering
         private InputElementDescription[] inputElements;
         private EffectInstance primitiveEffect;
         private Buffer transformBuffer;
+        private Buffer scaleBuffer;
         private Buffer colorBuffer;
 
         /* messages */
         private readonly FastList<Renderable> renderables = new FastList<Renderable>();
 
+        /* accumulators used when data is being pushed to the system */
         private int totalQuads = 0;
         private int totalCircles = 0;
         private int totalSpheres = 0;
@@ -634,7 +659,18 @@ namespace DebugRendering
         private int totalCylinders = 0;
         private int totalCones = 0;
         private int totalLines = 0;
+        
+        /* used to specify offset into instance data buffers when drawing */
+        private int quadInstanceOffset = 0;
+        private int circleInstanceOffset = 0;
+        private int sphereInstanceOffset = 0;
+        private int cubeInstanceOffset = 0;
+        private int capsuleInstanceOffset = 0;
+        private int cylinderInstanceOffset = 0;
+        private int coneInstanceOffset = 0;
+        private int lineInstanceOffset = 0;
 
+        /* used in render stage to know how many of each instance to draw */
         private int quadsToDraw = 0;
         private int circlesToDraw = 0;
         private int spheresToDraw = 0;
@@ -816,8 +852,8 @@ namespace DebugRendering
             var newTransformBuffer = Buffer.Structured.New<Matrix>(device, 1);
             transformBuffer = newTransformBuffer;
 
-            // var newScaleBuffer = Buffer.Structured.New<Vector3>(device, scales.Items);
-            // scaleBuffer = newScaleBuffer;
+            var newScaleBuffer = Buffer.Structured.New<Vector3>(device, scales.Items);
+            scaleBuffer = newScaleBuffer;
 
             var newColourBuffer = Buffer.Structured.New<Color4>(device, colors.Items);
             colorBuffer = newColourBuffer;
@@ -849,6 +885,16 @@ namespace DebugRendering
             int cylinderIndex = capsuleIndex + totalCapsules;
             int coneIndex = cylinderIndex + totalCylinders;
             int lineIndex = coneIndex + totalCones;
+
+            /* save instance offsets before we mutate them as we need them when rendering */
+            quadInstanceOffset = quadIndex;
+            circleInstanceOffset = circleIndex;
+            sphereInstanceOffset = sphereIndex;
+            cubeInstanceOffset = cubeIndex;
+            capsuleInstanceOffset = capsuleIndex;
+            cylinderInstanceOffset = cylinderIndex;
+            coneInstanceOffset = coneIndex;
+            lineInstanceOffset = lineIndex;
 
             for (int i = 0; i < renderables.Count; ++i)
             {
@@ -989,14 +1035,18 @@ namespace DebugRendering
             transforms.Resize(positions.Count, true);
 
             /* transform only things without rotation first */
-            Dispatcher.For(0, spheresToDraw, (int i) => {
+            Dispatcher.For(0, spheresToDraw, (int i) =>
+            {
                 transforms[i] = Matrix.Translation(positions[i]);
-            });
+            }
+            );
 
             /* start next dispatch at lower bound for things that have rotation, at this point only spheres dont */
-            Dispatcher.For(spheresToDraw, transforms.Count, (int i) => {
+            Dispatcher.For(spheresToDraw, transforms.Count, (int i) =>
+            {
                 transforms[i] = Matrix.AffineTransformation(1.0f, rotations[i - spheresToDraw], positions[i]);
-            });
+            }
+            );
 
             CheckBuffers(context);
 
@@ -1018,7 +1068,7 @@ namespace DebugRendering
         public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
         {
 
-            // we only want to render in the opaque stage
+            // we only want to render in the opaque stage, is there a nicer way to do this?
             var opaqueRenderStage = FindOpaqueRenderStage(context.RenderContext.RenderSystem);
             var opaqueRenderStageIndex = opaqueRenderStage.Index;
 
@@ -1054,17 +1104,14 @@ namespace DebugRendering
 
             /* finally render */
 
-            int curInstanceOffset = 0;
-
             // draw spheres
             if (spheresToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, sphereInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 commandList.DrawIndexedInstanced(sphere.Indices.Length, spheresToDraw, sphereIndexOffset, sphereVertexOffset);
-                curInstanceOffset += spheresToDraw;
 
             }
 
@@ -1072,11 +1119,10 @@ namespace DebugRendering
             if (quadsToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, quadInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 commandList.DrawIndexedInstanced(plane.Indices.Length, quadsToDraw, planeIndexOffset, planeVertexOffset);
-                curInstanceOffset += quadsToDraw;
 
             }
 
@@ -1084,11 +1130,10 @@ namespace DebugRendering
             if (cubesToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, cubeInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 commandList.DrawIndexedInstanced(cube.Indices.Length, cubesToDraw, cubeIndexOffset, cubeVertexOffset);
-                curInstanceOffset += cubesToDraw;
 
             }
 
@@ -1096,11 +1141,10 @@ namespace DebugRendering
             if (capsulesToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, capsuleInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 commandList.DrawIndexedInstanced(capsule.Indices.Length, capsulesToDraw, capsuleIndexOffset, capsuleVertexOffset);
-                curInstanceOffset += capsulesToDraw;
 
             }
 
@@ -1108,22 +1152,21 @@ namespace DebugRendering
             if (cylindersToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, cylinderInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 commandList.DrawIndexedInstanced(cylinder.Indices.Length, cylindersToDraw, cylinderIndexOffset, cylinderVertexOffset);
-                curInstanceOffset += cylindersToDraw;
+
             }
 
             // draw cones
             if (conesToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, coneInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 commandList.DrawIndexedInstanced(cone.Indices.Length, conesToDraw, coneIndexOffset, coneVertexOffset);
-                curInstanceOffset += conesToDraw;
 
             }
 
@@ -1131,7 +1174,7 @@ namespace DebugRendering
             if (linesToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, curInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, lineInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 // commandList.DrawIndexedInstanced(line.Indices.Length, linesToDraw, curIndexOffset, curVertexOffset);
