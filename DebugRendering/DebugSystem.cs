@@ -361,7 +361,7 @@ namespace DebugRendering
 
         public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCapsule { Position = position, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -373,7 +373,7 @@ namespace DebugRendering
 
         public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCylinder { Position = position, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -385,7 +385,7 @@ namespace DebugRendering
 
         public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCone { Position = position, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -929,7 +929,7 @@ namespace DebugRendering
                         break;
                     case RenderableType.Sphere:
                         positions[sphereIndex] = cmd.SphereData.Position;
-                        scales[sphereIndex] = new Vector3(1.0f);
+                        scales[sphereIndex] = new Vector3(cmd.SphereData.Radius * 2);
                         colors[sphereIndex] = cmd.SphereData.Color;
                         sphereIndex++;
                         break;
@@ -943,21 +943,21 @@ namespace DebugRendering
                     case RenderableType.Capsule:
                         positions[capsuleIndex] = cmd.CapsuleData.Position;
                         rotations[capsuleIndex - totalSpheres] = cmd.CapsuleData.Rotation;
-                        scales[capsuleIndex] = new Vector3(1.0f);
+                        scales[capsuleIndex] = new Vector3(cmd.CapsuleData.Radius * 2, cmd.CapsuleData.Height, cmd.CapsuleData.Radius * 2);
                         colors[capsuleIndex] = cmd.CapsuleData.Color;
                         capsuleIndex++;
                         break;
                     case RenderableType.Cylinder:
                         positions[cylinderIndex] = cmd.CylinderData.Position;
                         rotations[cylinderIndex - totalSpheres] = cmd.CylinderData.Rotation;
-                        scales[cylinderIndex] = new Vector3(1.0f);
+                        scales[cylinderIndex] = new Vector3(cmd.CylinderData.Radius * 2, cmd.CylinderData.Height, cmd.CylinderData.Radius * 2);
                         colors[cylinderIndex] = cmd.CylinderData.Color;
                         cylinderIndex++;
                         break;
                     case RenderableType.Cone:
                         positions[coneIndex] = cmd.ConeData.Position;
                         rotations[coneIndex - totalSpheres] = cmd.ConeData.Rotation;
-                        scales[coneIndex] = new Vector3(1.0f);
+                        scales[coneIndex] = new Vector3(cmd.ConeData.Radius * 2, cmd.ConeData.Height, cmd.ConeData.Radius * 2);
                         colors[coneIndex] = cmd.ConeData.Color;
                         coneIndex++;
                         break;

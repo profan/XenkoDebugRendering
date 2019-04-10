@@ -202,7 +202,7 @@ namespace DebugRendering
                         }
                         break;
                     case CurRenderMode.Sphere:
-                        debugSystem.DrawSphere(boxPositions.Items[i], 0.5f, boxColors.Items[i]);
+                        debugSystem.DrawSphere(boxPositions.Items[i], (float)Math.Sin(Game.PlayTime.TotalTime.TotalSeconds) + (float)Math.Cos(i), boxColors.Items[i]);
                         break;
                     case CurRenderMode.Cube:
                         debugSystem.DrawCube(boxPositions.Items[i], new Vector3(1, 1, 1), boxRotations.Items[i], boxColors.Items[i]);
