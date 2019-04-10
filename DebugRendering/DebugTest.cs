@@ -19,7 +19,7 @@ namespace DebugRendering
             Sphere,
             Cube,
             Capsule,
-            Cylnder,
+            Cylinder,
             Cone
         }
 
@@ -210,7 +210,7 @@ namespace DebugRendering
                     case CurRenderMode.Capsule:
                         debugSystem.DrawCapsule(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
                         break;
-                    case CurRenderMode.Cylnder:
+                    case CurRenderMode.Cylinder:
                         debugSystem.DrawCylinder(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
                         break;
                     case CurRenderMode.Cone:
