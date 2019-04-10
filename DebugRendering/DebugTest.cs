@@ -13,6 +13,16 @@ namespace DebugRendering
     public class DebugTest : SyncScript
     {
 
+        enum CurRenderMode : byte
+        {
+            All = 0,
+            Sphere,
+            Cube,
+            Capsule,
+            Cylnder,
+            Cone
+        }
+
         const int ChangePerSecond = 8192 + 2048;
         const int InitialNumBoxes = 32768;
         const int AreaSize = 64;
@@ -23,6 +33,7 @@ namespace DebugRendering
         int minNumberOfBoxes = 0;
         int maxNumberOfBoxes = InitialNumBoxes * 10;
         int currentNumBoxes = InitialNumBoxes;
+        CurRenderMode mode = CurRenderMode.All;
 
         FastList<Vector3> boxPositions = new FastList<Vector3>(InitialNumBoxes);
         FastList<Quaternion> boxRotations = new FastList<Quaternion>(InitialNumBoxes);
@@ -104,6 +115,11 @@ namespace DebugRendering
             
             var newAmountOfBoxes = Clamp(currentNumBoxes + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberOfBoxes, maxNumberOfBoxes);
 
+            if (Input.IsKeyPressed(Xenko.Input.Keys.LeftAlt))
+            {
+                mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.Cone + 1));
+            }
+
             if (newAmountOfBoxes > currentNumBoxes)
             {
                 InitializeBoxes(currentNumBoxes, newAmountOfBoxes);
@@ -116,6 +132,7 @@ namespace DebugRendering
             }
 
             DebugText.Print($"Primitive Count: {currentNumBoxes} (scrollwheel to adjust)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 32));
+            DebugText.Print($" - Current Render Mode: {mode} (alt to switch)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 48));
 
             Dispatcher.For(0, currentNumBoxes, i =>
             {
@@ -159,25 +176,45 @@ namespace DebugRendering
 
             for (int i = 0; i < currentNumBoxes; ++i)
             {
-                switch (currentShape++)
+                switch (mode)
                 {
-                    case 0: // sphere
+                    case CurRenderMode.All:
+                        switch (currentShape++)
+                        {
+                            case 0: // sphere
+                                debugSystem.DrawSphere(boxPositions.Items[i], 0.5f, boxColors.Items[i]);
+                                break;
+                            case 1: // cube
+                                debugSystem.DrawCube(boxPositions.Items[i], new Vector3(1, 1, 1), boxRotations.Items[i], boxColors.Items[i]);
+                                break;
+                            case 2: // capsule
+                                debugSystem.DrawCapsule(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                                break;
+                            case 3: // cylinder
+                                debugSystem.DrawCylinder(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                                break;
+                            case 4: // cone
+                                debugSystem.DrawCone(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                                currentShape = 0;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case CurRenderMode.Sphere:
                         debugSystem.DrawSphere(boxPositions.Items[i], 0.5f, boxColors.Items[i]);
                         break;
-                    case 1: // cube
+                    case CurRenderMode.Cube:
                         debugSystem.DrawCube(boxPositions.Items[i], new Vector3(1, 1, 1), boxRotations.Items[i], boxColors.Items[i]);
                         break;
-                    case 2: // capsule
+                    case CurRenderMode.Capsule:
                         debugSystem.DrawCapsule(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
                         break;
-                    case 3: // cylinder
+                    case CurRenderMode.Cylnder:
                         debugSystem.DrawCylinder(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
                         break;
-                    case 4: // cone
+                    case CurRenderMode.Cone:
                         debugSystem.DrawCone(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
-                        currentShape = 0;
-                        break;
-                    default:
                         break;
                 }
             }

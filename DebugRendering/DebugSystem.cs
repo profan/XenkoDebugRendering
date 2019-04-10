@@ -632,7 +632,7 @@ namespace DebugRendering
 
         const int SPHERE_TESSELATION = 4;
         const int CAPSULE_TESSELATION = 2;
-        const int CYLINDER_TESSELATION = 4;
+        const int CYLINDER_TESSELATION = 6;
         const int CONE_TESSELATION = 4;
 
         /* mesh data we will use when stuffing things in vertex buffers */
@@ -667,7 +667,6 @@ namespace DebugRendering
         private InputElementDescription[] inputElements;
         private EffectInstance primitiveEffect;
         private Buffer transformBuffer;
-        private Buffer scaleBuffer;
         private Buffer colorBuffer;
 
         /* messages */
@@ -875,9 +874,6 @@ namespace DebugRendering
             var newTransformBuffer = Buffer.Structured.New<Matrix>(device, 1);
             transformBuffer = newTransformBuffer;
 
-            var newScaleBuffer = Buffer.Structured.New<Vector3>(device, scales.Items);
-            scaleBuffer = newScaleBuffer;
-
             var newColourBuffer = Buffer.Structured.New<Color4>(device, colors.Items);
             colorBuffer = newColourBuffer;
 
@@ -933,35 +929,35 @@ namespace DebugRendering
                         break;
                     case RenderableType.Sphere:
                         positions[sphereIndex] = cmd.SphereData.Position;
-                        scales[sphereIndex] = new Vector3(1);
+                        scales[sphereIndex] = new Vector3(1.0f);
                         colors[sphereIndex] = cmd.SphereData.Color;
                         sphereIndex++;
                         break;
                     case RenderableType.Cube:
                         positions[cubeIndex] = cmd.CubeData.Start;
                         rotations[cubeIndex - totalSpheres] = cmd.CubeData.Rotation;
-                        scales[cubeIndex] = new Vector3(1);
+                        scales[cubeIndex] = new Vector3(2.0f);
                         colors[cubeIndex] = cmd.CubeData.Color;
                         cubeIndex++;
                         break;
                     case RenderableType.Capsule:
                         positions[capsuleIndex] = cmd.CapsuleData.Position;
                         rotations[capsuleIndex - totalSpheres] = cmd.CapsuleData.Rotation;
-                        scales[capsuleIndex] = new Vector3(1);
+                        scales[capsuleIndex] = new Vector3(1.0f);
                         colors[capsuleIndex] = cmd.CapsuleData.Color;
                         capsuleIndex++;
                         break;
                     case RenderableType.Cylinder:
                         positions[cylinderIndex] = cmd.CylinderData.Position;
                         rotations[cylinderIndex - totalSpheres] = cmd.CylinderData.Rotation;
-                        scales[cylinderIndex] = new Vector3(1);
+                        scales[cylinderIndex] = new Vector3(1.0f);
                         colors[cylinderIndex] = cmd.CylinderData.Color;
                         cylinderIndex++;
                         break;
                     case RenderableType.Cone:
                         positions[coneIndex] = cmd.ConeData.Position;
                         rotations[coneIndex - totalSpheres] = cmd.ConeData.Rotation;
-                        scales[coneIndex] = new Vector3(1);
+                        scales[coneIndex] = new Vector3(1.0f);
                         colors[coneIndex] = cmd.ConeData.Color;
                         coneIndex++;
                         break;
@@ -1023,15 +1019,6 @@ namespace DebugRendering
                         context.GraphicsDevice, context.CommandList, buffer: ref transformBuffer,
                         dataPtr: new DataPointer(transformsPtr, transforms.Count * Marshal.SizeOf<Matrix>()),
                         elementSize: Marshal.SizeOf<Matrix>()
-                    );
-                }
-
-                fixed (Vector3* scalesPtr = scales.Items)
-                {
-                    UpdateBufferIfNecessary(
-                        context.GraphicsDevice, context.CommandList, buffer: ref scaleBuffer,
-                        dataPtr: new DataPointer(scalesPtr, scales.Count * Marshal.SizeOf<Vector3>()),
-                        elementSize: Marshal.SizeOf<Vector3>()
                     );
                 }
 
@@ -1104,6 +1091,7 @@ namespace DebugRendering
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
             pipelineState.State.DepthStencilState = DepthStencilStates.Default;
             pipelineState.State.RasterizerState.FillMode = FillMode.Wireframe;
+            pipelineState.State.RasterizerState.CullMode = CullMode.None;
             pipelineState.State.BlendState = BlendStates.AlphaBlend;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
