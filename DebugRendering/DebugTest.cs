@@ -87,7 +87,7 @@ namespace DebugRendering
             debugSystem = new DebugSystem(Services);
             debugSystem.PrimitiveRenderer = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>().First();
             debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.NormalTailSize = currentNumBoxes;
+            debugSystem.NormalTailSize = currentNumBoxes + 1;
 
             InitializeBoxes(0, currentNumBoxes);
 
@@ -123,7 +123,7 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumBoxes)
             {
                 InitializeBoxes(currentNumBoxes, newAmountOfBoxes);
-                debugSystem.NormalTailSize = newAmountOfBoxes;
+                debugSystem.NormalTailSize = newAmountOfBoxes + 1;
                 currentNumBoxes = newAmountOfBoxes;
             }
             else
@@ -218,6 +218,9 @@ namespace DebugRendering
                         break;
                 }
             }
+
+            // CUBE OF ORIGIN!!
+            debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), Quaternion.Identity);
 
             debugSystem.Update(Game.UpdateTime);
 

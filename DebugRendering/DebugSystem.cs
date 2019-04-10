@@ -936,7 +936,7 @@ namespace DebugRendering
                     case RenderableType.Cube:
                         positions[cubeIndex] = cmd.CubeData.Start;
                         rotations[cubeIndex - totalSpheres] = cmd.CubeData.Rotation;
-                        scales[cubeIndex] = new Vector3(2.0f);
+                        scales[cubeIndex] = new Vector3(1.0f);
                         colors[cubeIndex] = cmd.CubeData.Color;
                         cubeIndex++;
                         break;
