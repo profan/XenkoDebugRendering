@@ -1,6 +1,6 @@
 XenkoDebugRendering
 ---------------------
-This is a testing ground for what will hopefully be included in Xenko itself for debug rendering purposes, immediate-mode type rendering of boxes, lines, cones, capsules, cones, etc.
+This is a testing ground for what will hopefully be included in Xenko itself for debug rendering purposes, immediate-mode type rendering of boxes, lines, cylinders, capsules, cones, etc.
 
 It consists of:
 1. A RootRenderFeature which does the actual rendering, split up into stages as specified so that later multithreading should just work optimistically.
