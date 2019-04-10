@@ -159,6 +159,8 @@ namespace DebugRendering
         internal struct DebugDrawCapsule
         {
             public Vector3 Position;
+            public float Height;
+            public float Radius;
             public Quaternion Rotation;
             public Color Color;
         }
@@ -166,6 +168,8 @@ namespace DebugRendering
         internal struct DebugDrawCylinder
         {
             public Vector3 Position;
+            public float Height;
+            public float Radius;
             public Quaternion Rotation;
             public Color Color;
         }
@@ -173,6 +177,8 @@ namespace DebugRendering
         internal struct DebugDrawCone
         {
             public Vector3 Position;
+            public float Height;
+            public float Radius;
             public Quaternion Rotation;
             public Color Color;
         }
@@ -208,7 +214,7 @@ namespace DebugRendering
             {
                 renderMessagesWithLifetime.Add(msg);
                 // drop one old message if the tail size has been reached
-                if (renderMessagesWithLifetime.Count > TailSize)
+                if (renderMessagesWithLifetime.Count > TimedTailSize)
                 {
                     renderMessagesWithLifetime.RemoveAt(renderMessagesWithLifetime.Count - 1);
                 }
@@ -217,7 +223,7 @@ namespace DebugRendering
             {
                 renderMessages.Add(msg);
                 // drop one old message if the tail size has been reached
-                if (renderMessages.Count > TailSize)
+                if (renderMessages.Count > NormalTailSize)
                 {
                     renderMessages.RemoveAt(renderMessages.Count - 1);
                 }
@@ -271,6 +277,16 @@ namespace DebugRendering
                 ref var v2 = ref vertices[i];
                 DrawLine(v1, v1 + v2, color, duration);
             }
+        }
+
+        public void DrawArrow(Vector3 from, Vector3 to, float duration = 0.0f, bool depthTest = true)
+        {
+            DrawArrow(from, to, PrimitiveColor, duration, depthTest);
+        }
+
+        public void DrawArrow(Vector3 from, Vector3 to, Color color, float duration = 0.0f, bool depthTest = true)
+        {
+
         }
 
         public void DrawSphere(Vector3 position, float radius, float duration = 0.0f, bool depthTest = true)
@@ -338,36 +354,36 @@ namespace DebugRendering
             }
         }
 
-        public void DrawCapsule(Vector3 position, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCapsule(position, rotation, PrimitiveColor, duration, depthTest);
+            DrawCapsule(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawCapsule(Vector3 position, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCapsule { Position = position, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCylinder(Vector3 position, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCylinder(position, rotation, PrimitiveColor, duration, depthTest);
+            DrawCylinder(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawCylinder(Vector3 position, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCylinder { Position = position, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCone(Vector3 position, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCone(position, rotation, PrimitiveColor, duration, depthTest);
+            DrawCone(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawCone(Vector3 position, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCone { Position = position, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
@@ -377,7 +393,8 @@ namespace DebugRendering
         public ref Color PrimitiveColor { get { return ref primitiveColor; } }
         private Color primitiveColor = Color.LightGreen;
 
-        public int TailSize { get; set; } = 100;
+        public int NormalTailSize { get; set; } = 100;
+        public int TimedTailSize { get; set; } = 100;
 
         public override void Update(GameTime gameTime)
         {
@@ -422,13 +439,13 @@ namespace DebugRendering
                         PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color);
                         break;
                     case DebugRenderableType.Capsule:
-                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color);
+                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color);
                         break;
                     case DebugRenderableType.Cylinder:
-                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color);
+                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color);
                         break;
                     case DebugRenderableType.Cone:
-                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, ref msg.ConeData.Rotation, ref msg.ConeData.Color);
+                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color);
                         break;
                 }
             }
@@ -551,7 +568,7 @@ namespace DebugRendering
         {
             public Vector3 Position;
             public Quaternion Rotation;
-            public float radius;
+            public float Radius;
         }
 
         internal struct Sphere
@@ -572,6 +589,8 @@ namespace DebugRendering
         internal struct Capsule
         {
             public Vector3 Position;
+            public float Height;
+            public float Radius;
             public Quaternion Rotation;
             public Color Color;
         }
@@ -579,6 +598,8 @@ namespace DebugRendering
         internal struct Cylinder
         {
             public Vector3 Position;
+            public float Height;
+            public float Radius;
             public Quaternion Rotation;
             public Color Color;
         }
@@ -586,6 +607,8 @@ namespace DebugRendering
         internal struct Cone
         {
             public Vector3 Position;
+            public float Height;
+            public float Radius;
             public Quaternion Rotation;
             public Color Color;
         }
@@ -625,14 +648,14 @@ namespace DebugRendering
         private Buffer vertexBuffer;
         private Buffer indexBuffer;
 
-        private int planeVertexOffset = 0;
+        private int quadVertexOffset = 0;
         private int sphereVertexOffset = 0;
         private int cubeVertexOffset = 0;
         private int capsuleVertexOffset = 0;
         private int cylinderVertexOffset = 0;
         private int coneVertexOffset = 0;
 
-        private int planeIndexOffset = 0;
+        private int quadIndexOffset = 0;
         private int sphereIndexOffset = 0;
         private int cubeIndexOffset = 0;
         private int capsuleIndexOffset = 0;
@@ -721,23 +744,23 @@ namespace DebugRendering
             totalCubes++;
         }
 
-        public void DrawCapsule(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
+        public void DrawCapsule(ref Vector3 position, float height, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
-            var cmd = new Capsule() { Position = position, Rotation = rotation, Color = color };
+            var cmd = new Capsule() { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
             renderables.Add(new Renderable(ref cmd));
             totalCapsules++;
         }
 
-        public void DrawCylinder(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
+        public void DrawCylinder(ref Vector3 position, float height, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
-            var cmd = new Cylinder() { Position = position, Rotation = rotation, Color = color };
+            var cmd = new Cylinder() { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
             renderables.Add(new Renderable(ref cmd));
             totalCylinders++;
         }
 
-        public void DrawCone(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
+        public void DrawCone(ref Vector3 position, float height, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
-            var cmd = new Cone() { Position = position, Rotation = rotation, Color = color };
+            var cmd = new Cone() { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
             renderables.Add(new Renderable(ref cmd));
             totalCones++;
         }
@@ -782,7 +805,7 @@ namespace DebugRendering
             int vertexBufferOffset = 0;
 
             Array.Copy(plane.Vertices, vertexData, plane.Vertices.Length);
-            planeVertexOffset = vertexBufferOffset;
+            quadVertexOffset = vertexBufferOffset;
             vertexBufferOffset += plane.Vertices.Length;
 
             Array.Copy(sphere.Vertices, 0, vertexData, vertexBufferOffset, sphere.Vertices.Length);
@@ -822,7 +845,7 @@ namespace DebugRendering
             int indexBufferOffset = 0;
 
             Array.Copy(plane.Indices, indexData, plane.Indices.Length);
-            planeIndexOffset = indexBufferOffset;
+            quadIndexOffset = indexBufferOffset;
             indexBufferOffset += plane.Indices.Length;
 
             Array.Copy(sphere.Indices, 0, indexData, indexBufferOffset, sphere.Indices.Length);
@@ -1122,7 +1145,7 @@ namespace DebugRendering
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, quadInstanceOffset);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(plane.Indices.Length, quadsToDraw, planeIndexOffset, planeVertexOffset);
+                commandList.DrawIndexedInstanced(plane.Indices.Length, quadsToDraw, quadIndexOffset, quadVertexOffset);
 
             }
 

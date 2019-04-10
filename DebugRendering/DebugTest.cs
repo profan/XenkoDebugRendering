@@ -76,7 +76,7 @@ namespace DebugRendering
             debugSystem = new DebugSystem(Services);
             debugSystem.PrimitiveRenderer = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>().First();
             debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.TailSize = currentNumBoxes;
+            debugSystem.NormalTailSize = currentNumBoxes;
 
             InitializeBoxes(0, currentNumBoxes);
 
@@ -107,7 +107,7 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumBoxes)
             {
                 InitializeBoxes(currentNumBoxes, newAmountOfBoxes);
-                debugSystem.TailSize = newAmountOfBoxes;
+                debugSystem.NormalTailSize = newAmountOfBoxes;
                 currentNumBoxes = newAmountOfBoxes;
             }
             else
@@ -168,13 +168,13 @@ namespace DebugRendering
                         debugSystem.DrawCube(boxPositions.Items[i], new Vector3(1, 1, 1), boxRotations.Items[i], boxColors.Items[i]);
                         break;
                     case 2: // capsule
-                        debugSystem.DrawCapsule(boxPositions.Items[i], boxRotations.Items[i], boxColors.Items[i]);
+                        debugSystem.DrawCapsule(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
                         break;
                     case 3: // cylinder
-                        debugSystem.DrawCylinder(boxPositions.Items[i], boxRotations.Items[i], boxColors.Items[i]);
+                        debugSystem.DrawCylinder(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
                         break;
                     case 4: // cone
-                        debugSystem.DrawCone(boxPositions.Items[i], boxRotations.Items[i], boxColors.Items[i]);
+                        debugSystem.DrawCone(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
                         currentShape = 0;
                         break;
                     default:
