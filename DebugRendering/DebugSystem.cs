@@ -898,6 +898,7 @@ namespace DebugRendering
 
             positions.Resize(totalThingsToDraw, true);
             rotations.Resize(totalThingsToDraw - totalSpheres, true); // spheres have no rotation
+            scales.Resize(totalThingsToDraw, true);
             colors.Resize(totalThingsToDraw, true);
 
             int sphereIndex = 0;
@@ -932,30 +933,35 @@ namespace DebugRendering
                         break;
                     case RenderableType.Sphere:
                         positions[sphereIndex] = cmd.SphereData.Position;
+                        scales[sphereIndex] = new Vector3(1);
                         colors[sphereIndex] = cmd.SphereData.Color;
                         sphereIndex++;
                         break;
                     case RenderableType.Cube:
                         positions[cubeIndex] = cmd.CubeData.Start;
                         rotations[cubeIndex - totalSpheres] = cmd.CubeData.Rotation;
+                        scales[cubeIndex] = new Vector3(1);
                         colors[cubeIndex] = cmd.CubeData.Color;
                         cubeIndex++;
                         break;
                     case RenderableType.Capsule:
                         positions[capsuleIndex] = cmd.CapsuleData.Position;
                         rotations[capsuleIndex - totalSpheres] = cmd.CapsuleData.Rotation;
+                        scales[capsuleIndex] = new Vector3(1);
                         colors[capsuleIndex] = cmd.CapsuleData.Color;
                         capsuleIndex++;
                         break;
                     case RenderableType.Cylinder:
                         positions[cylinderIndex] = cmd.CylinderData.Position;
                         rotations[cylinderIndex - totalSpheres] = cmd.CylinderData.Rotation;
+                        scales[cylinderIndex] = new Vector3(1);
                         colors[cylinderIndex] = cmd.CylinderData.Color;
                         cylinderIndex++;
                         break;
                     case RenderableType.Cone:
                         positions[coneIndex] = cmd.ConeData.Position;
                         rotations[coneIndex - totalSpheres] = cmd.ConeData.Rotation;
+                        scales[coneIndex] = new Vector3(1);
                         colors[coneIndex] = cmd.ConeData.Color;
                         coneIndex++;
                         break;
@@ -1050,14 +1056,15 @@ namespace DebugRendering
             /* transform only things without rotation first */
             Dispatcher.For(0, spheresToDraw, (int i) =>
             {
-                transforms[i] = Matrix.Translation(positions[i]);
+                var identQuat = Quaternion.Identity;
+                Matrix.Transformation(ref scales.Items[i], ref identQuat, ref positions.Items[i], out transforms.Items[i]);
             }
             );
 
             /* start next dispatch at lower bound for things that have rotation, at this point only spheres dont */
             Dispatcher.For(spheresToDraw, transforms.Count, (int i) =>
             {
-                transforms[i] = Matrix.AffineTransformation(1.0f, rotations[i - spheresToDraw], positions[i]);
+                Matrix.Transformation(ref scales.Items[i], ref rotations.Items[i - spheresToDraw], ref positions.Items[i], out transforms.Items[i]);
             }
             );
 
