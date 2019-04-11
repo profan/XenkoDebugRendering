@@ -322,7 +322,7 @@ namespace DebugRendering
 
         public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCube { Position = start, End = end, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -934,9 +934,12 @@ namespace DebugRendering
                         sphereIndex++;
                         break;
                     case RenderableType.Cube:
-                        positions[cubeIndex] = cmd.CubeData.Start;
+                        ref var pos = ref cmd.CubeData.Start;
+                        ref var end = ref cmd.CubeData.End;
+                        var cubeScale = end - pos;
+                        positions[cubeIndex] = pos;
                         rotations[cubeIndex - totalSpheres] = cmd.CubeData.Rotation;
-                        scales[cubeIndex] = new Vector3(1.0f);
+                        scales[cubeIndex] = cubeScale;
                         colors[cubeIndex] = cmd.CubeData.Color;
                         cubeIndex++;
                         break;

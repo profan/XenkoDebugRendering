@@ -87,7 +87,9 @@ namespace DebugRendering
             debugSystem = new DebugSystem(Services);
             debugSystem.PrimitiveRenderer = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>().First();
             debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.MaxPrimitives = currentNumPrimitives + 1;
+            debugSystem.MaxPrimitives = currentNumPrimitives + 2;
+            Services.AddService(debugSystem);
+            Game.GameSystems.Add(debugSystem);
 
             InitializePrimitives(0, currentNumPrimitives);
 
@@ -123,7 +125,7 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                debugSystem.MaxPrimitives = newAmountOfBoxes + 1;
+                debugSystem.MaxPrimitives = newAmountOfBoxes + 2;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
@@ -227,9 +229,8 @@ namespace DebugRendering
             }
 
             // CUBE OF ORIGIN!!
-            debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), Quaternion.Identity);
-
-            debugSystem.Update(Game.UpdateTime);
+            debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), Quaternion.Identity, Color.White);
+            debugSystem.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), Quaternion.Identity, Color.White);
 
         }
 
