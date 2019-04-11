@@ -214,7 +214,7 @@ namespace DebugRendering
             {
                 renderMessagesWithLifetime.Add(msg);
                 // drop one old message if the tail size has been reached
-                if (renderMessagesWithLifetime.Count > TimedTailSize)
+                if (renderMessagesWithLifetime.Count > MaxPrimitivesWithLifetime)
                 {
                     renderMessagesWithLifetime.RemoveAt(renderMessagesWithLifetime.Count - 1);
                 }
@@ -223,7 +223,7 @@ namespace DebugRendering
             {
                 renderMessages.Add(msg);
                 // drop one old message if the tail size has been reached
-                if (renderMessages.Count > NormalTailSize)
+                if (renderMessages.Count > MaxPrimitives)
                 {
                     renderMessages.RemoveAt(renderMessages.Count - 1);
                 }
@@ -393,8 +393,8 @@ namespace DebugRendering
         public ref Color PrimitiveColor { get { return ref primitiveColor; } }
         private Color primitiveColor = Color.LightGreen;
 
-        public int NormalTailSize { get; set; } = 100;
-        public int TimedTailSize { get; set; } = 100;
+        public int MaxPrimitives { get; set; } = 100;
+        public int MaxPrimitivesWithLifetime { get; set; } = 100;
 
         public override void Update(GameTime gameTime)
         {

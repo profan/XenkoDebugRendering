@@ -87,7 +87,7 @@ namespace DebugRendering
             debugSystem = new DebugSystem(Services);
             debugSystem.PrimitiveRenderer = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>().First();
             debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.NormalTailSize = currentNumPrimitives + 1;
+            debugSystem.MaxPrimitives = currentNumPrimitives + 1;
 
             InitializePrimitives(0, currentNumPrimitives);
 
@@ -123,7 +123,7 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                debugSystem.NormalTailSize = newAmountOfBoxes + 1;
+                debugSystem.MaxPrimitives = newAmountOfBoxes + 1;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
