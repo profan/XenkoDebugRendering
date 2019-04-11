@@ -24,33 +24,33 @@ namespace DebugRendering
         }
 
         const int ChangePerSecond = 8192 + 2048;
-        const int InitialNumBoxes = 32768;
+        const int InitialNumPrimitives = 32768;
         const int AreaSize = 64;
         
         [DataMemberIgnore]
         DebugSystem debugSystem;
 
-        int minNumberOfBoxes = 0;
-        int maxNumberOfBoxes = InitialNumBoxes * 10;
-        int currentNumBoxes = InitialNumBoxes;
+        int minNumberofPrimitives = 0;
+        int maxNumbeOfPrimitives = InitialNumPrimitives * 10;
+        int currentNumPrimitives = InitialNumPrimitives;
         CurRenderMode mode = CurRenderMode.All;
 
-        FastList<Vector3> boxPositions = new FastList<Vector3>(InitialNumBoxes);
-        FastList<Quaternion> boxRotations = new FastList<Quaternion>(InitialNumBoxes);
-        FastList<Vector3> boxVelocities = new FastList<Vector3>(InitialNumBoxes);
-        FastList<Vector3> boxRotVelocities = new FastList<Vector3>(InitialNumBoxes);
-        FastList<Color> boxColors = new FastList<Color>(InitialNumBoxes);
+        FastList<Vector3> primitivePositions = new FastList<Vector3>(InitialNumPrimitives);
+        FastList<Quaternion> primitiveRotations = new FastList<Quaternion>(InitialNumPrimitives);
+        FastList<Vector3> primitiveVelocities = new FastList<Vector3>(InitialNumPrimitives);
+        FastList<Vector3> primitiveRotVelocities = new FastList<Vector3>(InitialNumPrimitives);
+        FastList<Color> primitiveColors = new FastList<Color>(InitialNumPrimitives);
 
-        private void InitializeBoxes(int from, int to)
+        private void InitializePrimitives(int from, int to)
         {
 
             var random = new Random();
 
-            boxPositions.Resize(to, true);
-            boxRotations.Resize(to, true);
-            boxVelocities.Resize(to, true);
-            boxRotVelocities.Resize(to, true);
-            boxColors.Resize(to, true);
+            primitivePositions.Resize(to, true);
+            primitiveRotations.Resize(to, true);
+            primitiveVelocities.Resize(to, true);
+            primitiveRotVelocities.Resize(to, true);
+            primitiveColors.Resize(to, true);
 
             for (int i = from; i < to; ++i)
             {
@@ -71,10 +71,10 @@ namespace DebugRendering
                 var rotVelZ = random.NextDouble();
                 var ballRotVel = new Vector3((float)rotVelX, (float)rotVelY, (float)rotVelZ);
 
-                boxPositions.Items[i] = new Vector3(randX, randY, randZ);
-                boxRotations.Items[i] = Quaternion.Identity;
-                boxVelocities.Items[i] = ballVel;
-                boxRotVelocities.Items[i] = ballRotVel;
+                primitivePositions.Items[i] = new Vector3(randX, randY, randZ);
+                primitiveRotations.Items[i] = Quaternion.Identity;
+                primitiveVelocities.Items[i] = ballVel;
+                primitiveRotVelocities.Items[i] = ballRotVel;
 
             }
         }
@@ -87,9 +87,9 @@ namespace DebugRendering
             debugSystem = new DebugSystem(Services);
             debugSystem.PrimitiveRenderer = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>().First();
             debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.NormalTailSize = currentNumBoxes + 1;
+            debugSystem.NormalTailSize = currentNumPrimitives + 1;
 
-            InitializeBoxes(0, currentNumBoxes);
+            InitializePrimitives(0, currentNumPrimitives);
 
         }
 
@@ -113,35 +113,35 @@ namespace DebugRendering
 
             var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
             
-            var newAmountOfBoxes = Clamp(currentNumBoxes + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberOfBoxes, maxNumberOfBoxes);
+            var newAmountOfBoxes = Clamp(currentNumPrimitives + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberofPrimitives, maxNumbeOfPrimitives);
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.LeftAlt))
             {
                 mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.Cone + 1));
             }
 
-            if (newAmountOfBoxes > currentNumBoxes)
+            if (newAmountOfBoxes > currentNumPrimitives)
             {
-                InitializeBoxes(currentNumBoxes, newAmountOfBoxes);
+                InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
                 debugSystem.NormalTailSize = newAmountOfBoxes + 1;
-                currentNumBoxes = newAmountOfBoxes;
+                currentNumPrimitives = newAmountOfBoxes;
             }
             else
             {
-                currentNumBoxes = newAmountOfBoxes;
+                currentNumPrimitives = newAmountOfBoxes;
             }
 
-            DebugText.Print($"Primitive Count: {currentNumBoxes} (scrollwheel to adjust)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 32));
+            DebugText.Print($"Primitive Count: {currentNumPrimitives} (scrollwheel to adjust)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 32));
             DebugText.Print($" - Current Render Mode: {mode} (alt to switch)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 48));
 
-            Dispatcher.For(0, currentNumBoxes, i =>
+            Dispatcher.For(0, currentNumPrimitives, i =>
             {
 
-                ref var position = ref boxPositions.Items[i];
-                ref var velocity = ref boxVelocities.Items[i];
-                ref var rotVelocity = ref boxRotVelocities.Items[i];
-                ref var rotation = ref boxRotations.Items[i];
-                ref var color = ref boxColors.Items[i];
+                ref var position = ref primitivePositions.Items[i];
+                ref var velocity = ref primitiveVelocities.Items[i];
+                ref var rotVelocity = ref primitiveRotVelocities.Items[i];
+                ref var rotation = ref primitiveRotations.Items[i];
+                ref var color = ref primitiveColors.Items[i];
 
                 if (position.X > AreaSize || position.X < -AreaSize)
                 {
@@ -174,7 +174,7 @@ namespace DebugRendering
             int currentShape = 0;
             var ds = debugSystem;
 
-            for (int i = 0; i < currentNumBoxes; ++i)
+            for (int i = 0; i < currentNumPrimitives; ++i)
             {
                 switch (mode)
                 {
@@ -182,19 +182,19 @@ namespace DebugRendering
                         switch (currentShape++)
                         {
                             case 0: // sphere
-                                debugSystem.DrawSphere(boxPositions.Items[i], 0.5f, boxColors.Items[i]);
+                                debugSystem.DrawSphere(primitivePositions.Items[i], 0.5f, primitiveColors.Items[i]);
                                 break;
                             case 1: // cube
-                                debugSystem.DrawCube(boxPositions.Items[i], new Vector3(1, 1, 1), boxRotations.Items[i], boxColors.Items[i]);
+                                debugSystem.DrawCube(primitivePositions.Items[i], new Vector3(1, 1, 1), primitiveRotations.Items[i], primitiveColors.Items[i]);
                                 break;
                             case 2: // capsule
-                                debugSystem.DrawCapsule(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                                debugSystem.DrawCapsule(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
                                 break;
                             case 3: // cylinder
-                                debugSystem.DrawCylinder(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                                debugSystem.DrawCylinder(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
                                 break;
                             case 4: // cone
-                                debugSystem.DrawCone(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                                debugSystem.DrawCone(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
                                 currentShape = 0;
                                 break;
                             default:
@@ -202,19 +202,19 @@ namespace DebugRendering
                         }
                         break;
                     case CurRenderMode.Sphere:
-                        debugSystem.DrawSphere(boxPositions.Items[i], (float)Math.Sin(Game.PlayTime.TotalTime.TotalSeconds) + (float)Math.Cos(i), boxColors.Items[i]);
+                        debugSystem.DrawSphere(primitivePositions.Items[i], (float)Math.Sin(Game.PlayTime.TotalTime.TotalSeconds) + (float)Math.Cos(i), primitiveColors.Items[i]);
                         break;
                     case CurRenderMode.Cube:
-                        debugSystem.DrawCube(boxPositions.Items[i], new Vector3(1, 1, 1), boxRotations.Items[i], boxColors.Items[i]);
+                        debugSystem.DrawCube(primitivePositions.Items[i], new Vector3(1, 1, 1), primitiveRotations.Items[i], primitiveColors.Items[i]);
                         break;
                     case CurRenderMode.Capsule:
-                        debugSystem.DrawCapsule(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                        debugSystem.DrawCapsule(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
                         break;
                     case CurRenderMode.Cylinder:
-                        debugSystem.DrawCylinder(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                        debugSystem.DrawCylinder(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
                         break;
                     case CurRenderMode.Cone:
-                        debugSystem.DrawCone(boxPositions.Items[i], 1.0f, 0.5f, boxRotations.Items[i], boxColors.Items[i]);
+                        debugSystem.DrawCone(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
                         break;
                 }
             }

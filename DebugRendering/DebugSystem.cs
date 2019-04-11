@@ -29,7 +29,7 @@ namespace DebugRendering
             Quad,
             Circle,
             Line,
-            Box,
+            Cube,
             Sphere,
             Capsule,
             Cylinder,
@@ -58,10 +58,10 @@ namespace DebugRendering
                 LineData = l;
             }
 
-            public DebugRenderable(ref DebugDrawBox b) : this()
+            public DebugRenderable(ref DebugDrawCube b) : this()
             {
-                Type = DebugRenderableType.Box;
-                BoxData = b;
+                Type = DebugRenderableType.Cube;
+                CubeData = b;
             }
 
             public DebugRenderable(ref DebugDrawSphere s) : this()
@@ -104,7 +104,7 @@ namespace DebugRendering
             public DebugDrawLine LineData;
 
             [FieldOffset(1 + sizeof(float))]
-            public DebugDrawBox BoxData;
+            public DebugDrawCube CubeData;
 
             [FieldOffset(1 + sizeof(float))]
             public DebugDrawSphere SphereData;
@@ -141,7 +141,7 @@ namespace DebugRendering
             public Color Color;
         }
 
-        internal struct DebugDrawBox
+        internal struct DebugDrawCube
         {
             public Vector3 Position;
             public Vector3 End;
@@ -322,7 +322,7 @@ namespace DebugRendering
 
         public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawBox { Position = start, End = end, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCube { Position = start, End = end, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -334,7 +334,7 @@ namespace DebugRendering
 
         public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawBox { Position = start, End = start + size, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation, Color = color };
             var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -432,8 +432,8 @@ namespace DebugRendering
                     case DebugRenderableType.Line:
                         PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color);
                         break;
-                    case DebugRenderableType.Box:
-                        PrimitiveRenderer.DrawBox(ref msg.BoxData.Position, ref msg.BoxData.End, ref msg.BoxData.Rotation, ref msg.BoxData.Color);
+                    case DebugRenderableType.Cube:
+                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color);
                         break;
                     case DebugRenderableType.Sphere:
                         PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color);
@@ -736,7 +736,7 @@ namespace DebugRendering
             totalSpheres++;
         }
 
-        public void DrawBox(ref Vector3 start, ref Vector3 end, ref Quaternion rotation, ref Color color, bool depthTest = true)
+        public void DrawCube(ref Vector3 start, ref Vector3 end, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Cube() { Start = start, End = end, Rotation = rotation, Color = color };
             renderables.Add(new Renderable(ref cmd));
