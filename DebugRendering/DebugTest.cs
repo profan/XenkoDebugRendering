@@ -176,25 +176,32 @@ namespace DebugRendering
 
             for (int i = 0; i < currentNumPrimitives; ++i)
             {
+
+                ref var position = ref primitivePositions.Items[i];
+                ref var rotation = ref primitiveRotations.Items[i];
+                ref var velocity = ref primitiveVelocities.Items[i];
+                ref var rotVelocity = ref primitiveRotVelocities.Items[i];
+                ref var color = ref primitiveColors.Items[i];
+
                 switch (mode)
                 {
                     case CurRenderMode.All:
                         switch (currentShape++)
                         {
                             case 0: // sphere
-                                debugSystem.DrawSphere(primitivePositions.Items[i], 0.5f, primitiveColors.Items[i]);
+                                debugSystem.DrawSphere(position, 0.5f, color);
                                 break;
                             case 1: // cube
-                                debugSystem.DrawCube(primitivePositions.Items[i], new Vector3(1, 1, 1), primitiveRotations.Items[i], primitiveColors.Items[i]);
+                                debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color);
                                 break;
                             case 2: // capsule
-                                debugSystem.DrawCapsule(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
+                                debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color);
                                 break;
                             case 3: // cylinder
-                                debugSystem.DrawCylinder(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
+                                debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color);
                                 break;
                             case 4: // cone
-                                debugSystem.DrawCone(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
+                                debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color);
                                 currentShape = 0;
                                 break;
                             default:
@@ -202,19 +209,19 @@ namespace DebugRendering
                         }
                         break;
                     case CurRenderMode.Sphere:
-                        debugSystem.DrawSphere(primitivePositions.Items[i], (float)Math.Sin(Game.PlayTime.TotalTime.TotalSeconds) + (float)Math.Cos(i), primitiveColors.Items[i]);
+                        debugSystem.DrawSphere(position, (float)Math.Sin(Game.PlayTime.TotalTime.TotalSeconds) + (float)Math.Cos(i), color);
                         break;
                     case CurRenderMode.Cube:
-                        debugSystem.DrawCube(primitivePositions.Items[i], new Vector3(1, 1, 1), primitiveRotations.Items[i], primitiveColors.Items[i]);
+                        debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color);
                         break;
                     case CurRenderMode.Capsule:
-                        debugSystem.DrawCapsule(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
+                        debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color);
                         break;
                     case CurRenderMode.Cylinder:
-                        debugSystem.DrawCylinder(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
+                        debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color);
                         break;
                     case CurRenderMode.Cone:
-                        debugSystem.DrawCone(primitivePositions.Items[i], 1.0f, 0.5f, primitiveRotations.Items[i], primitiveColors.Items[i]);
+                        debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color);
                         break;
                 }
             }
