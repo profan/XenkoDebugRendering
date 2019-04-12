@@ -36,6 +36,7 @@ namespace DebugRendering
         int maxNumbeOfPrimitives = InitialNumPrimitives * 10;
         int currentNumPrimitives = InitialNumPrimitives;
         CurRenderMode mode = CurRenderMode.All;
+        bool running = true;
 
         FastList<Vector3> primitivePositions = new FastList<Vector3>(InitialNumPrimitives);
         FastList<Quaternion> primitiveRotations = new FastList<Quaternion>(InitialNumPrimitives);
@@ -77,6 +78,12 @@ namespace DebugRendering
                 primitiveRotations.Items[i] = Quaternion.Identity;
                 primitiveVelocities.Items[i] = ballVel;
                 primitiveRotVelocities.Items[i] = ballRotVel;
+
+                ref var color = ref primitiveColors.Items[i];
+                color.R = (byte)((((primitivePositions[i].X / AreaSize) + 1f) / 2.0f) * 255.0f);
+                color.G = (byte)((((primitivePositions[i].Y / AreaSize) + 1f) / 2.0f) * 255.0f);
+                color.B = (byte)((((primitivePositions[i].Z / AreaSize) + 1f) / 2.0f) * 255.0f);
+                color.A = 255;
 
             }
         }
@@ -135,6 +142,11 @@ namespace DebugRendering
             {
                 mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.None + 1));
             }
+            
+            if (Input.IsKeyPressed(Xenko.Input.Keys.Space))
+            {
+                running = !running;
+            }
 
             if (newAmountOfBoxes > currentNumPrimitives)
             {
@@ -148,45 +160,49 @@ namespace DebugRendering
             }
 
             DebugText.Print($"Primitive Count: {currentNumPrimitives} (scrollwheel to adjust)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 32));
-            DebugText.Print($" - Current Render Mode: {mode} (alt to switch)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 48));
+            DebugText.Print($" - Render Mode: {mode} (left alt to switch)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 48));
+            DebugText.Print($" - State: {(running ? "Simulating" : "Paused")} (space to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 64));
 
-            Dispatcher.For(0, currentNumPrimitives, i =>
+            if (running)
             {
-
-                ref var position = ref primitivePositions.Items[i];
-                ref var velocity = ref primitiveVelocities.Items[i];
-                ref var rotVelocity = ref primitiveRotVelocities.Items[i];
-                ref var rotation = ref primitiveRotations.Items[i];
-                ref var color = ref primitiveColors.Items[i];
-
-                if (position.X > AreaSize || position.X < -AreaSize)
+                Dispatcher.For(0, currentNumPrimitives, i =>
                 {
-                    velocity.X = -velocity.X;
-                }
 
-                if (position.Y > AreaSize || position.Y < -AreaSize)
-                {
-                    velocity.Y = -velocity.Y;
-                }
+                    ref var position = ref primitivePositions.Items[i];
+                    ref var velocity = ref primitiveVelocities.Items[i];
+                    ref var rotVelocity = ref primitiveRotVelocities.Items[i];
+                    ref var rotation = ref primitiveRotations.Items[i];
+                    ref var color = ref primitiveColors.Items[i];
 
-                if (position.Z > AreaSize || position.Z < -AreaSize)
-                {
-                    velocity.Z = -velocity.Z;
-                }
+                    if (position.X > AreaSize || position.X < -AreaSize)
+                    {
+                        velocity.X = -velocity.X;
+                    }
 
-                position += velocity * dt;
+                    if (position.Y > AreaSize || position.Y < -AreaSize)
+                    {
+                        velocity.Y = -velocity.Y;
+                    }
 
-                rotation *=
-                    Quaternion.RotationX(rotVelocity.X * dt) *
-                    Quaternion.RotationY(rotVelocity.Y * dt) *
-                    Quaternion.RotationZ(rotVelocity.Z * dt);
+                    if (position.Z > AreaSize || position.Z < -AreaSize)
+                    {
+                        velocity.Z = -velocity.Z;
+                    }
 
-                color.R = (byte)((((position.X / AreaSize) + 1f) / 2.0f) * 255.0f);
-                color.G = (byte)((((position.Y / AreaSize) + 1f) / 2.0f) * 255.0f);
-                color.B = (byte)((((position.Z / AreaSize) + 1f) / 2.0f) * 255.0f);
-                color.A = 255;
+                    position += velocity * dt;
 
-            });
+                    rotation *=
+                        Quaternion.RotationX(rotVelocity.X * dt) *
+                        Quaternion.RotationY(rotVelocity.Y * dt) *
+                        Quaternion.RotationZ(rotVelocity.Z * dt);
+
+                    color.R = (byte)((((position.X / AreaSize) + 1f) / 2.0f) * 255.0f);
+                    color.G = (byte)((((position.Y / AreaSize) + 1f) / 2.0f) * 255.0f);
+                    color.B = (byte)((((position.Z / AreaSize) + 1f) / 2.0f) * 255.0f);
+                    color.A = 255;
+
+                });
+            }
 
             int currentShape = 0;
             var ds = debugSystem;
@@ -245,6 +261,8 @@ namespace DebugRendering
                         break;
                     case CurRenderMode.Ray:
                         debugSystem.DrawRay(position, velocity, color);
+                        break;
+                    case CurRenderMode.None:
                         break;
                 }
             }
