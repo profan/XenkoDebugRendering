@@ -3,7 +3,7 @@ Id: ab8065b7-2116-45ec-b65a-93dd5933cda3
 SerializedVersion: {Xenko: 3.1.0.1}
 Tags: []
 DefaultScene: 0cad0c59-4b09-4e2f-86e7-f5d055792a8a:MainScene
-GraphicsCompositor: 4064b269-ca3e-49db-bbcc-c59351f4dd5a:GraphicsCompositor
+GraphicsCompositor: acf7a3a1-62cc-4a40-b171-3903915d65b9:GraphicsCompositor
 Defaults:
     - !Xenko.Audio.AudioEngineSettings,Xenko.Audio
         HrtfSupport: false

@@ -93,7 +93,7 @@ Hierarchy:
                         Id: 42ec571c-6a76-4fef-9dd6-062e00e050f8
                         Name: null
                         Projection: Perspective
-                        Slot: 795212de-915d-4a39-baa0-b342bcef9b94
+                        Slot: 22297012-ce42-447c-a75d-00736521a0bb
                     2e8a5eb14529d9b60e29966194e29a7a: !DebugRendering.BasicCameraController,DebugRendering
                         Id: 8495895b-05df-4e08-83b6-76a64af38c9b
                         Gamepad: false

@@ -81,13 +81,25 @@ namespace DebugRendering
 
         public override void Start() {
 
+            debugSystem = new DebugSystem(Services);
+            debugSystem.PrimitiveColor = Color.Green;
+            debugSystem.MaxPrimitives = currentNumPrimitives*2 + 3;
+
+            // FIXME
+            var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
+
+            if (!debugRenderFeatures.Any())
+            {
+                var newDebugRenderFeature = new DebugRenderFeature();
+                SceneSystem.GraphicsCompositor.RenderFeatures.Add(newDebugRenderFeature);
+                debugSystem.PrimitiveRenderer = newDebugRenderFeature;
+            } else
+            {
+                debugSystem.PrimitiveRenderer = debugRenderFeatures.First();
+            }
+
             // keep DebugText visible in release builds too
             DebugText.Visible = true;
-
-            debugSystem = new DebugSystem(Services);
-            debugSystem.PrimitiveRenderer = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>().First();
-            debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.MaxPrimitives = currentNumPrimitives + 2;
             Services.AddService(debugSystem);
             Game.GameSystems.Add(debugSystem);
 
@@ -125,7 +137,7 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                debugSystem.MaxPrimitives = newAmountOfBoxes + 2;
+                debugSystem.MaxPrimitives = newAmountOfBoxes*2 + 3;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
@@ -170,6 +182,7 @@ namespace DebugRendering
                 color.R = (byte)((((position.X / AreaSize) + 1f) / 2.0f) * 255.0f);
                 color.G = (byte)((((position.Y / AreaSize) + 1f) / 2.0f) * 255.0f);
                 color.B = (byte)((((position.Z / AreaSize) + 1f) / 2.0f) * 255.0f);
+                color.A = 255;
 
             });
 
@@ -215,6 +228,7 @@ namespace DebugRendering
                         break;
                     case CurRenderMode.Cube:
                         debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color);
+                        debugSystem.DrawRay(position, velocity / 2, color);
                         break;
                     case CurRenderMode.Capsule:
                         debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color);
@@ -231,6 +245,7 @@ namespace DebugRendering
             // CUBE OF ORIGIN!!
             debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), Quaternion.Identity, Color.White);
             debugSystem.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), Quaternion.Identity, Color.White);
+            debugSystem.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), Quaternion.Identity, Color.HotPink);
 
         }
 

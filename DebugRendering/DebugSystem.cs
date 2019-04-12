@@ -462,7 +462,7 @@ namespace DebugRendering
     public class DebugRenderFeature : RootRenderFeature
     {
 
-        struct LineVertex
+        internal struct LineVertex
         {
 
             public static readonly VertexDeclaration Layout = new VertexDeclaration(VertexElement.Position<Vector3>(), VertexElement.Color<Color4>());
@@ -648,7 +648,7 @@ namespace DebugRendering
         /* mesh data we will use when stuffing things in vertex buffers */
         private readonly GeometricMeshData<VertexPositionNormalTexture> plane = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE, SPHERE_TESSELATION, SPHERE_TESSELATION);
         // private readonly GeometricMeshData<VertexPositionNormalTexture> circle = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> sphere = GeometricPrimitive.GeoSphere.New(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
+        private readonly GeometricMeshData<VertexPositionNormalTexture> sphere = GeometricPrimitive.Sphere.New(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
         private readonly GeometricMeshData<VertexPositionNormalTexture> cube = GeometricPrimitive.Cube.New(DEFAULT_CUBE_SIZE);
         private readonly GeometricMeshData<VertexPositionNormalTexture> capsule = GeometricPrimitive.Capsule.New(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
         private readonly GeometricMeshData<VertexPositionNormalTexture> cylinder = GeometricPrimitive.Cylinder.New(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
@@ -903,7 +903,7 @@ namespace DebugRendering
             var newColourBuffer = Buffer.Structured.New<Color4>(device, colors.Items);
             colorBuffer = newColourBuffer;
 
-            var newLineVertexBuffer = Buffer.Vertex.New<LineVertex>(device, lineVertices.Items);
+            var newLineVertexBuffer = Buffer.Vertex.New<LineVertex>(device, lineVertices.Items, GraphicsResourceUsage.Dynamic);
             lineVertexBuffer = newLineVertexBuffer;
 
         }
@@ -925,6 +925,8 @@ namespace DebugRendering
             rotations.Resize(totalThingsToDraw - totalSpheres, true); // spheres have no rotation
             scales.Resize(totalThingsToDraw, true);
             colors.Resize(totalThingsToDraw, true);
+
+            lineVertices.Resize(totalLines * 2, true);
 
             int sphereIndex = 0;
             int quadIndex = sphereIndex + totalSpheres;
@@ -1029,11 +1031,11 @@ namespace DebugRendering
             if (neededBufferSize > buffer.ElementCount)
             {
                 buffer.Dispose();
-                var newBuffer = Xenko.Graphics.Buffer.Structured.New(
+                var newBuffer = Xenko.Graphics.Buffer.New(
                     device,
                     dataPtr,
                     buffer.StructureByteStride,
-                    isUnorderedAccess: true
+                    buffer.Flags
                 );
                 buffer = newBuffer;
             }
@@ -1120,6 +1122,7 @@ namespace DebugRendering
         private void SetPrimitiveRenderingPipelineState(CommandList commandList)
         {
             pipelineState.State.SetDefaults();
+            pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
             pipelineState.State.DepthStencilState = DepthStencilStates.Default;
@@ -1134,14 +1137,15 @@ namespace DebugRendering
         private void SetLineRenderingPipelineState(CommandList commandList)
         {
             pipelineState.State.SetDefaults();
+            pipelineState.State.PrimitiveType = PrimitiveType.LineList;
             pipelineState.State.RootSignature = lineEffect.RootSignature;
             pipelineState.State.EffectBytecode = lineEffect.Effect.Bytecode;
             pipelineState.State.DepthStencilState = DepthStencilStates.Default;
-            pipelineState.State.RasterizerState.FillMode = FillMode.Wireframe;
+            pipelineState.State.RasterizerState.FillMode = FillMode.Solid;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
             pipelineState.State.BlendState = BlendStates.AlphaBlend;
             pipelineState.State.Output.CaptureState(commandList);
-            pipelineState.State.InputElements = inputElements;
+            pipelineState.State.InputElements = lineInputElements;
             pipelineState.Update();
         }
 
@@ -1249,7 +1253,7 @@ namespace DebugRendering
                 commandList.SetVertexBuffer(0, lineVertexBuffer, 0, LineVertex.Layout.VertexStride);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
-                lineEffect.Parameters.Set(PrimitiveShaderKeys.ViewProjection, renderView.ViewProjection);
+                lineEffect.Parameters.Set(LinePrimitiveShaderKeys.ViewProjection, renderView.ViewProjection);
                 lineEffect.UpdateEffect(context.GraphicsDevice);
                 lineEffect.Apply(context.GraphicsContext);
 
