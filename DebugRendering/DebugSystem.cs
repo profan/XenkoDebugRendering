@@ -462,6 +462,16 @@ namespace DebugRendering
     public class DebugRenderFeature : RootRenderFeature
     {
 
+        struct LineVertex
+        {
+
+            public static readonly VertexDeclaration Layout = new VertexDeclaration(VertexElement.Position<Vector3>(), VertexElement.Color<Color4>());
+
+            public Vector3 Position;
+            public Color4 Color;
+
+        }
+
         public override Type SupportedRenderObjectType => typeof(DummyDebugRenderObject);
 
         internal enum RenderableType : byte
@@ -638,7 +648,7 @@ namespace DebugRendering
         /* mesh data we will use when stuffing things in vertex buffers */
         private readonly GeometricMeshData<VertexPositionNormalTexture> plane = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE, SPHERE_TESSELATION, SPHERE_TESSELATION);
         // private readonly GeometricMeshData<VertexPositionNormalTexture> circle = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> sphere = GeometricPrimitive.Sphere.New(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
+        private readonly GeometricMeshData<VertexPositionNormalTexture> sphere = GeometricPrimitive.GeoSphere.New(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
         private readonly GeometricMeshData<VertexPositionNormalTexture> cube = GeometricPrimitive.Cube.New(DEFAULT_CUBE_SIZE);
         private readonly GeometricMeshData<VertexPositionNormalTexture> capsule = GeometricPrimitive.Capsule.New(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
         private readonly GeometricMeshData<VertexPositionNormalTexture> cylinder = GeometricPrimitive.Cylinder.New(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
@@ -647,6 +657,9 @@ namespace DebugRendering
         /* gpu side vertex and index buffer for our primitive data */
         private Buffer vertexBuffer;
         private Buffer indexBuffer;
+
+        /* vertex buffer for line rendering */
+        private Buffer lineVertexBuffer;
 
         private int quadVertexOffset = 0;
         private int sphereVertexOffset = 0;
@@ -665,7 +678,9 @@ namespace DebugRendering
         /* other gpu related data */
         private MutablePipelineState pipelineState;
         private InputElementDescription[] inputElements;
+        private InputElementDescription[] lineInputElements;
         private EffectInstance primitiveEffect;
+        private EffectInstance lineEffect;
         private Buffer transformBuffer;
         private Buffer colorBuffer;
 
@@ -690,7 +705,6 @@ namespace DebugRendering
         private int capsuleInstanceOffset = 0;
         private int cylinderInstanceOffset = 0;
         private int coneInstanceOffset = 0;
-        private int lineInstanceOffset = 0;
 
         /* used in render stage to know how many of each instance to draw */
         private int quadsToDraw = 0;
@@ -708,6 +722,9 @@ namespace DebugRendering
         private readonly FastList<Quaternion> rotations = new FastList<Quaternion>(1);
         private readonly FastList<Vector3> scales = new FastList<Vector3>(1);
         private readonly FastList<Color4> colors = new FastList<Color4>(1);
+
+        /* data only for line rendering */
+        private readonly FastList<LineVertex> lineVertices = new FastList<LineVertex>(1);
 
         public DebugRenderFeature()
         {
@@ -782,6 +799,7 @@ namespace DebugRendering
             var device = Context.GraphicsDevice;
 
             inputElements = VertexPositionNormalTexture.Layout.CreateInputElements();
+            lineInputElements = LineVertex.Layout.CreateInputElements();
 
             // create our pipeline state object
             pipelineState = new MutablePipelineState(device);
@@ -793,6 +811,9 @@ namespace DebugRendering
             // TODO: create our associated effect
             primitiveEffect = new EffectInstance(Context.Effects.LoadEffect("PrimitiveShader").WaitForResult());
             primitiveEffect.UpdateEffect(device);
+
+            lineEffect = new EffectInstance(Context.Effects.LoadEffect("LinePrimitiveShader").WaitForResult());
+            lineEffect.UpdateEffect(device);
 
             // create initial vertex and index buffers
             var vertexData = new VertexPositionNormalTexture[
@@ -882,11 +903,15 @@ namespace DebugRendering
             var newColourBuffer = Buffer.Structured.New<Color4>(device, colors.Items);
             colorBuffer = newColourBuffer;
 
+            var newLineVertexBuffer = Buffer.Vertex.New<LineVertex>(device, lineVertices.Items);
+            lineVertexBuffer = newLineVertexBuffer;
+
         }
 
         public override void Extract()
         {
 
+            /* everything except lines */
             int totalThingsToDraw =
                 totalQuads
                 + totalCircles
@@ -894,8 +919,7 @@ namespace DebugRendering
                 + totalCubes
                 + totalCapsules
                 + totalCylinders
-                + totalCones
-                + totalLines;
+                + totalCones;
 
             positions.Resize(totalThingsToDraw, true);
             rotations.Resize(totalThingsToDraw - totalSpheres, true); // spheres have no rotation
@@ -909,7 +933,9 @@ namespace DebugRendering
             int capsuleIndex = cubeIndex + totalCubes;
             int cylinderIndex = capsuleIndex + totalCapsules;
             int coneIndex = cylinderIndex + totalCylinders;
-            int lineIndex = coneIndex + totalCones;
+
+            /* line rendering data, separate buffer */
+            int lineIndex = 0;
 
             /* save instance offsets before we mutate them as we need them when rendering */
             quadInstanceOffset = quadIndex;
@@ -919,7 +945,6 @@ namespace DebugRendering
             capsuleInstanceOffset = capsuleIndex;
             cylinderInstanceOffset = cylinderIndex;
             coneInstanceOffset = coneIndex;
-            lineInstanceOffset = lineIndex;
 
             for (int i = 0; i < renderables.Count; ++i)
             {
@@ -970,7 +995,10 @@ namespace DebugRendering
                         coneIndex++;
                         break;
                     case RenderableType.Line:
-                        lineIndex++;
+                        lineVertices.Items[lineIndex].Position = cmd.LineData.Start;
+                        lineVertices.Items[lineIndex++].Color = cmd.LineData.Color;
+                        lineVertices.Items[lineIndex].Position = cmd.LineData.End;
+                        lineVertices.Items[lineIndex++].Color = cmd.LineData.Color;
                         break;
                 }
             }
@@ -1039,6 +1067,15 @@ namespace DebugRendering
                     );
                 }
 
+                fixed (LineVertex* lineVertsPtr = lineVertices.Items)
+                {
+                    UpdateBufferIfNecessary(
+                        context.GraphicsDevice, context.CommandList, buffer: ref lineVertexBuffer,
+                        dataPtr: new DataPointer(lineVertsPtr, lineVertices.Count * Marshal.SizeOf<LineVertex>()),
+                        elementSize: Marshal.SizeOf<LineVertex>()
+                    );
+                }
+
             }
 
         }
@@ -1080,20 +1117,8 @@ namespace DebugRendering
             return null;
         }
 
-        public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
+        private void SetPrimitiveRenderingPipelineState(CommandList commandList)
         {
-
-            // we only want to render in the transparent stage, is there a nicer way to do this?
-            var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
-            var transparentRenderStageIndex = transparentRenderStage.Index;
-
-            // bail out if it's any other stage, this is crude but alas
-            if (renderViewStage.Index != transparentRenderStageIndex) return;
-
-            var device = context.GraphicsDevice;
-            var commandList = context.CommandList;
-
-            // update pipeline state
             pipelineState.State.SetDefaults();
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
@@ -1104,6 +1129,36 @@ namespace DebugRendering
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
+        }
+
+        private void SetLineRenderingPipelineState(CommandList commandList)
+        {
+            pipelineState.State.SetDefaults();
+            pipelineState.State.RootSignature = lineEffect.RootSignature;
+            pipelineState.State.EffectBytecode = lineEffect.Effect.Bytecode;
+            pipelineState.State.DepthStencilState = DepthStencilStates.Default;
+            pipelineState.State.RasterizerState.FillMode = FillMode.Wireframe;
+            pipelineState.State.RasterizerState.CullMode = CullMode.None;
+            pipelineState.State.BlendState = BlendStates.AlphaBlend;
+            pipelineState.State.Output.CaptureState(commandList);
+            pipelineState.State.InputElements = inputElements;
+            pipelineState.Update();
+        }
+
+        public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
+        {
+
+            // we only want to render in the transparent stage, is there a nicer way to do this?
+            var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
+            var transparentRenderStageIndex = transparentRenderStage.Index;
+
+            // bail out if it's any other stage, this is crude but alas
+            if (renderViewStage.Index != transparentRenderStageIndex) return;
+
+            var commandList = context.CommandList;
+
+            // update pipeline state
+            SetPrimitiveRenderingPipelineState(commandList);
 
             // set buffers and our current pipeline state
             commandList.SetVertexBuffer(0, vertexBuffer, 0, VertexPositionNormalTexture.Layout.VertexStride);
@@ -1115,7 +1170,7 @@ namespace DebugRendering
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.Transforms, transformBuffer);
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.Colors, colorBuffer);
 
-            primitiveEffect.UpdateEffect(device);
+            primitiveEffect.UpdateEffect(context.GraphicsDevice);
             primitiveEffect.Apply(context.GraphicsContext);
 
             /* finally render */
@@ -1190,11 +1245,15 @@ namespace DebugRendering
             if (linesToDraw > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, lineInstanceOffset);
-                primitiveEffect.Apply(context.GraphicsContext);
+                SetLineRenderingPipelineState(commandList);
+                commandList.SetVertexBuffer(0, lineVertexBuffer, 0, LineVertex.Layout.VertexStride);
+                commandList.SetPipelineState(pipelineState.CurrentState);
 
-                // commandList.DrawIndexedInstanced(line.Indices.Length, linesToDraw, curIndexOffset, curVertexOffset);
-                // curIndexOffset += line.Indices.Length;
+                lineEffect.Parameters.Set(PrimitiveShaderKeys.ViewProjection, renderView.ViewProjection);
+                lineEffect.UpdateEffect(context.GraphicsDevice);
+                lineEffect.Apply(context.GraphicsContext);
+
+                commandList.Draw(linesToDraw * 2);
 
             }
 
