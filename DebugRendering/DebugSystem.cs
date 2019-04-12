@@ -630,10 +630,10 @@ namespace DebugRendering
         const float DEFAULT_CONE_RADIUS = 0.5f;
         const float DEFAULT_CONE_HEIGHT = 1.0f;
 
-        const int SPHERE_TESSELATION = 4;
-        const int CAPSULE_TESSELATION = 2;
-        const int CYLINDER_TESSELATION = 6;
-        const int CONE_TESSELATION = 4;
+        const int SPHERE_TESSELATION = 8;
+        const int CAPSULE_TESSELATION = 4;
+        const int CYLINDER_TESSELATION = 16;
+        const int CONE_TESSELATION = 6;
 
         /* mesh data we will use when stuffing things in vertex buffers */
         private readonly GeometricMeshData<VertexPositionNormalTexture> plane = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE, SPHERE_TESSELATION, SPHERE_TESSELATION);

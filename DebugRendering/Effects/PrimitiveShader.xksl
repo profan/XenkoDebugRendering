@@ -24,12 +24,26 @@
         override stage void VSMain() {
             int offsetInstanceId = streams.InstanceID + InstanceOffset;
             streams.ShadingPosition = mul(mul(float4(streams.Position, 1), Transforms[offsetInstanceId].Matrix), ViewProjection);
-            streams.Normal = mul(float4(streams.Normal, 0), ViewProjection);
+            streams.Normal = mul(mul(float4(streams.Normal, 0), Transforms[offsetInstanceId].Matrix), ViewProjection);
             streams.Color = Colors[offsetInstanceId].Color;
         }
 
         override stage void PSMain() {
+
             streams.ColorTarget = streams.Color;
+            
+            /* this is for later
+            float lineWidth = 0.05f;
+
+            float2 uv = streams.Uv;
+            float lx = step(lineWidth, uv.x);
+            float ly = step(lineWidth, uv.y);
+            float hx = step(uv.x, 1.0f - lineWidth);
+            float hy = step(uv.y, 1.0f - lineWidth);
+
+            streams.ColorTarget = lerp(streams.Color, float4(0.0f, 0.0f, 0.0f, 0.0f), lx*ly*hx*hy);
+            */
+
         }
 
     };
