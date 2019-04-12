@@ -191,7 +191,6 @@ namespace DebugRendering
 
         /* FIXME: this is set from outside atm, bit of a hack */
         public DebugRenderFeature PrimitiveRenderer;
-        public EffectInstance PrimitiveEffect;
 
         public DebugSystem(IServiceRegistry registry) : base(registry)
         {
@@ -200,11 +199,6 @@ namespace DebugRendering
 
             DrawOrder = 0xffffff;
             UpdateOrder = -100100; //before script
-        }
-
-        protected override void Destroy()
-        {
-            base.Destroy();
         }
 
         // [MethodImpl(MethodImplOptions.AggressiveInlining)]
