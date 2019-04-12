@@ -22,7 +22,7 @@ namespace DebugRendering
             Cylinder,
             Cone,
             Ray,
-            Total
+            None
         }
 
         const int ChangePerSecond = 8192 + 2048;
@@ -133,7 +133,7 @@ namespace DebugRendering
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.LeftAlt))
             {
-                mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.Total + 1));
+                mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.None + 1));
             }
 
             if (newAmountOfBoxes > currentNumPrimitives)
