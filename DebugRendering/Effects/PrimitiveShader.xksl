@@ -30,10 +30,9 @@
 
         override stage void PSMain() {
 
-            streams.ColorTarget = streams.Color;
-            
-            /* this is for later
-            float lineWidth = 0.05f;
+            // streams.ColorTarget = streams.Color;
+
+            float lineWidth = 0.001f;
 
             float2 uv = streams.Uv;
             float lx = step(lineWidth, uv.x);
@@ -42,7 +41,6 @@
             float hy = step(uv.y, 1.0f - lineWidth);
 
             streams.ColorTarget = lerp(streams.Color, float4(0.0f, 0.0f, 0.0f, 0.0f), lx*ly*hx*hy);
-            */
 
         }
 

@@ -771,6 +771,11 @@ namespace DebugRendering
             totalLines++;
         }
 
+        private void AdjustUVs()
+        {
+
+        }
+
         protected override void InitializeCore()
         {
 
@@ -1062,12 +1067,12 @@ namespace DebugRendering
 
         }
 
-        private RenderStage FindOpaqueRenderStage(RenderSystem renderSystem)
+        private RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
         {
             for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
             {
                 var stage = renderSystem.RenderStages[i];
-                if (stage.Name == "Opaque")
+                if (stage.Name == "Transparent")
                 {
                     return stage;
                 }
@@ -1078,12 +1083,12 @@ namespace DebugRendering
         public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
         {
 
-            // we only want to render in the opaque stage, is there a nicer way to do this?
-            var opaqueRenderStage = FindOpaqueRenderStage(context.RenderContext.RenderSystem);
-            var opaqueRenderStageIndex = opaqueRenderStage.Index;
+            // we only want to render in the transparent stage, is there a nicer way to do this?
+            var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
+            var transparentRenderStageIndex = transparentRenderStage.Index;
 
             // bail out if it's any other stage, this is crude but alas
-            if (renderViewStage.Index != opaqueRenderStageIndex) return;
+            if (renderViewStage.Index != transparentRenderStageIndex) return;
 
             var device = context.GraphicsDevice;
             var commandList = context.CommandList;
