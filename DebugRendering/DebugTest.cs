@@ -20,7 +20,9 @@ namespace DebugRendering
             Cube,
             Capsule,
             Cylinder,
-            Cone
+            Cone,
+            Ray,
+            Total
         }
 
         const int ChangePerSecond = 8192 + 2048;
@@ -131,7 +133,7 @@ namespace DebugRendering
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.LeftAlt))
             {
-                mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.Cone + 1));
+                mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.Total + 1));
             }
 
             if (newAmountOfBoxes > currentNumPrimitives)
@@ -217,6 +219,9 @@ namespace DebugRendering
                                 break;
                             case 4: // cone
                                 debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color);
+                                break;
+                            case 5: // ray
+                                debugSystem.DrawRay(position, velocity, color);
                                 currentShape = 0;
                                 break;
                             default:
@@ -228,7 +233,6 @@ namespace DebugRendering
                         break;
                     case CurRenderMode.Cube:
                         debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color);
-                        debugSystem.DrawRay(position, velocity / 2, color);
                         break;
                     case CurRenderMode.Capsule:
                         debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color);
@@ -238,6 +242,9 @@ namespace DebugRendering
                         break;
                     case CurRenderMode.Cone:
                         debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color);
+                        break;
+                    case CurRenderMode.Ray:
+                        debugSystem.DrawRay(position, velocity, color);
                         break;
                 }
             }
