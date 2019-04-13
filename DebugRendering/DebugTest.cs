@@ -22,6 +22,7 @@ namespace DebugRendering
             Cylinder,
             Cone,
             Ray,
+            Arrow,
             None
         }
 
@@ -261,6 +262,9 @@ namespace DebugRendering
                         break;
                     case CurRenderMode.Ray:
                         debugSystem.DrawRay(position, velocity, color);
+                        break;
+                    case CurRenderMode.Arrow:
+                        debugSystem.DrawArrow(position, velocity, color);
                         break;
                     case CurRenderMode.None:
                         break;

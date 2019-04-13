@@ -183,7 +183,7 @@ namespace DebugRendering
             public Color Color;
         }
 
-        static private Comparer<DebugRenderable> renderableComparer =
+        static private readonly Comparer<DebugRenderable> renderableComparer =
             Comparer<DebugRenderable>.Create((a, b) => a.Lifetime > b.Lifetime ? 1 : a.Lifetime < b.Lifetime ? -1 : 0);
 
         private readonly FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
@@ -280,7 +280,8 @@ namespace DebugRendering
 
         public void DrawArrow(Vector3 from, Vector3 to, Color color, float duration = 0.0f, bool depthTest = true)
         {
-
+            DrawRay(from, to, color, duration, depthTest);
+            DrawCone(from + to, 1.0f, 0.5f, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color, duration, depthTest);
         }
 
         public void DrawSphere(Vector3 position, float radius, float duration = 0.0f, bool depthTest = true)
@@ -640,7 +641,7 @@ namespace DebugRendering
         const int CONE_TESSELATION = 6;
 
         /* mesh data we will use when stuffing things in vertex buffers */
-        private readonly GeometricMeshData<VertexPositionNormalTexture> plane = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE, SPHERE_TESSELATION, SPHERE_TESSELATION);
+        private readonly GeometricMeshData<VertexPositionNormalTexture> plane = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
         // private readonly GeometricMeshData<VertexPositionNormalTexture> circle = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
         private readonly GeometricMeshData<VertexPositionNormalTexture> sphere = GeometricPrimitive.Sphere.New(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
         private readonly GeometricMeshData<VertexPositionNormalTexture> cube = GeometricPrimitive.Cube.New(DEFAULT_CUBE_SIZE);
@@ -785,6 +786,18 @@ namespace DebugRendering
         private void AdjustUVs()
         {
 
+            // fix sphere
+
+
+            // fix capsule
+
+
+            // fix cylinder
+
+
+            // fix cone
+
+
         }
 
         protected override void InitializeCore()
@@ -798,9 +811,6 @@ namespace DebugRendering
             // create our pipeline state object
             pipelineState = new MutablePipelineState(device);
             pipelineState.State.SetDefaults();
-            pipelineState.State.InputElements = inputElements;
-            pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
-            pipelineState.State.RasterizerState.FillMode = FillMode.Wireframe;
 
             // TODO: create our associated effect
             primitiveEffect = new EffectInstance(Context.Effects.LoadEffect("PrimitiveShader").WaitForResult());
