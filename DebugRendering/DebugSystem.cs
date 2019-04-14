@@ -1280,6 +1280,7 @@ namespace DebugRendering
             colorBuffer.Dispose();
             vertexBuffer.Dispose();
             indexBuffer.Dispose();
+            lineVertexBuffer.Dispose();
         }
 
     }
