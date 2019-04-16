@@ -203,7 +203,6 @@ namespace DebugRendering
             UpdateOrder = -100100; //before script
         }
 
-        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void PushMessage(ref DebugRenderable msg)
         {
             if (msg.Lifetime > 0.0f)
@@ -895,9 +894,14 @@ namespace DebugRendering
 
         static (VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16)
         {
+
             VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
+
+
+
             return (vertices, indices);
+
         }
 
         static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16)
