@@ -886,80 +886,6 @@ namespace DebugRendering
             return (vertices, indices);
         }
 
-        private void AdjustUVs()
-        {
-
-            // all the code in here was basically written by looking at how the primitives were generated in the source and the resulting 
-            //  structure of the vertex data, and is thus SUPER FRAGILE!!!!! in case the code to generate the geometric primitives changes, 
-            //  this code might then need to change as well, but for now this works.
-
-            // fix sphere
-            {
-                int desiredVerticalSphereSegments = 4;
-                double radiansPerSegment = (2*Math.PI) / desiredVerticalSphereSegments;
-
-                double curLatitude = 0.0f;
-
-                Vector2 curXZ = new Vector2(0.0f, 0.0f);
-
-                for (int s = 0; s < desiredVerticalSphereSegments; ++s)
-                {
-                    // step heightweise bottom to top
-                    for (int t = -SPHERE_TESSELATION; t < SPHERE_TESSELATION; ++t)
-                    {
-                        curXZ.X = Math.Abs(((float)Math.Cos(curLatitude) / 2) / t);
-                        curXZ.Y = Math.Abs(((float)Math.Sin(curLatitude) / 2) / t);
-                        for (int i = 0; i < sphere.Vertices.Length; ++i)
-                        {
-                            var vertXZ = sphere.Vertices[i].Position.XZ();
-                            var vertDist = Vector2.Distance(vertXZ, curXZ);
-                            if (vertDist < 0.05)
-                            {
-                                sphere.Vertices[i].TextureCoordinate = new Vector2(1.0f);
-                            }
-                        }
-                    }
-                    curLatitude += radiansPerSegment;
-                } 
-            }
-
-
-            // fix capsule
-
-
-            // fix cylinder
-            {
-                int desiredCylinderSegments = 6;
-                double radiansPerSegment = (2 * Math.PI) / desiredCylinderSegments;
-
-                double curLatitude = 0.0f;
-                Vector2 curXZ = new Vector2();
-                curXZ.X = (float)Math.Cos(curLatitude) / 2;
-                curXZ.Y = (float)Math.Sin(curLatitude) / 2;
-
-                for (int s = 0; s < desiredCylinderSegments; ++s)
-                {
-                    for (int i = 0; i < cylinder.Vertices.Length; ++i)
-                    {
-                        var vertXZ = cylinder.Vertices[i].Position.XZ();
-                        var vertDist = Vector2.Distance(vertXZ, curXZ);
-                        if (vertDist < 0.0001)
-                        {
-                            // cylinder.Vertices[i].TextureCoordinate = new Vector2(1.0f);
-                        }
-                    }
-                    curLatitude += radiansPerSegment;
-                    curXZ.X = (float)Math.Cos(curLatitude) / 2;
-                    curXZ.Y = (float)Math.Sin(curLatitude) / 2;
-                }
-
-            }
-
-            // fix cone
-
-
-        }
-
         protected override void InitializeCore()
         {
 
@@ -978,9 +904,6 @@ namespace DebugRendering
 
             lineEffect = new EffectInstance(Context.Effects.LoadEffect("LinePrimitiveShader").WaitForResult());
             lineEffect.UpdateEffect(device);
-
-            // adjust UVs before we copy the data in
-            AdjustUVs();
 
             // create initial vertex and index buffers
             var vertexData = new VertexPositionNormalTexture[
