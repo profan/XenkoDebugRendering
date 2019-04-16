@@ -13,7 +13,6 @@
 
         override stage void PSMain() {
             streams.ColorTarget = streams.Color;
-            streams.ColorTarget.a = 1.0f;
         }
 
     };

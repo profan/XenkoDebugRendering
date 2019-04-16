@@ -38,7 +38,7 @@
             float hx = step(uv.x, 1.0f - lineWidth);
             float hy = step(uv.y, 1.0f - lineWidth);
 
-            streams.ColorTarget = lerp(streams.Color, float4(0.0f, 0.0f, 0.0f, 0.0f), lx*ly*hx*hy);
+            streams.ColorTarget = lerp(streams.Color, float4(streams.Color.rgb, 0.0f), lx*ly*hx*hy);
 
         }
 

@@ -335,21 +335,6 @@ namespace DebugRendering
             PushMessage(ref msg);
         }
 
-        public void DrawCubes(Vector3[] positions, Quaternion[] rotations, Vector3 size, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawCubes(positions, rotations, size, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCubes(Vector3[] positions, Quaternion[] rotations, Vector3 size, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            for (int i = 0; i < positions.Length; ++i)
-            {
-                ref var pos = ref positions[i];
-                ref var rot = ref rotations[i];
-                DrawCube(pos, size, rot, color, duration, depthTest);
-            }
-        }
-
         public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
         {
             DrawCapsule(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
@@ -821,11 +806,31 @@ namespace DebugRendering
             totalLines++;
         }
 
+        static void CopyFromGeometricPrimitive(GeometricMeshData<VertexPositionNormalTexture> primitiveData, ref VertexPositionTexture[] vertices, ref int[] indices)
+        {
+            for (int i = 0; i < vertices.Length; ++i)
+            {
+                vertices[i].Position = primitiveData.Vertices[i].Position;
+                vertices[i].TextureCoordinate = primitiveData.Vertices[i].TextureCoordinate;
+            }
+
+            for (int i = 0; i < indices.Length; ++i)
+            {
+                indices[i] = primitiveData.Indices[i];
+            }
+        }
+
         static (VertexPositionTexture[] Vertices, int[] Indices) GenerateQuad(float width, float height)
         {
-            VertexPositionTexture[] vertices = new VertexPositionTexture[4];
-            int[] indices = new int[6];
+
+            var quadMeshData = GeometricPrimitive.Plane.New(width, height);
+            VertexPositionTexture[] vertices = new VertexPositionTexture[quadMeshData.Vertices.Length];
+            int[] indices = new int[quadMeshData.Indices.Length];
+
+            CopyFromGeometricPrimitive(quadMeshData, ref vertices, ref indices);
+
             return (vertices, indices);
+
         }
 
         static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f)
@@ -844,8 +849,8 @@ namespace DebugRendering
             float curX = 0.0f, curZ = 0.0f;
             for (int i = 1; i < tesselations+1; ++i)
             {
-                curX = (float)Math.Cos(i * radiansPerSegment) / 2;
-                curZ = (float)Math.Sin(i * radiansPerSegment) / 2;
+                curX = (float)(Math.Cos(i * radiansPerSegment) * (2.0f*radius)) / 2.0f;
+                curZ = (float)(Math.Sin(i * radiansPerSegment) * (2.0f*radius)) / 2.0f;
                 vertices[i].Position = new Vector3(curX, yOffset, curZ);
                 vertices[i].TextureCoordinate = new Vector2(1.0f);
             }
@@ -877,16 +882,7 @@ namespace DebugRendering
             VertexPositionTexture[] vertices = new VertexPositionTexture[cubeMeshData.Vertices.Length];
             int[] indices = new int[cubeMeshData.Indices.Length];
 
-            for (int i = 0; i < vertices.Length; ++i)
-            {
-                vertices[i].Position = cubeMeshData.Vertices[i].Position;
-                vertices[i].TextureCoordinate = cubeMeshData.Vertices[i].TextureCoordinate;
-            }
-
-            for (int i = 0; i < indices.Length; ++i)
-            {
-                indices[i] = cubeMeshData.Indices[i];
-            }
+            CopyFromGeometricPrimitive(cubeMeshData, ref vertices, ref indices);
 
             return (vertices, indices);
 
@@ -907,8 +903,8 @@ namespace DebugRendering
         static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16)
         {
 
-            var (topVertices, topIndices) = GenerateCircle(radius, tesselations);
-            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations);
+            var (topVertices, topIndices) = GenerateCircle(radius, tesselations, 4);
+            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, 4, yOffset: 1.0f);
             VertexPositionTexture[] vertices = new VertexPositionTexture[topVertices.Length + bottomVertices.Length + tesselations * 2];
             int[] indices = new int[topIndices.Length + bottomIndices.Length + tesselations * 2];
 
@@ -923,7 +919,7 @@ namespace DebugRendering
             return (vertices, indices);
         }
 
-        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations)
         {
             VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
@@ -1280,7 +1276,7 @@ namespace DebugRendering
             pipelineState.State.DepthStencilState = DepthStencilStates.Default;
             pipelineState.State.RasterizerState.FillMode = FillMode.Wireframe;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
-            pipelineState.State.BlendState = BlendStates.AlphaBlend;
+            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
