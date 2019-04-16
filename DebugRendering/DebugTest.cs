@@ -17,6 +17,7 @@ namespace DebugRendering
         {
             All = 0,
             Quad,
+            Circle,
             Sphere,
             Cube,
             Capsule,
@@ -240,6 +241,12 @@ namespace DebugRendering
                                 break;
                             case 5: // ray
                                 debugSystem.DrawRay(position, velocity, color);
+                                break;
+                            case 6: // quad
+                                debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color);
+                                break;
+                            case 7: // circle
+                                debugSystem.DrawCircle(position, 0.5f, rotation, color);
                                 currentShape = 0;
                                 break;
                             default:
@@ -248,6 +255,9 @@ namespace DebugRendering
                         break;
                     case CurRenderMode.Quad:
                         debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color);
+                        break;
+                    case CurRenderMode.Circle:
+                        debugSystem.DrawCircle(position, 0.5f, rotation, color);
                         break;
                     case CurRenderMode.Sphere:
                         debugSystem.DrawSphere(position, 0.5f, color);

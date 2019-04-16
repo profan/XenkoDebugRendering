@@ -400,6 +400,18 @@ namespace DebugRendering
             PushMessage(ref msg);
         }
 
+        public void DrawCircle(Vector3 position, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        {
+            DrawCircle(position, radius, rotation, PrimitiveColor, duration, depthTest);
+        }
+
+        public void DrawCircle(Vector3 position, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
+        {
+            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation, Color = color };
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
+        }
+
         public ref Color PrimitiveColor { get { return ref primitiveColor; } }
         private Color primitiveColor = Color.LightGreen;
 
@@ -437,7 +449,7 @@ namespace DebugRendering
                         PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color);
                         break;
                     case DebugRenderableType.Circle:
-                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, ref msg.CircleData.Rotation, ref msg.CircleData.Color);
+                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color);
                         break;
                     case DebugRenderableType.Line:
                         PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color);
@@ -753,9 +765,9 @@ namespace DebugRendering
             totalQuads++;
         }
 
-        public void DrawCircle(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
+        public void DrawCircle(ref Vector3 position, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
-            var cmd = new Circle() { Position = position, Rotation = rotation, Color = color };
+            var cmd = new Circle() { Position = position, Radius = radius, Rotation = rotation, Color = color };
             renderables.Add(new Renderable(ref cmd));
             totalCircles++;
         }
@@ -827,7 +839,7 @@ namespace DebugRendering
         {
 
             VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[tesselations + 1];
-            int[] indices = new int[tesselations * 3];
+            int[] indices = new int[tesselations * 3 + 3];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -837,22 +849,29 @@ namespace DebugRendering
 
             // in the XZ plane
             float curX = 0.0f, curZ = 0.0f;
-            for (int i = 1; i < tesselations; ++i)
+            for (int i = 1; i < tesselations+1; ++i)
             {
-                curX = (float)Math.Cos(tesselations * radiansPerSegment) / 2;
-                curZ = (float)Math.Sin(tesselations * radiansPerSegment) / 2;
+                curX = (float)Math.Cos(i * radiansPerSegment) / 2;
+                curZ = (float)Math.Sin(i * radiansPerSegment) / 2;
                 vertices[i].Position = new Vector3(curX, 0.0f, curZ);
                 vertices[i].TextureCoordinate = new Vector2(1.0f);
             }
 
             int curVert = 1;
-            for (int i = 0; i < tesselations; i += 3)
+            int lastIndex = 0;
+            for (int i = 0; i < tesselations*3; i += 3)
             {
-                indices[0] = 0;
-                indices[i] = curVert;
-                indices[i + 1] = curVert + 1;
+                indices[i] = 0;
+                indices[i + 1] = curVert;
+                indices[i + 2] = curVert + 1;
+                lastIndex = i;
                 curVert++;
             }
+
+            // endpoint
+            indices[lastIndex] = 0;
+            indices[lastIndex + 1] = indices[lastIndex - 1];
+            indices[lastIndex + 2] = indices[1];
 
             return (vertices, indices);
 
@@ -1306,6 +1325,17 @@ namespace DebugRendering
                 primitiveEffect.Apply(context.GraphicsContext);
 
                 commandList.DrawIndexedInstanced(plane.Indices.Length, quadsToDraw, quadIndexOffset, quadVertexOffset);
+
+            }
+
+            // draw circles
+            if (circlesToDraw > 0)
+            {
+
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, circleInstanceOffset);
+                primitiveEffect.Apply(context.GraphicsContext);
+
+                commandList.DrawIndexedInstanced(circle.Item2.Length, circlesToDraw, circleIndexOffset, circleVertexOffset);
 
             }
 
