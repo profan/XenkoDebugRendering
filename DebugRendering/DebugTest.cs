@@ -257,7 +257,7 @@ namespace DebugRendering
                         debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color);
                         break;
                     case CurRenderMode.Circle:
-                        debugSystem.DrawCircle(position, (float)Math.Sin(Game.PlayTime.TotalTime.TotalSeconds) * 0.5f, rotation, color);
+                        debugSystem.DrawCircle(position, 0.5f, rotation, color);
                         break;
                     case CurRenderMode.Sphere:
                         debugSystem.DrawSphere(position, 0.5f, color);

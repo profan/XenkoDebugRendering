@@ -18,13 +18,11 @@
         int InstanceOffset;
 
         stream float3 Position : POSITION;
-        stream float3 Normal : NORMAL;
         stream float2 Uv : TEXCOORD0;
 
         override stage void VSMain() {
             int offsetInstanceId = streams.InstanceID + InstanceOffset;
             streams.ShadingPosition = mul(mul(float4(streams.Position, 1), Transforms[offsetInstanceId].Matrix), ViewProjection);
-            streams.Normal = mul(mul(float4(streams.Normal, 0), Transforms[offsetInstanceId].Matrix), ViewProjection);
             streams.Color = Colors[offsetInstanceId].Color;
         }
 

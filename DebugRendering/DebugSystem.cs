@@ -680,13 +680,13 @@ namespace DebugRendering
         const int CONE_TESSELATION = 6;
 
         /* mesh data we will use when stuffing things in vertex buffers */
-        private readonly (VertexPositionNormalTexture[] Vertices, int[] Indices) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION);
-        private readonly (VertexPositionNormalTexture[] Vertices, int[] Indices) plane = GenerateQuad(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
-        private readonly (VertexPositionNormalTexture[] Vertices, int[] Indices) sphere = GenerateSphere(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
-        private readonly (VertexPositionNormalTexture[] Vertices, int[] Indices) cube = GenerateCube(DEFAULT_CUBE_SIZE);
-        private readonly (VertexPositionNormalTexture[] Vertices, int[] Indices) capsule = GenerateCapsule(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
-        private readonly (VertexPositionNormalTexture[] Vertices, int[] Indices) cylinder = GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CAPSULE_TESSELATION);
-        private readonly (VertexPositionNormalTexture[] Vertices, int[] Indices) cone = GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) plane = GenerateQuad(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) sphere = GenerateSphere(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = GenerateCube(DEFAULT_CUBE_SIZE);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) capsule = GenerateCapsule(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CAPSULE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION);
 
         /* gpu side vertex and index buffer for our primitive data */
         private Buffer vertexBuffer;
@@ -822,17 +822,17 @@ namespace DebugRendering
             totalLines++;
         }
 
-        static (VertexPositionNormalTexture[] Vertices, int[] Indices) GenerateQuad(float width, float height)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateQuad(float width, float height)
         {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[4];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[4];
             int[] indices = new int[6];
             return (vertices, indices);
         }
 
-        static (VertexPositionNormalTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f)
         {
 
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[tesselations + 1];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + 1];
             int[] indices = new int[tesselations * 3 + 3];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
@@ -871,56 +871,57 @@ namespace DebugRendering
 
         }
 
-        static (VertexPositionNormalTexture[] Vertices, int[] Indices) GenerateCube(float size = 1.0f)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCube(float size = 1.0f)
         {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[8];
-            float side = size / 2.0f;
 
-            // bottom
-            vertices[0].Position = new Vector3(-side, -side, -side);
-            vertices[1].Position = new Vector3(side, -side, -side);
-            vertices[2].Position = new Vector3(side, -side, side);
-            vertices[3].Position = new Vector3(-side, -side, side);
+            var cubeMeshData = GeometricPrimitive.Cube.New(size);
+            VertexPositionTexture[] vertices = new VertexPositionTexture[cubeMeshData.Vertices.Length];
+            int[] indices = new int[cubeMeshData.Indices.Length];
 
-            // top
-            vertices[4].Position = new Vector3(-side, side, -side);
-            vertices[5].Position = new Vector3(side, side, -side);
-            vertices[6].Position = new Vector3(side, side, side);
-            vertices[7].Position = new Vector3(-side, side, side);
+            for (int i = 0; i < vertices.Length; ++i)
+            {
+                vertices[i].Position = cubeMeshData.Vertices[i].Position;
+                vertices[i].TextureCoordinate = cubeMeshData.Vertices[i].TextureCoordinate;
+            }
 
+            for (int i = 0; i < indices.Length; ++i)
+            {
+                indices[i] = cubeMeshData.Indices[i];
+            }
+
+            return (vertices, indices);
+
+        }
+
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16)
+        {
+            VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
             return (vertices, indices);
         }
 
-        static (VertexPositionNormalTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16)
-        {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
-            int[] indices = new int[1];
-            return (vertices, indices);
-        }
-
-        static  (VertexPositionNormalTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16)
+        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16)
         {
 
             var (topVertices, topIndices) = GenerateCircle(radius, tesselations);
             var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations);
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[topVertices.Length + bottomVertices.Length + tesselations * 2];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[topVertices.Length + bottomVertices.Length + tesselations * 2];
             int[] indices = new int[topIndices.Length + bottomIndices.Length + tesselations * 2];
 
             return (vertices, indices);
 
         }
 
-        static (VertexPositionNormalTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations)
         {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
             return (vertices, indices);
         }
 
-        static  (VertexPositionNormalTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations)
+        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations)
         {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
             return (vertices, indices);
         }
@@ -930,7 +931,7 @@ namespace DebugRendering
 
             var device = Context.GraphicsDevice;
 
-            inputElements = VertexPositionNormalTexture.Layout.CreateInputElements();
+            inputElements = VertexPositionTexture.Layout.CreateInputElements();
             lineInputElements = LineVertex.Layout.CreateInputElements();
 
             // create our pipeline state object
@@ -945,7 +946,7 @@ namespace DebugRendering
             lineEffect.UpdateEffect(device);
 
             // create initial vertex and index buffers
-            var vertexData = new VertexPositionNormalTexture[
+            var vertexData = new VertexPositionTexture[
                 circle.Vertices.Length +
                 plane.Vertices.Length +
                 sphere.Vertices.Length +
@@ -987,7 +988,7 @@ namespace DebugRendering
             coneVertexOffset = vertexBufferOffset;
             vertexBufferOffset += cone.Vertices.Length;
 
-            var newVertexBuffer = Buffer.Vertex.New<VertexPositionNormalTexture>(device, vertexData);
+            var newVertexBuffer = Buffer.Vertex.New<VertexPositionTexture>(device, vertexData);
             vertexBuffer = newVertexBuffer;
 
             /* set up index buffer data */
@@ -1312,7 +1313,7 @@ namespace DebugRendering
             SetPrimitiveRenderingPipelineState(commandList);
 
             // set buffers and our current pipeline state
-            commandList.SetVertexBuffer(0, vertexBuffer, 0, VertexPositionNormalTexture.Layout.VertexStride);
+            commandList.SetVertexBuffer(0, vertexBuffer, 0, VertexPositionTexture.Layout.VertexStride);
             commandList.SetIndexBuffer(indexBuffer, 0, is32bits: true);
             commandList.SetPipelineState(pipelineState.CurrentState);
 
