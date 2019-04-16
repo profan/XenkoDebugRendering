@@ -11,7 +11,7 @@
             [Color]
             float4 Color;
         };
-        
+
         float4x4 ViewProjection;
         StructuredBuffer<TransformData> Transforms;
         StructuredBuffer<ColorData> Colors;

@@ -122,14 +122,17 @@ namespace DebugRendering
 
         internal struct DebugDrawQuad
         {
-            public Rectangle Rectangle;
+            public Vector3 Position;
+            public Vector2 Size;
+            public Quaternion Rotation;
             public Color Color;
         }
 
         internal struct DebugDrawCircle
         {
-            public Vector2 Position;
+            public Vector3 Position;
             public float Radius;
+            public Quaternion Rotation;
             public Color Color;
         }
 
@@ -385,6 +388,18 @@ namespace DebugRendering
             PushMessage(ref msg);
         }
 
+        public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        {
+            DrawQuad(position, size, rotation, PrimitiveColor, duration, depthTest);
+        }
+
+        public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
+        {
+            var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation, Color = color };
+            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            PushMessage(ref msg);
+        }
+
         public ref Color PrimitiveColor { get { return ref primitiveColor; } }
         private Color primitiveColor = Color.LightGreen;
 
@@ -419,10 +434,10 @@ namespace DebugRendering
                 switch (msg.Type)
                 {
                     case DebugRenderableType.Quad:
-                        // PrimitiveRenderer.DrawQuad
+                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color);
                         break;
                     case DebugRenderableType.Circle:
-                        // PrimitiveRenderer.DrawCircle
+                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, ref msg.CircleData.Rotation, ref msg.CircleData.Color);
                         break;
                     case DebugRenderableType.Line:
                         PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color);
@@ -564,8 +579,9 @@ namespace DebugRendering
 
         internal struct Quad
         {
-            public Vector3 TopLeft;
-            public Vector3 BottomRight;
+            public Vector3 Position;
+            public Quaternion Rotation;
+            public Vector2 Size;
             public Color Color;
         }
 
@@ -574,6 +590,7 @@ namespace DebugRendering
             public Vector3 Position;
             public Quaternion Rotation;
             public float Radius;
+            public Color Color;
         }
 
         internal struct Sphere
@@ -635,12 +652,14 @@ namespace DebugRendering
         const float DEFAULT_CONE_RADIUS = 0.5f;
         const float DEFAULT_CONE_HEIGHT = 1.0f;
 
+        const int CIRCLE_TESSELATION = 16;
         const int SPHERE_TESSELATION = 8;
         const int CAPSULE_TESSELATION = 4;
         const int CYLINDER_TESSELATION = 16;
         const int CONE_TESSELATION = 6;
 
         /* mesh data we will use when stuffing things in vertex buffers */
+        private readonly (VertexPositionNormalTexture[], int[]) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION);
         private readonly GeometricMeshData<VertexPositionNormalTexture> plane = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
         // private readonly GeometricMeshData<VertexPositionNormalTexture> circle = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
         private readonly GeometricMeshData<VertexPositionNormalTexture> sphere = GeometricPrimitive.Sphere.New(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
@@ -656,6 +675,7 @@ namespace DebugRendering
         /* vertex buffer for line rendering */
         private Buffer lineVertexBuffer;
 
+        private int circleVertexOffset = 0;
         private int quadVertexOffset = 0;
         private int sphereVertexOffset = 0;
         private int cubeVertexOffset = 0;
@@ -663,6 +683,7 @@ namespace DebugRendering
         private int cylinderVertexOffset = 0;
         private int coneVertexOffset = 0;
 
+        private int circleIndexOffset = 0;
         private int quadIndexOffset = 0;
         private int sphereIndexOffset = 0;
         private int cubeIndexOffset = 0;
@@ -725,21 +746,19 @@ namespace DebugRendering
         {
         }
 
-        public void DrawQuad(ref Vector3 topLeft, ref Vector3 bottomRight, ref Color color, bool depthTest = true)
+        public void DrawQuad(ref Vector3 position, ref Vector2 size, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
-            var cmd = new Quad() { TopLeft = topLeft, BottomRight = bottomRight, Color = color };
+            var cmd = new Quad() { Position = position, Size = size, Rotation = rotation, Color = color };
             renderables.Add(new Renderable(ref cmd));
             totalQuads++;
         }
 
-        /*
         public void DrawCircle(ref Vector3 position, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Circle() { Position = position, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(cmd));
+            renderables.Add(new Renderable(ref cmd));
             totalCircles++;
         }
-        */
 
         public void DrawSphere(ref Vector3 position, float radius, ref Color color, bool depthTest = true)
         {
@@ -783,17 +802,158 @@ namespace DebugRendering
             totalLines++;
         }
 
+        (VertexPositionNormalTexture[], int[]) GenerateCube(float size = 1.0f)
+        {
+            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[8];
+            float side = size / 2.0f;
+            
+            // bottom
+            vertices[0].Position = new Vector3(-side, -side, -side);
+            vertices[1].Position = new Vector3(side, -side, -side);
+            vertices[2].Position = new Vector3(side, -side, side);
+            vertices[3].Position = new Vector3(-side, -side, side);
+
+            // top
+            vertices[4].Position = new Vector3(-side, side, -side);
+            vertices[5].Position = new Vector3(side, side, -side);
+            vertices[6].Position = new Vector3(side, side, side);
+            vertices[7].Position = new Vector3(-side, side, side);
+
+            int[] indices = new int[1];
+            return (vertices, indices);
+        }
+
+        static (VertexPositionNormalTexture[], int[]) GenerateCircle(float radius = 0.5f, int tesselations = 16)
+        {
+
+            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[tesselations + 1];
+            int[] indices = new int[tesselations * 3];
+
+            double radiansPerSegment = MathUtil.TwoPi / tesselations;
+
+            // center of our circle
+            vertices[0].Position = new Vector3(0.0f);
+            vertices[0].TextureCoordinate = new Vector2(0.5f);
+
+            // in the XZ plane
+            float curX = 0.0f, curZ = 0.0f;
+            for (int i = 1; i < tesselations; ++i)
+            {
+                curX = (float)Math.Cos(tesselations * radiansPerSegment) / 2;
+                curZ = (float)Math.Sin(tesselations * radiansPerSegment) / 2;
+                vertices[i].Position = new Vector3(curX, 0.0f, curZ);
+                vertices[i].TextureCoordinate = new Vector2(1.0f);
+            }
+
+            int curVert = 1;
+            for (int i = 0; i < tesselations; i += 3)
+            {
+                indices[0] = 0;
+                indices[i] = curVert;
+                indices[i + 1] = curVert + 1;
+                curVert++;
+            }
+
+            return (vertices, indices);
+
+        }
+
+        static (VertexPositionNormalTexture[], int[]) GenerateSphere(float radius = 0.5f, int tesselations = 16)
+        {
+            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
+            int[] indices = new int[1];
+            return (vertices, indices);
+        }
+
+        static  (VertexPositionNormalTexture[], int[]) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16)
+        {
+            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
+            int[] indices = new int[1];
+            return (vertices, indices);
+        }
+
+        static (VertexPositionNormalTexture[], int[]) GenerateCone(float height, float radius, int tesselations)
+        {
+            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
+            int[] indices = new int[1];
+            return (vertices, indices);
+        }
+
+        static  (VertexPositionNormalTexture[], int[]) GenerateCapsule(float height, float radius, int tesselations)
+        {
+            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
+            int[] indices = new int[1];
+            return (vertices, indices);
+        }
+
         private void AdjustUVs()
         {
 
+            // all the code in here was basically written by looking at how the primitives were generated in the source and the resulting 
+            //  structure of the vertex data, and is thus SUPER FRAGILE!!!!! in case the code to generate the geometric primitives changes, 
+            //  this code might then need to change as well, but for now this works.
+
             // fix sphere
+            {
+                int desiredVerticalSphereSegments = 4;
+                double radiansPerSegment = (2*Math.PI) / desiredVerticalSphereSegments;
+
+                double curLatitude = 0.0f;
+
+                Vector2 curXZ = new Vector2(0.0f, 0.0f);
+
+                for (int s = 0; s < desiredVerticalSphereSegments; ++s)
+                {
+                    // step heightweise bottom to top
+                    for (int t = -SPHERE_TESSELATION; t < SPHERE_TESSELATION; ++t)
+                    {
+                        curXZ.X = Math.Abs(((float)Math.Cos(curLatitude) / 2) / t);
+                        curXZ.Y = Math.Abs(((float)Math.Sin(curLatitude) / 2) / t);
+                        for (int i = 0; i < sphere.Vertices.Length; ++i)
+                        {
+                            var vertXZ = sphere.Vertices[i].Position.XZ();
+                            var vertDist = Vector2.Distance(vertXZ, curXZ);
+                            if (vertDist < 0.05)
+                            {
+                                sphere.Vertices[i].TextureCoordinate = new Vector2(1.0f);
+                            }
+                        }
+                    }
+                    curLatitude += radiansPerSegment;
+                } 
+            }
 
 
             // fix capsule
 
 
             // fix cylinder
+            {
+                int desiredCylinderSegments = 6;
+                double radiansPerSegment = (2 * Math.PI) / desiredCylinderSegments;
 
+                double curLatitude = 0.0f;
+                Vector2 curXZ = new Vector2();
+                curXZ.X = (float)Math.Cos(curLatitude) / 2;
+                curXZ.Y = (float)Math.Sin(curLatitude) / 2;
+
+                for (int s = 0; s < desiredCylinderSegments; ++s)
+                {
+                    for (int i = 0; i < cylinder.Vertices.Length; ++i)
+                    {
+                        var vertXZ = cylinder.Vertices[i].Position.XZ();
+                        var vertDist = Vector2.Distance(vertXZ, curXZ);
+                        if (vertDist < 0.0001)
+                        {
+                            // cylinder.Vertices[i].TextureCoordinate = new Vector2(1.0f);
+                        }
+                    }
+                    curLatitude += radiansPerSegment;
+                    curXZ.X = (float)Math.Cos(curLatitude) / 2;
+                    curXZ.Y = (float)Math.Sin(curLatitude) / 2;
+                }
+
+            }
 
             // fix cone
 
@@ -819,8 +979,12 @@ namespace DebugRendering
             lineEffect = new EffectInstance(Context.Effects.LoadEffect("LinePrimitiveShader").WaitForResult());
             lineEffect.UpdateEffect(device);
 
+            // adjust UVs before we copy the data in
+            AdjustUVs();
+
             // create initial vertex and index buffers
             var vertexData = new VertexPositionNormalTexture[
+                circle.Item1.Length +
                 plane.Vertices.Length +
                 sphere.Vertices.Length +
                 cube.Vertices.Length +
@@ -833,7 +997,11 @@ namespace DebugRendering
 
             int vertexBufferOffset = 0;
 
-            Array.Copy(plane.Vertices, vertexData, plane.Vertices.Length);
+            Array.Copy(circle.Item1, vertexData, circle.Item1.Length);
+            circleVertexOffset = vertexBufferOffset;
+            vertexBufferOffset += circle.Item1.Length;
+
+            Array.Copy(plane.Vertices, 0, vertexData, vertexBufferOffset, plane.Vertices.Length);
             quadVertexOffset = vertexBufferOffset;
             vertexBufferOffset += plane.Vertices.Length;
 
@@ -863,6 +1031,7 @@ namespace DebugRendering
             /* set up index buffer data */
 
             var indexData = new int[
+                circle.Item2.Length +
                 plane.Indices.Length +
                 sphere.Indices.Length +
                 cube.Indices.Length +
@@ -873,7 +1042,11 @@ namespace DebugRendering
 
             int indexBufferOffset = 0;
 
-            Array.Copy(plane.Indices, indexData, plane.Indices.Length);
+            Array.Copy(circle.Item2, indexData, circle.Item2.Length);
+            circleIndexOffset = indexBufferOffset;
+            indexBufferOffset += circle.Item2.Length;
+
+            Array.Copy(plane.Indices, 0, indexData, indexBufferOffset, plane.Indices.Length);
             quadIndexOffset = indexBufferOffset;
             indexBufferOffset += plane.Indices.Length;
 
@@ -958,9 +1131,17 @@ namespace DebugRendering
                 switch (cmd.Type)
                 {
                     case RenderableType.Quad:
+                        positions[quadIndex] = cmd.QuadData.Position;
+                        scales[quadIndex] = new Vector3(cmd.QuadData.Size.X, 1.0f, cmd.QuadData.Size.Y);
+                        rotations[quadIndex] = cmd.QuadData.Rotation;
+                        colors[quadIndex] = cmd.QuadData.Color;
                         quadIndex++;
                         break;
                     case RenderableType.Circle:
+                        positions[circleIndex] = cmd.CircleData.Position;
+                        rotations[circleIndex] = cmd.CircleData.Rotation;
+                        scales[circleIndex] = new Vector3(cmd.CircleData.Radius * 2.0f, 0.0f, cmd.CircleData.Radius * 2.0f);
+                        colors[circleIndex] = cmd.CircleData.Color;
                         circleIndex++;
                         break;
                     case RenderableType.Sphere:
@@ -970,10 +1151,10 @@ namespace DebugRendering
                         sphereIndex++;
                         break;
                     case RenderableType.Cube:
-                        ref var pos = ref cmd.CubeData.Start;
+                        ref var start = ref cmd.CubeData.Start;
                         ref var end = ref cmd.CubeData.End;
-                        var cubeScale = end - pos;
-                        positions[cubeIndex] = pos;
+                        var cubeScale = end - start;
+                        positions[cubeIndex] = start;
                         rotations[cubeIndex - totalSpheres] = cmd.CubeData.Rotation;
                         scales[cubeIndex] = cubeScale;
                         colors[cubeIndex] = cmd.CubeData.Color;
@@ -982,21 +1163,21 @@ namespace DebugRendering
                     case RenderableType.Capsule:
                         positions[capsuleIndex] = cmd.CapsuleData.Position;
                         rotations[capsuleIndex - totalSpheres] = cmd.CapsuleData.Rotation;
-                        scales[capsuleIndex] = new Vector3(cmd.CapsuleData.Radius * 2, cmd.CapsuleData.Height, cmd.CapsuleData.Radius * 2);
+                        scales[capsuleIndex] = new Vector3(cmd.CapsuleData.Radius * 2.0f, cmd.CapsuleData.Height, cmd.CapsuleData.Radius * 2.0f);
                         colors[capsuleIndex] = cmd.CapsuleData.Color;
                         capsuleIndex++;
                         break;
                     case RenderableType.Cylinder:
                         positions[cylinderIndex] = cmd.CylinderData.Position;
                         rotations[cylinderIndex - totalSpheres] = cmd.CylinderData.Rotation;
-                        scales[cylinderIndex] = new Vector3(cmd.CylinderData.Radius * 2, cmd.CylinderData.Height, cmd.CylinderData.Radius * 2);
+                        scales[cylinderIndex] = new Vector3(cmd.CylinderData.Radius * 2.0f, cmd.CylinderData.Height, cmd.CylinderData.Radius * 2.0f);
                         colors[cylinderIndex] = cmd.CylinderData.Color;
                         cylinderIndex++;
                         break;
                     case RenderableType.Cone:
                         positions[coneIndex] = cmd.ConeData.Position;
                         rotations[coneIndex - totalSpheres] = cmd.ConeData.Rotation;
-                        scales[coneIndex] = new Vector3(cmd.ConeData.Radius * 2, cmd.ConeData.Height, cmd.ConeData.Radius * 2);
+                        scales[coneIndex] = new Vector3(cmd.ConeData.Radius * 2.0f, cmd.ConeData.Height, cmd.ConeData.Radius * 2.0f);
                         colors[coneIndex] = cmd.ConeData.Color;
                         coneIndex++;
                         break;

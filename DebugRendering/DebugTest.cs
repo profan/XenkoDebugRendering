@@ -16,6 +16,7 @@ namespace DebugRendering
         enum CurRenderMode : byte
         {
             All = 0,
+            Quad,
             Sphere,
             Cube,
             Capsule,
@@ -245,8 +246,11 @@ namespace DebugRendering
                                 break;
                         }
                         break;
+                    case CurRenderMode.Quad:
+                        debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color);
+                        break;
                     case CurRenderMode.Sphere:
-                        debugSystem.DrawSphere(position, (float)Math.Sin(Game.PlayTime.TotalTime.TotalSeconds) + (float)Math.Cos(i), color);
+                        debugSystem.DrawSphere(position, 0.5f, color);
                         break;
                     case CurRenderMode.Cube:
                         debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color);
