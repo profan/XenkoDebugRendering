@@ -1190,78 +1190,78 @@ namespace DebugRendering
 
         }
 
-        private void HandleRenderables(FastList<Renderable> renderables, ref Primitives offsets)
-        {
-
-            for (int i = 0; i < renderables.Count; ++i)
-            {
-                ref var cmd = ref renderables.Items[i];
-                switch (cmd.Type)
-                {
-                    case RenderableType.Quad:
-                        positions[offsets.Quads] = cmd.QuadData.Position;
-                        scales[offsets.Quads] = new Vector3(cmd.QuadData.Size.X, 1.0f, cmd.QuadData.Size.Y);
-                        rotations[offsets.Quads] = cmd.QuadData.Rotation;
-                        colors[offsets.Quads] = cmd.QuadData.Color;
-                        offsets.Quads++;
-                        break;
-                    case RenderableType.Circle:
-                        positions[offsets.Circles] = cmd.CircleData.Position;
-                        rotations[offsets.Circles] = cmd.CircleData.Rotation;
-                        scales[offsets.Circles] = new Vector3(cmd.CircleData.Radius * 2.0f, 0.0f, cmd.CircleData.Radius * 2.0f);
-                        colors[offsets.Circles] = cmd.CircleData.Color;
-                        offsets.Circles++;
-                        break;
-                    case RenderableType.Sphere:
-                        positions[offsets.Spheres] = cmd.SphereData.Position;
-                        scales[offsets.Spheres] = new Vector3(cmd.SphereData.Radius * 2);
-                        colors[offsets.Spheres] = cmd.SphereData.Color;
-                        offsets.Spheres++;
-                        break;
-                    case RenderableType.Cube:
-                        ref var start = ref cmd.CubeData.Start;
-                        ref var end = ref cmd.CubeData.End;
-                        var cubeScale = end - start;
-                        positions[offsets.Cubes] = start;
-                        rotations[offsets.Cubes] = cmd.CubeData.Rotation;
-                        scales[offsets.Cubes] = cubeScale;
-                        colors[offsets.Cubes] = cmd.CubeData.Color;
-                        offsets.Cubes++;
-                        break;
-                    case RenderableType.Capsule:
-                        positions[offsets.Capsules] = cmd.CapsuleData.Position;
-                        rotations[offsets.Capsules] = cmd.CapsuleData.Rotation;
-                        scales[offsets.Capsules] = new Vector3(cmd.CapsuleData.Radius * 2.0f, cmd.CapsuleData.Height, cmd.CapsuleData.Radius * 2.0f);
-                        colors[offsets.Capsules] = cmd.CapsuleData.Color;
-                        offsets.Capsules++;
-                        break;
-                    case RenderableType.Cylinder:
-                        positions[offsets.Cylinders] = cmd.CylinderData.Position;
-                        rotations[offsets.Cylinders] = cmd.CylinderData.Rotation;
-                        scales[offsets.Cylinders] = new Vector3(cmd.CylinderData.Radius * 2.0f, cmd.CylinderData.Height, cmd.CylinderData.Radius * 2.0f);
-                        colors[offsets.Cylinders] = cmd.CylinderData.Color;
-                        offsets.Cylinders++;
-                        break;
-                    case RenderableType.Cone:
-                        positions[offsets.Cones] = cmd.ConeData.Position;
-                        rotations[offsets.Cones] = cmd.ConeData.Rotation;
-                        scales[offsets.Cones] = new Vector3(cmd.ConeData.Radius * 2.0f, cmd.ConeData.Height, cmd.ConeData.Radius * 2.0f);
-                        colors[offsets.Cones] = cmd.ConeData.Color;
-                        offsets.Cones++;
-                        break;
-                    case RenderableType.Line:
-                        lineVertices.Items[offsets.Lines].Position = cmd.LineData.Start;
-                        lineVertices.Items[offsets.Lines++].Color = cmd.LineData.Color;
-                        lineVertices.Items[offsets.Lines].Position = cmd.LineData.End;
-                        lineVertices.Items[offsets.Lines++].Color = cmd.LineData.Color;
-                        break;
-                }
-            }
-
-        }
-
         public override void Extract()
         {
+
+            void HandleRenderables(FastList<Renderable> renderables, ref Primitives offsets)
+            {
+
+                for (int i = 0; i < renderables.Count; ++i)
+                {
+                    ref var cmd = ref renderables.Items[i];
+                    switch (cmd.Type)
+                    {
+                        case RenderableType.Quad:
+                            positions[offsets.Quads] = cmd.QuadData.Position;
+                            scales[offsets.Quads] = new Vector3(cmd.QuadData.Size.X, 1.0f, cmd.QuadData.Size.Y);
+                            rotations[offsets.Quads] = cmd.QuadData.Rotation;
+                            colors[offsets.Quads] = cmd.QuadData.Color;
+                            offsets.Quads++;
+                            break;
+                        case RenderableType.Circle:
+                            positions[offsets.Circles] = cmd.CircleData.Position;
+                            rotations[offsets.Circles] = cmd.CircleData.Rotation;
+                            scales[offsets.Circles] = new Vector3(cmd.CircleData.Radius * 2.0f, 0.0f, cmd.CircleData.Radius * 2.0f);
+                            colors[offsets.Circles] = cmd.CircleData.Color;
+                            offsets.Circles++;
+                            break;
+                        case RenderableType.Sphere:
+                            positions[offsets.Spheres] = cmd.SphereData.Position;
+                            scales[offsets.Spheres] = new Vector3(cmd.SphereData.Radius * 2);
+                            colors[offsets.Spheres] = cmd.SphereData.Color;
+                            offsets.Spheres++;
+                            break;
+                        case RenderableType.Cube:
+                            ref var start = ref cmd.CubeData.Start;
+                            ref var end = ref cmd.CubeData.End;
+                            var cubeScale = end - start;
+                            positions[offsets.Cubes] = start;
+                            rotations[offsets.Cubes] = cmd.CubeData.Rotation;
+                            scales[offsets.Cubes] = cubeScale;
+                            colors[offsets.Cubes] = cmd.CubeData.Color;
+                            offsets.Cubes++;
+                            break;
+                        case RenderableType.Capsule:
+                            positions[offsets.Capsules] = cmd.CapsuleData.Position;
+                            rotations[offsets.Capsules] = cmd.CapsuleData.Rotation;
+                            scales[offsets.Capsules] = new Vector3(cmd.CapsuleData.Radius * 2.0f, cmd.CapsuleData.Height, cmd.CapsuleData.Radius * 2.0f);
+                            colors[offsets.Capsules] = cmd.CapsuleData.Color;
+                            offsets.Capsules++;
+                            break;
+                        case RenderableType.Cylinder:
+                            positions[offsets.Cylinders] = cmd.CylinderData.Position;
+                            rotations[offsets.Cylinders] = cmd.CylinderData.Rotation;
+                            scales[offsets.Cylinders] = new Vector3(cmd.CylinderData.Radius * 2.0f, cmd.CylinderData.Height, cmd.CylinderData.Radius * 2.0f);
+                            colors[offsets.Cylinders] = cmd.CylinderData.Color;
+                            offsets.Cylinders++;
+                            break;
+                        case RenderableType.Cone:
+                            positions[offsets.Cones] = cmd.ConeData.Position;
+                            rotations[offsets.Cones] = cmd.ConeData.Rotation;
+                            scales[offsets.Cones] = new Vector3(cmd.ConeData.Radius * 2.0f, cmd.ConeData.Height, cmd.ConeData.Radius * 2.0f);
+                            colors[offsets.Cones] = cmd.ConeData.Color;
+                            offsets.Cones++;
+                            break;
+                        case RenderableType.Line:
+                            lineVertices.Items[offsets.Lines].Position = cmd.LineData.Start;
+                            lineVertices.Items[offsets.Lines++].Color = cmd.LineData.Color;
+                            lineVertices.Items[offsets.Lines].Position = cmd.LineData.End;
+                            lineVertices.Items[offsets.Lines++].Color = cmd.LineData.Color;
+                            break;
+                    }
+                }
+
+            }
 
             int SumBasicPrimitives(ref Primitives primitives)
             {
