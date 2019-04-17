@@ -669,7 +669,7 @@ namespace DebugRendering
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) sphere = GenerateSphere(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = GenerateCube(DEFAULT_CUBE_SIZE);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) capsule = GenerateCapsule(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CAPSULE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION);
 
         /* gpu side vertex and index buffer for our primitive data */
@@ -888,7 +888,7 @@ namespace DebugRendering
 
         }
 
-        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16, int uvSplits = 4)
         {
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[1];
@@ -900,26 +900,108 @@ namespace DebugRendering
 
         }
 
-        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16)
+        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16,  int uvSplits = 2)
         {
 
             var (topVertices, topIndices) = GenerateCircle(radius, tesselations, 4);
-            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, 4, yOffset: 1.0f);
-            VertexPositionTexture[] vertices = new VertexPositionTexture[topVertices.Length + bottomVertices.Length + tesselations * 2];
-            int[] indices = new int[topIndices.Length + bottomIndices.Length + tesselations * 2];
+            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, 4, yOffset: height);
+
+            VertexPositionTexture[] vertices = new VertexPositionTexture[topVertices.Length + bottomVertices.Length + tesselations * 4];
+            int[] indices = new int[topIndices.Length + bottomIndices.Length + tesselations * 6];
+
+            Array.Copy(topVertices, vertices, topVertices.Length);
+            Array.Copy(bottomVertices, 0, vertices, topVertices.Length, bottomVertices.Length);
+
+            Array.Copy(topIndices, indices, topIndices.Length);
+            Array.Copy(bottomIndices, 0, indices, topIndices.Length, bottomIndices.Length);
+
+            // adjust indices for top half so they actually point at vertex data of top half
+            for (int i = topIndices.Length; i < topIndices.Length + bottomIndices.Length; ++i)
+                indices[i] += topVertices.Length;
+
+            // generate sides, using our top and bottom circle triangle fans
+            int curVert = topVertices.Length * 2;
+            int curIndex = topIndices.Length * 2;
+            for (int i = 1; i < topVertices.Length; ++i)
+            {
+                int sideModulo = (i - 1) % uvSplits;
+                if (sideModulo == 0)
+                {
+
+                    vertices[curVert] = vertices[i];
+                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                    var ip = curVert++;
+
+                    vertices[curVert] = vertices[i + 1];
+                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                    var ip1= curVert++;
+
+                    vertices[curVert] = vertices[i + topVertices.Length];
+                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                    var ipv = curVert++;
+
+                    // make some fresh vertex shit yo
+                    indices[curIndex++] = ip;
+                    indices[curIndex++] = i + 1;
+                    indices[curIndex++] = ipv;
+
+                    indices[curIndex++] = ipv;
+                    indices[curIndex++] = i + topVertices.Length + 1;
+                    indices[curIndex++] = i + 1;
+
+                } else
+                {
+
+                    vertices[curVert] = vertices[i];
+                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                    var ip = curVert++;
+
+                    vertices[curVert] = vertices[i + 1];
+                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                    var ip1 = curVert++;
+
+                    vertices[curVert] = vertices[i + topVertices.Length];
+                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                    var ipv = curVert++;
+
+                    vertices[curVert] = vertices[i + 1 + topVertices.Length];
+                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                    var ipv1 = curVert++;
+
+                    // reuse the old stuff yo
+                    indices[curIndex++] = ip;
+                    indices[curIndex++] = ip1;
+                    indices[curIndex++] = ipv;
+
+                    indices[curIndex++] = ipv;
+                    indices[curIndex++] = ipv1;
+                    indices[curIndex++] = ip1;
+
+                    /* sanity checker
+                    indices[curIndex++] = i;
+                    indices[curIndex++] = i + 1;
+                    indices[curIndex++] = i + topVertices.Length;
+
+                    indices[curIndex++] = i + topVertices.Length;
+                    indices[curIndex++] = i + 1 + topVertices.Length;
+                    indices[curIndex++] = i + 1;
+                    */
+
+                }
+            }
 
             return (vertices, indices);
 
         }
 
-        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4)
         {
             VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
             return (vertices, indices);
         }
 
-        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations, int uvSplits = 4)
         {
             VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
