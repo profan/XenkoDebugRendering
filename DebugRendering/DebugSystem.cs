@@ -257,7 +257,7 @@ namespace DebugRendering
             {
                 ref var v1 = ref vertices[i];
                 ref var v2 = ref vertices[i];
-                DrawLine(v1, v2, color, duration);
+                DrawLine(v1, v2, color, duration, depthTest);
             }
         }
 
