@@ -26,64 +26,72 @@ namespace DebugRendering
         internal enum DebugRenderableType : byte
         {
             Quad,
+            QuadNoDepth,
             Circle,
+            CircleNoDepth,
             Line,
+            LineNoDepth,
             Cube,
+            CubeNoDepth,
             Sphere,
+            SphereNoDepth,
             Capsule,
+            CapsuleNoDepth,
             Cylinder,
-            Cone
+            CylinderNoDepth,
+            Cone,
+            ConeNoDepth
         }
 
         [StructLayout(LayoutKind.Explicit)]
         internal struct DebugRenderable
         {
 
-            public DebugRenderable(ref DebugDrawQuad q) : this()
+            public DebugRenderable(ref DebugDrawQuad q, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Quad;
+                Type = (depthTest) ? DebugRenderableType.Quad : DebugRenderableType.QuadNoDepth;
                 QuadData = q;
             }
 
-            public DebugRenderable(ref DebugDrawCircle c) : this()
+            public DebugRenderable(ref DebugDrawCircle c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Circle;
+                Type = (depthTest) ? DebugRenderableType.Circle : DebugRenderableType.CircleNoDepth;
                 CircleData = c;
             }
 
-            public DebugRenderable(ref DebugDrawLine l) : this()
+            public DebugRenderable(ref DebugDrawLine l, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Line;
+                Type = (depthTest) ? DebugRenderableType.Line : DebugRenderableType.LineNoDepth;
                 LineData = l;
             }
 
-            public DebugRenderable(ref DebugDrawCube b) : this()
+            public DebugRenderable(ref DebugDrawCube b, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Cube;
+                Type = (depthTest) ? DebugRenderableType.Cube : DebugRenderableType.CubeNoDepth;
                 CubeData = b;
             }
 
-            public DebugRenderable(ref DebugDrawSphere s) : this()
+            public DebugRenderable(ref DebugDrawSphere s, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Sphere;
+                Type = (depthTest) ? DebugRenderableType.Sphere : DebugRenderableType.SphereNoDepth;
                 SphereData = s;
             }
 
-            public DebugRenderable(ref DebugDrawCapsule c) : this()
+            public DebugRenderable(ref DebugDrawCapsule c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Capsule;
+                Type = (depthTest) ? DebugRenderableType.Capsule : DebugRenderableType.CapsuleNoDepth;
                 CapsuleData = c;
             }
 
-            public DebugRenderable(ref DebugDrawCylinder c) : this()
+            public DebugRenderable(ref DebugDrawCylinder c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Cylinder;
+                Type = (depthTest) ? DebugRenderableType.Cylinder : DebugRenderableType.CylinderNoDepth;
                 CylinderData = c;
             }
 
-            public DebugRenderable(ref DebugDrawCone c) : this()
+            public DebugRenderable(ref DebugDrawCone c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Cone;
+                Type = (depthTest) ? DebugRenderableType.Cone : DebugRenderableType.ConeNoDepth;
                 ConeData = c;
             }
 
@@ -233,7 +241,7 @@ namespace DebugRendering
         public void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawLine { Start = start, End = end, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -293,7 +301,7 @@ namespace DebugRendering
         public void DrawSphere(Vector3 position, float radius, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -319,7 +327,7 @@ namespace DebugRendering
         public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -331,7 +339,7 @@ namespace DebugRendering
         public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -343,7 +351,7 @@ namespace DebugRendering
         public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -355,7 +363,7 @@ namespace DebugRendering
         public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -367,7 +375,7 @@ namespace DebugRendering
         public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -379,7 +387,7 @@ namespace DebugRendering
         public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -391,7 +399,7 @@ namespace DebugRendering
         public void DrawCircle(Vector3 position, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
@@ -429,28 +437,52 @@ namespace DebugRendering
                 switch (msg.Type)
                 {
                     case DebugRenderableType.Quad:
-                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color);
+                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.QuadNoDepth:
+                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Circle:
-                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color);
+                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CircleNoDepth:
+                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Line:
-                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color);
+                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.LineNoDepth:
+                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cube:
-                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color);
+                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CubeNoDepth:
+                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Sphere:
-                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color);
+                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.SphereNoDepth:
+                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Capsule:
-                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color);
+                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CapsuleNoDepth:
+                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cylinder:
-                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color);
+                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CylinderNoDepth:
+                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cone:
-                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color);
+                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.ConeNoDepth:
+                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: false);
                         break;
                 }
             }
@@ -1314,6 +1346,7 @@ namespace DebugRendering
             primitivesToDrawNoDepth = totalPrimitivesNoDepth;
 
             renderablesWithDepth.Clear(true);
+            renderablesNoDepth.Clear(true);
             totalPrimitives.Clear();
             totalPrimitivesNoDepth.Clear();
 

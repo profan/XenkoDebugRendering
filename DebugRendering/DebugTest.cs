@@ -39,6 +39,7 @@ namespace DebugRendering
         int maxNumbeOfPrimitives = InitialNumPrimitives * 10;
         int currentNumPrimitives = InitialNumPrimitives;
         CurRenderMode mode = CurRenderMode.All;
+        bool useDepthTesting = true;
         bool running = true;
 
         FastList<Vector3> primitivePositions = new FastList<Vector3>(InitialNumPrimitives);
@@ -151,6 +152,11 @@ namespace DebugRendering
                 running = !running;
             }
 
+            if (Input.IsKeyPressed(Xenko.Input.Keys.LeftCtrl))
+            {
+                useDepthTesting = !useDepthTesting;
+            }
+
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
@@ -164,7 +170,8 @@ namespace DebugRendering
 
             DebugText.Print($"Primitive Count: {currentNumPrimitives} (scrollwheel to adjust)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 32));
             DebugText.Print($" - Render Mode: {mode} (left alt to switch)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 48));
-            DebugText.Print($" - State: {(running ? "Simulating" : "Paused")} (space to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 64));
+            DebugText.Print($" - Depth Testing: {(useDepthTesting ? "On " : "Off")} (left ctrl to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 64));
+            DebugText.Print($" - State: {(running ? "Simulating" : "Paused")} (space to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 80));
 
             if (running)
             {
@@ -225,28 +232,28 @@ namespace DebugRendering
                         switch (currentShape++)
                         {
                             case 0: // sphere
-                                debugSystem.DrawSphere(position, 0.5f, color);
+                                debugSystem.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
                                 break;
                             case 1: // cube
-                                debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color);
+                                debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 2: // capsule
-                                debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color);
+                                debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 3: // cylinder
-                                debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color);
+                                debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 4: // cone
-                                debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color);
+                                debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 5: // ray
-                                debugSystem.DrawRay(position, velocity, color);
+                                debugSystem.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
                                 break;
                             case 6: // quad
-                                debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color);
+                                debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 7: // circle
-                                debugSystem.DrawCircle(position, 0.5f, rotation, color);
+                                debugSystem.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 currentShape = 0;
                                 break;
                             default:
@@ -254,31 +261,31 @@ namespace DebugRendering
                         }
                         break;
                     case CurRenderMode.Quad:
-                        debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color);
+                        debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Circle:
-                        debugSystem.DrawCircle(position, 0.5f, rotation, color);
+                        debugSystem.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Sphere:
-                        debugSystem.DrawSphere(position, 0.5f, color);
+                        debugSystem.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Cube:
-                        debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color);
+                        debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Capsule:
-                        debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color);
+                        debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Cylinder:
-                        debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color);
+                        debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Cone:
-                        debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color);
+                        debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Ray:
-                        debugSystem.DrawRay(position, velocity, color);
+                        debugSystem.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Arrow:
-                        debugSystem.DrawArrow(position, velocity, color);
+                        debugSystem.DrawArrow(position, velocity, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.None:
                         break;
