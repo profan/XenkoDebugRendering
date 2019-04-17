@@ -1225,7 +1225,7 @@ namespace DebugRendering
         public override void Extract()
         {
 
-            void HandleRenderables(FastList<Renderable> renderables, ref Primitives offsets)
+            void ProcessRenderables(FastList<Renderable> renderables, ref Primitives offsets)
             {
 
                 for (int i = 0; i < renderables.Count; ++i)
@@ -1318,7 +1318,7 @@ namespace DebugRendering
                 return offsets;
             }
 
-            /* everything except lines */
+            /* everything except lines is included here, as lines just get accumulated into a buffer directly */
             int totalThingsToDraw = SumBasicPrimitives(ref totalPrimitives) + SumBasicPrimitives(ref totalPrimitivesNoDepth);
 
             positions.Resize(totalThingsToDraw, true);
@@ -1339,8 +1339,8 @@ namespace DebugRendering
             instanceOffsets = primitiveOffsets;
             instanceOffsetsNoDepth = primitiveOffsetsNoDepth;
 
-            HandleRenderables(renderablesWithDepth, ref primitiveOffsets);
-            HandleRenderables(renderablesNoDepth, ref primitiveOffsetsNoDepth);
+            ProcessRenderables(renderablesWithDepth, ref primitiveOffsets);
+            ProcessRenderables(renderablesNoDepth, ref primitiveOffsetsNoDepth);
 
             primitivesToDraw = totalPrimitives;
             primitivesToDrawNoDepth = totalPrimitivesNoDepth;
