@@ -1561,7 +1561,7 @@ namespace DebugRendering
 
             // we only want to render in the transparent stage, is there a nicer way to do this?
             var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
-            var transparentRenderStageIndex = transparentRenderStage.Index;
+            var transparentRenderStageIndex = transparentRenderStage?.Index;
 
             // bail out if it's any other stage, this is crude but alas
             if (renderViewStage.Index != transparentRenderStageIndex) return;
