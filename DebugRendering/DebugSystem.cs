@@ -977,16 +977,6 @@ namespace DebugRendering
                     indices[curIndex++] = ipv1;
                     indices[curIndex++] = ip1;
 
-                    /* sanity checker
-                    indices[curIndex++] = i;
-                    indices[curIndex++] = i + 1;
-                    indices[curIndex++] = i + topVertices.Length;
-
-                    indices[curIndex++] = i + topVertices.Length;
-                    indices[curIndex++] = i + 1 + topVertices.Length;
-                    indices[curIndex++] = i + 1;
-                    */
-
                 }
             }
 
