@@ -967,30 +967,30 @@ namespace DebugRendering
         static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16,  int uvSides = 4)
         {
 
-            var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSides);
-            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSides, yOffset: height);
+            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSides);
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[topVertices.Length + bottomVertices.Length + tesselations * 4];
-            int[] indices = new int[topIndices.Length + bottomIndices.Length + tesselations * 6];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + tesselations * 4];
+            int[] indices = new int[capIndices.Length * 2 + tesselations * 6];
 
             // copy vertices
-            for (int i = 0; i < topVertices.Length; ++i)
+            for (int i = 0; i < capVertices.Length; ++i)
             {
-                vertices[i] = topVertices[i];
-                vertices[i + topVertices.Length] = bottomVertices[i];
+                vertices[i] = capVertices[i];
+                vertices[i + capVertices.Length] = capVertices[i];
+                vertices[i + capVertices.Length].Position.Y = height;
             }
 
             // copy indices
-            for (int i = 0; i < topIndices.Length; ++i)
+            for (int i = 0; i < capIndices.Length; ++i)
             {
-                indices[i] = topIndices[i];
-                indices[i + topIndices.Length] = topIndices[i] + topVertices.Length;
+                indices[i] = capIndices[i];
+                indices[i + capIndices.Length] = capIndices[i] + capVertices.Length;
             }
 
             // generate sides, using our top and bottom circle triangle fans
-            int curVert = topVertices.Length * 2;
-            int curIndex = topIndices.Length * 2;
-            for (int i = 1; i < topVertices.Length; ++i)
+            int curVert = capVertices.Length * 2;
+            int curIndex = capIndices.Length * 2;
+            for (int i = 1; i < capVertices.Length; ++i)
             {
                 int sideModulo = (i - 1) % (tesselations / uvSides);
                 if (sideModulo == 0)
@@ -1004,7 +1004,7 @@ namespace DebugRendering
                     vertices[curVert].TextureCoordinate = new Vector2(0.5f);
                     var ip1= curVert++;
 
-                    vertices[curVert] = vertices[i + topVertices.Length];
+                    vertices[curVert] = vertices[i + capVertices.Length];
                     vertices[curVert].TextureCoordinate = new Vector2(0.5f);
                     var ipv = curVert++;
 
@@ -1014,7 +1014,7 @@ namespace DebugRendering
                     indices[curIndex++] = ipv;
 
                     indices[curIndex++] = ipv;
-                    indices[curIndex++] = i + topVertices.Length + 1;
+                    indices[curIndex++] = i + capVertices.Length + 1;
                     indices[curIndex++] = i + 1;
 
                 } else
@@ -1028,11 +1028,11 @@ namespace DebugRendering
                     vertices[curVert].TextureCoordinate = new Vector2(0.5f);
                     var ip1 = curVert++;
 
-                    vertices[curVert] = vertices[i + topVertices.Length];
+                    vertices[curVert] = vertices[i + capVertices.Length];
                     vertices[curVert].TextureCoordinate = new Vector2(0.5f);
                     var ipv = curVert++;
 
-                    vertices[curVert] = vertices[i + 1 + topVertices.Length];
+                    vertices[curVert] = vertices[i + 1 + capVertices.Length];
                     vertices[curVert].TextureCoordinate = new Vector2(0.5f);
                     var ipv1 = curVert++;
 
