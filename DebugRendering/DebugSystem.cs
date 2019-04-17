@@ -1391,19 +1391,6 @@ namespace DebugRendering
 
         }
 
-        private RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
-        {
-            for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
-            {
-                var stage = renderSystem.RenderStages[i];
-                if (stage.Name == "Transparent")
-                {
-                    return stage;
-                }
-            }
-            return null;
-        }
-
         private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest)
         {
             pipelineState.State.SetDefaults();
@@ -1549,6 +1536,19 @@ namespace DebugRendering
 
         public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
         {
+
+            RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
+            {
+                for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
+                {
+                    var stage = renderSystem.RenderStages[i];
+                    if (stage.Name == "Transparent")
+                    {
+                        return stage;
+                    }
+                }
+                return null;
+            }
 
             // we only want to render in the transparent stage, is there a nicer way to do this?
             var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
