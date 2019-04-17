@@ -900,7 +900,7 @@ namespace DebugRendering
 
         }
 
-        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16,  int uvSplits = 2)
+        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16,  int uvSides = 8)
         {
 
             var (topVertices, topIndices) = GenerateCircle(radius, tesselations, 4);
@@ -924,7 +924,7 @@ namespace DebugRendering
             int curIndex = topIndices.Length * 2;
             for (int i = 1; i < topVertices.Length; ++i)
             {
-                int sideModulo = (i - 1) % uvSplits;
+                int sideModulo = (i - 1) % (tesselations / uvSides);
                 if (sideModulo == 0)
                 {
 
