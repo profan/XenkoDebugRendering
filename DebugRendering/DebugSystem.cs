@@ -404,7 +404,10 @@ namespace DebugRendering
         private void HandlePrimitives(GameTime gameTime, FastList<DebugRenderable> messages)
         {
 
-            if (messages.Count == 0) return;
+            if (messages.Count == 0)
+            {
+                return;
+            }
 
             for (int i = 0; i < messages.Count; ++i)
             {
@@ -1564,7 +1567,10 @@ namespace DebugRendering
             var transparentRenderStageIndex = transparentRenderStage?.Index;
 
             // bail out if it's any other stage, this is crude but alas
-            if (renderViewStage.Index != transparentRenderStageIndex) return;
+            if (renderViewStage.Index != transparentRenderStageIndex)
+            {
+                return;
+            }
 
             var commandList = context.CommandList;
 
