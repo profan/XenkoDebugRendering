@@ -271,17 +271,6 @@ namespace DebugRendering
             DrawLine(start, start + dir, color, duration, depthTest);
         }
 
-        public void DrawRays(Vector3[] vertices, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var totalVertexPairs = vertices.Length - (vertices.Length % 2);
-            for (int i = 0; i < totalVertexPairs; i += 2)
-            {
-                ref var v1 = ref vertices[i];
-                ref var v2 = ref vertices[i];
-                DrawLine(v1, v1 + v2, color, duration);
-            }
-        }
-
         public void DrawArrow(Vector3 from, Vector3 to, float duration = 0.0f, bool depthTest = true)
         {
             DrawArrow(from, to, PrimitiveColor, duration, depthTest);
@@ -303,20 +292,6 @@ namespace DebugRendering
             var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
-        }
-
-        public void DrawSpheres(Vector3[] positions, float radius, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawSpheres(positions, radius, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawSpheres(Vector3[] positions, float radius, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            for (int i = 0; i < positions.Length; ++i)
-            {
-                ref var pos = ref positions[i];
-                DrawSphere(pos, radius, color, duration, depthTest);
-            }
         }
 
         public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
