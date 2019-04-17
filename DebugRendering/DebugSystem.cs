@@ -1296,8 +1296,8 @@ namespace DebugRendering
 
             lineVertices.Resize((totalPrimitives.Lines * 2) + (totalPrimitivesNoDepth.Lines * 2), true);
 
-            var primitiveOffsets = SetupPrimitiveOffsets(ref primitivesToDraw);
-            var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref primitivesToDrawNoDepth, primitiveOffsets.Cones);
+            var primitiveOffsets = SetupPrimitiveOffsets(ref totalPrimitives);
+            var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref totalPrimitivesNoDepth, primitiveOffsets.Cones);
 
             /* line rendering data, separate buffer so offset isnt relative to the other data */
             primitiveOffsets.Lines = 0;
