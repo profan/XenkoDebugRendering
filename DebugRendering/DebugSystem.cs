@@ -1286,7 +1286,8 @@ namespace DebugRendering
                 var offsets = new Primitives();
                 offsets.Quads = 0 + offset;
                 offsets.Circles = offsets.Quads + counts.Quads;
-                offsets.Cubes = offsets.Circles + counts.Circles;
+                offsets.Spheres = offsets.Circles + counts.Circles;
+                offsets.Cubes = offsets.Spheres + counts.Spheres;
                 offsets.Capsules = offsets.Cubes + counts.Cubes;
                 offsets.Cylinders = offsets.Capsules + counts.Capsules;
                 offsets.Cones = offsets.Cylinders + counts.Cylinders;
@@ -1308,7 +1309,7 @@ namespace DebugRendering
 
             /* line rendering data, separate buffer so offset isnt relative to the other data */
             primitiveOffsets.Lines = 0;
-            primitiveOffsetsNoDepth.Lines = 0;
+            primitiveOffsetsNoDepth.Lines = totalPrimitives.Lines * 2;
 
             /* save instance offsets before we mutate them as we need them when rendering */
             instanceOffsets = primitiveOffsets;
