@@ -695,7 +695,7 @@ namespace DebugRendering
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION);
 
-        /* gpu side vertex and index buffer for our primitive data */
+        /* vertex and index buffer for our primitive data */
         private Buffer vertexBuffer;
         private Buffer indexBuffer;
 
@@ -1327,7 +1327,7 @@ namespace DebugRendering
 
         }
 
-        unsafe static void UpdateBufferIfNecessary(GraphicsDevice device, CommandList commandList, ref Buffer buffer, DataPointer dataPtr, int elementSize)
+        internal unsafe static void UpdateBufferIfNecessary(GraphicsDevice device, CommandList commandList, ref Buffer buffer, DataPointer dataPtr, int elementSize)
         {
             int neededBufferSize = dataPtr.Size / elementSize;
             if (neededBufferSize > buffer.ElementCount)
