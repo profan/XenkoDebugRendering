@@ -233,147 +233,87 @@ namespace DebugRendering
             }
         }
 
-        public void DrawLine(Vector3 start, Vector3 end, float duration = 0.0f, bool depthTest = true)
+        public void DrawLine(Vector3 start, Vector3 end, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawLine(start, end, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawLine { Start = start, End = end, Color = color };
+            var cmd = new DebugDrawLine { Start = start, End = end, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawLines(Vector3[] vertices, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawLines(vertices, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawLines(Vector3[] vertices, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawLines(Vector3[] vertices, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
             var totalVertexPairs = vertices.Length - (vertices.Length % 2);
             for (int i = 0; i < totalVertexPairs; i += 2)
             {
                 ref var v1 = ref vertices[i];
                 ref var v2 = ref vertices[i];
-                DrawLine(v1, v2, color, duration, depthTest);
+                DrawLine(v1, v2, color ?? PrimitiveColor, duration, depthTest);
             }
         }
 
-        public void DrawRay(Vector3 start, Vector3 dir, float duration = 0.0f, bool depthTest = true)
+        public void DrawRay(Vector3 start, Vector3 dir, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawRay(start, dir, PrimitiveColor, duration, depthTest);
+            DrawLine(start, start + dir, color ?? PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawRay(Vector3 start, Vector3 dir, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawLine(start, start + dir, color, duration, depthTest);
-        }
-
-        public void DrawArrow(Vector3 from, Vector3 to, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawArrow(from, to, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawArrow(Vector3 from, Vector3 to, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawArrow(Vector3 from, Vector3 to, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
             DrawRay(from, to, color, duration, depthTest);
-            DrawCone(from + to, 1.0f, 0.5f, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color, duration, depthTest);
+            DrawCone(from + to, 1.0f, 0.5f, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color ?? PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawSphere(Vector3 position, float radius, float duration = 0.0f, bool depthTest = true)
+        public void DrawSphere(Vector3 position, float radius, Color? color, float duration = 0.0f, bool depthTest = true)
         {
-            DrawSphere(position, radius, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawSphere(Vector3 position, float radius, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color };
+            var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawBounds(Vector3 start, Vector3 end, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawBounds(start, end, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCube(Vector3 start, Vector3 size, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCube(start, size, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCapsule(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCylinder(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCone(Vector3 position, float height, float radius, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCone(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawQuad(Vector3 position, Vector2 size, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawQuad(position, size, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCircle(Vector3 position, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCircle(Vector3 position, float radius, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCircle(position, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCircle(Vector3 position, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation, Color = color };
+            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -1071,8 +1011,10 @@ namespace DebugRendering
         {
 
             var (baseVertices, baseIndices) = GenerateCircle(radius, tesselations, 4, yOffset: height);
-            VertexPositionTexture[] vertices = new VertexPositionTexture[1];
-            int[] indices = new int[1];
+            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselations, uvSides: uvSplits);
+
+            VertexPositionTexture[] vertices = new VertexPositionTexture[baseVertices.Length + midVertices.Length];
+            int[] indices = new int[baseIndices.Length + midIndices.Length];
 
             return (vertices, indices);
 
