@@ -262,7 +262,7 @@ namespace DebugRendering
             DrawCone(from + to, 1.0f, 0.5f, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color ?? PrimitiveColor, duration, depthTest);
         }
 
-        public void DrawSphere(Vector3 position, float radius, Color? color, float duration = 0.0f, bool depthTest = true)
+        public void DrawSphere(Vector3 position, float radius, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
             var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color ?? PrimitiveColor };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };

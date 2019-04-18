@@ -293,9 +293,9 @@ namespace DebugRendering
             }
 
             // CUBE OF ORIGIN!!
-            debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), Quaternion.Identity, Color.White);
-            debugSystem.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), Quaternion.Identity, Color.White);
-            debugSystem.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), Quaternion.Identity, Color.HotPink);
+            debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), color: Color.White);
+            debugSystem.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), color: Color.White);
+            debugSystem.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
 
         }
 
