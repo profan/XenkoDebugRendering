@@ -311,9 +311,9 @@ namespace DebugRendering
             PushMessage(ref msg);
         }
 
-        public void DrawCircle(Vector3 position, float radius, Quaternion? rotation = null, Color? color = null, float duration = 0.0f, bool depthTest = true)
+        public void DrawCircle(Vector3 position, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation ?? Quaternion.Identity, Color = color ?? PrimitiveColor };
+            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
