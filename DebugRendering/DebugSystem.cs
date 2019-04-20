@@ -446,10 +446,10 @@ namespace DebugRendering
         internal struct LineVertex
         {
 
-            public static readonly VertexDeclaration Layout = new VertexDeclaration(VertexElement.Position<Vector3>(), VertexElement.Color<Color4>());
+            public static readonly VertexDeclaration Layout = new VertexDeclaration(VertexElement.Position<Vector3>(), VertexElement.Color<Color>());
 
             public Vector3 Position;
-            public Color4 Color;
+            public Color Color;
 
         }
 
@@ -676,7 +676,7 @@ namespace DebugRendering
         private readonly FastList<Vector3> positions = new FastList<Vector3>(1);
         private readonly FastList<Quaternion> rotations = new FastList<Quaternion>(1);
         private readonly FastList<Vector3> scales = new FastList<Vector3>(1);
-        private readonly FastList<Color4> colors = new FastList<Color4>(1);
+        private readonly FastList<Color> colors = new FastList<Color>(1);
 
         /* data only for line rendering */
         private readonly FastList<LineVertex> lineVertices = new FastList<LineVertex>(1);
@@ -907,10 +907,10 @@ namespace DebugRendering
 
         }
 
-        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16,  int uvSides = 4)
+        static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16,  int uvSides = 4, int? uvSidesForCircle = null)
         {
 
-            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSides);
+            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + tesselations * 4];
             int[] indices = new int[capIndices.Length * 2 + tesselations * 6];
@@ -1007,14 +1007,21 @@ namespace DebugRendering
 
         }
 
-        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations, int uvSplits = 4)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselation, int uvSplits = 4)
         {
 
-            var (baseVertices, baseIndices) = GenerateCircle(radius, tesselations, 4, yOffset: height);
-            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselations, uvSides: uvSplits);
+            var (capVertices, capIndices) = GenerateCircle(radius, tesselation, 4, yOffset: height);
+            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselation, uvSides: uvSplits, uvSidesForCircle: 0);
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[baseVertices.Length + midVertices.Length];
-            int[] indices = new int[baseIndices.Length + midIndices.Length];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length + midVertices.Length];
+            int[] indices = new int[capIndices.Length + midIndices.Length];
+
+            /*
+            var capsuleData = GeometricPrimitive.Capsule.New(height, radius, tesselation);
+            VertexPositionTexture[] vertices = new VertexPositionTexture[capsuleData.Vertices.Length];
+            int[] indices = new int[capsuleData.Indices.Length];
+            CopyFromGeometricPrimitive(capsuleData, ref vertices, ref indices);
+            */
 
             return (vertices, indices);
 
@@ -1134,7 +1141,7 @@ namespace DebugRendering
             var newTransformBuffer = Buffer.Structured.New<Matrix>(device, 1);
             transformBuffer = newTransformBuffer;
 
-            var newColourBuffer = Buffer.Structured.New<Color4>(device, colors.Items);
+            var newColourBuffer = Buffer.Structured.New<Color>(device, colors.Items);
             colorBuffer = newColourBuffer;
 
             var newLineVertexBuffer = Buffer.Vertex.New<LineVertex>(device, lineVertices.Items, GraphicsResourceUsage.Dynamic);
@@ -1308,12 +1315,12 @@ namespace DebugRendering
                     );
                 }
 
-                fixed (Color4* colorsPtr = colors.Items)
+                fixed (Color* colorsPtr = colors.Items)
                 {
                     UpdateBufferIfNecessary(
                         context.GraphicsDevice, context.CommandList, buffer: ref colorBuffer,
-                        dataPtr: new DataPointer(colorsPtr, colors.Count * Marshal.SizeOf<Color4>()),
-                        elementSize: Marshal.SizeOf<Color4>()
+                        dataPtr: new DataPointer(colorsPtr, colors.Count * Marshal.SizeOf<Color>()),
+                        elementSize: Marshal.SizeOf<Color>()
                     );
                 }
 
