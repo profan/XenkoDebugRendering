@@ -678,9 +678,11 @@ namespace DebugRendering
         /* used in render stage to know how many of each instance to draw */
         private Primitives primitivesToDraw, primitivesToDrawNoDepth;
 
-        /* message related data */
-        private readonly FastList<Matrix> transforms = new FastList<Matrix>(1);
+        /* intermediate message related data, written to in extract */
         private readonly FastList<InstanceData> instances = new FastList<InstanceData>(1);
+
+        /* data written to buffers in prepare */
+        private readonly FastList<Matrix> transforms = new FastList<Matrix>(1);
         private readonly FastList<Color> colors = new FastList<Color>(1);
 
         /* data only for line rendering */
