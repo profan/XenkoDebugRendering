@@ -1,7 +1,8 @@
 ﻿namespace DebugRendering
 {
 
-    shader PrimitiveShader : ShaderBase, ColorBase {
+    shader PrimitiveShader : ShaderBase, ColorBase
+    {
 
         struct TransformData {
             float4x4 Matrix;
@@ -19,13 +20,15 @@
         stream float3 Position : POSITION;
         stream float2 Uv : TEXCOORD0;
 
-        override stage void VSMain() {
+        override stage void VSMain()
+        {
             int offsetInstanceId = streams.InstanceID + InstanceOffset;
             streams.ShadingPosition = mul(mul(float4(streams.Position, 1), Transforms[offsetInstanceId].Matrix), ViewProjection);
             streams.Color = BitsToColor(Colors[offsetInstanceId].Color);
         }
 
-        override stage void PSMain() {
+        override stage void PSMain()
+        {
 
             // streams.ColorTarget = streams.Color;
 
