@@ -443,6 +443,7 @@ namespace DebugRendering
 
         }
 
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
         internal struct LineVertex
         {
 
@@ -635,7 +636,7 @@ namespace DebugRendering
         const int SPHERE_TESSELATION = 8;
         const int CAPSULE_TESSELATION = 4;
         const int CYLINDER_TESSELATION = 16;
-        const int CONE_TESSELATION = 6;
+        const int CONE_TESSELATION = 8;
 
         /* mesh data we will use when stuffing things in vertex buffers */
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION);
@@ -1006,10 +1007,26 @@ namespace DebugRendering
         static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4)
         {
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[1];
-            int[] indices = new int[1];
+            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, 0);
+            VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length * 2];
+            int[] indices = new int[bottomIndices.Length * 2];
 
+            // copy vertices from circle
+            for (int i = 0; i < bottomVertices.Length; ++i) {
+                vertices[i] = bottomVertices[i];
+                vertices[i + bottomVertices.Length] = bottomVertices[i];
+            }
 
+            // copy indices from circle
+            for (int i = 0; i < bottomIndices.Length; ++i) {
+                indices[i] = bottomIndices[i];
+                indices[i + bottomIndices.Length] = bottomIndices[i] + bottomVertices.Length;
+            }
+
+            // extrude middle vertex of center of first circle triangle fan
+            vertices[0].Position.Y = height;
+            vertices[0].TextureCoordinate.X = 1.0f;
+            vertices[0].TextureCoordinate.Y = 1.0f;
 
             return (vertices, indices);
 
