@@ -1284,7 +1284,7 @@ namespace DebugRendering
 
         }
 
-        internal unsafe static void UpdateBufferIfNecessary(GraphicsDevice device, CommandList commandList, ref Buffer buffer, DataPointer dataPtr, int elementSize)
+        private unsafe static void UpdateBufferIfNecessary(GraphicsDevice device, CommandList commandList, ref Buffer buffer, DataPointer dataPtr, int elementSize)
         {
             int neededBufferSize = dataPtr.Size / elementSize;
             if (neededBufferSize > buffer.ElementCount)
