@@ -100,6 +100,7 @@ namespace DebugRendering
             debugSystem = new DebugSystem(Services);
             debugSystem.PrimitiveColor = Color.Green;
             debugSystem.MaxPrimitives = currentNumPrimitives*2 + 6;
+            debugSystem.MaxPrimitivesWithLifetime = currentNumPrimitives*2 + 6;
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
@@ -163,6 +164,7 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
+                debugSystem.MaxPrimitivesWithLifetime = newAmountOfBoxes*2 + 6;
                 debugSystem.MaxPrimitives = newAmountOfBoxes*2 + 6;
                 currentNumPrimitives = newAmountOfBoxes;
             }
@@ -312,7 +314,7 @@ namespace DebugRendering
                     var cameraUp = CurrentCamera.Entity.Transform.LocalMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
                     debugSystem.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 1.0f);
-                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 1.0f);
+                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f / 2, coneRadius: 0.125f / 2, color: Color.HotPink, duration: 1.0f);
                     System.Diagnostics.Debug.WriteLine(result.Normal);
                 }
             }

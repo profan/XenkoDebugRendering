@@ -640,7 +640,7 @@ namespace DebugRendering
         const int SPHERE_TESSELATION = 8;
         const int CAPSULE_TESSELATION = 8;
         const int CYLINDER_TESSELATION = 16;
-        const int CONE_TESSELATION = 8;
+        const int CONE_TESSELATION = 16;
 
         /* mesh data we will use when stuffing things in vertex buffers */
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION, 0);
@@ -649,7 +649,7 @@ namespace DebugRendering
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = GenerateCube(DEFAULT_CUBE_SIZE);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) capsule = GenerateCapsule(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION, uvSplits: 8);
 
         /* vertex and index buffer for our primitive data */
         private Buffer vertexBuffer;
@@ -903,7 +903,7 @@ namespace DebugRendering
 
             // draw uv lines
             int newVert = tesselations + (1 + hasUvSplits);
-            int curNewIndex = ++lastIndex;
+            int curNewIndex = lastIndex + 1;
             for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
             {
                 if (hasUvSplits > 0)
@@ -1036,23 +1036,33 @@ namespace DebugRendering
 
         }
 
-        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4)
+        static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4, int uvSplitsBottom = 0)
         {
 
             var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits);
+            var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom);
             VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length * 2];
             int[] indices = new int[bottomIndices.Length * 2];
 
             // copy vertices from circle
-            for (int i = 0; i < bottomVertices.Length; ++i) {
+            for (int i = 0; i < bottomVertices.Length; ++i)
+            {
                 vertices[i] = bottomVertices[i];
-                vertices[i + bottomVertices.Length] = bottomVertices[i];
+            }
+
+            for (int i = 0; i < topVertices.Length; ++i)
+            {
+                vertices[i + bottomVertices.Length] = topVertices[i];
             }
 
             // copy indices from circle
-            for (int i = 0; i < bottomIndices.Length; ++i) {
+            for (int i = 0; i < bottomIndices.Length; ++i) 
+            {
                 indices[i] = bottomIndices[i];
-                indices[i + bottomIndices.Length] = bottomIndices[i] + bottomVertices.Length;
+            }
+
+            for (int i = 0; i < topIndices.Length; ++i) {
+                indices[i + bottomIndices.Length] = topIndices[i] + bottomVertices.Length;
             }
 
             // extrude middle vertex of center of first circle triangle fan
