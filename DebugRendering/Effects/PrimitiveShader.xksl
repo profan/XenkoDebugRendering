@@ -42,6 +42,8 @@
 
             streams.ColorTarget = lerp(streams.Color, float4(streams.Color.rgb, 0.0f), lx*ly*hx*hy);
 
+            // streams.ColorTarget = streams.Color;
+
         }
 
         float4 BitsToColor(float f)

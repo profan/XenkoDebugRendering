@@ -634,12 +634,12 @@ namespace DebugRendering
 
         const int CIRCLE_TESSELATION = 16;
         const int SPHERE_TESSELATION = 8;
-        const int CAPSULE_TESSELATION = 4;
+        const int CAPSULE_TESSELATION = 8;
         const int CYLINDER_TESSELATION = 16;
         const int CONE_TESSELATION = 8;
 
         /* mesh data we will use when stuffing things in vertex buffers */
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION, 0);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) plane = GenerateQuad(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) sphere = GenerateSphere(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = GenerateCube(DEFAULT_CUBE_SIZE);
@@ -852,18 +852,26 @@ namespace DebugRendering
         static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f)
         {
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + 1];
-            int[] indices = new int[tesselations * 3 + 3];
+            int hasUvSplits = (uvSplits > 0 ? 1 : 0);
+            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + (hasUvSplits + (hasUvSplits * uvSplits)))];
+            int[] indices = new int[tesselations * 3 + 3 + uvSplits * 3];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
             // center of our circle
             vertices[0].Position = new Vector3(0.0f, yOffset, 0.0f);
             vertices[0].TextureCoordinate = new Vector2(0.5f);
+            
+            // center, but with uv coords set
+            if (hasUvSplits > 0)
+            {
+                vertices[1].Position = new Vector3(0.0f, yOffset, 0.0f);
+                vertices[1].TextureCoordinate = new Vector2(1.0f);
+            }
 
             // in the XZ plane
             float curX = 0.0f, curZ = 0.0f;
-            for (int i = 1; i < tesselations+1; ++i)
+            for (int i = 1 + hasUvSplits; i < tesselations + (1 + hasUvSplits); ++i)
             {
                 curX = (float)(Math.Cos(i * radiansPerSegment) * (2.0f*radius)) / 2.0f;
                 curZ = (float)(Math.Sin(i * radiansPerSegment) * (2.0f*radius)) / 2.0f;
@@ -871,9 +879,9 @@ namespace DebugRendering
                 vertices[i].TextureCoordinate = new Vector2(1.0f);
             }
 
-            int curVert = 1;
+            int curVert = 1 + hasUvSplits;
             int lastIndex = 0;
-            for (int i = 0; i < tesselations*3; i += 3)
+            for (int i = 0; i < tesselations*3 - (3 * hasUvSplits); i += 3)
             {
                 indices[i] = 0;
                 indices[i + 1] = curVert;
@@ -883,9 +891,32 @@ namespace DebugRendering
             }
 
             // endpoint
-            indices[lastIndex] = 0;
-            indices[lastIndex + 1] = indices[lastIndex - 1];
-            indices[lastIndex + 2] = indices[1];
+            indices[lastIndex + 3] = 0;
+            indices[lastIndex + 4] = indices[lastIndex + 1 + hasUvSplits];
+            indices[lastIndex + 5] = indices[1];
+            lastIndex = lastIndex + 5;
+            // lastIndex++;
+
+            // draw uv lines
+            int newVert = tesselations + (1 + hasUvSplits);
+            int curNewIndex = ++lastIndex;
+            for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
+            {
+                if (hasUvSplits > 0)
+                {
+                    var splitMod = (v - 1) % (tesselations / uvSplits);
+                    var timeToSplit = (splitMod == 0);
+                    if (timeToSplit)
+                    {
+                        indices[curNewIndex] = 1;
+                        indices[curNewIndex + 1] = v;
+                        vertices[newVert] = vertices[v + 1];
+                        vertices[newVert].TextureCoordinate = new Vector2(0.5f);
+                        indices[curNewIndex + 2] = newVert++;
+                        curNewIndex += 3;
+                    }
+                }
+            }
 
             return (vertices, indices);
 
@@ -919,6 +950,7 @@ namespace DebugRendering
         static  (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16,  int uvSides = 4, int? uvSidesForCircle = null)
         {
 
+            var hasUvSplit = (uvSides > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + tesselations * 4];
@@ -942,19 +974,15 @@ namespace DebugRendering
             // generate sides, using our top and bottom circle triangle fans
             int curVert = capVertices.Length * 2;
             int curIndex = capIndices.Length * 2;
-            for (int i = 1; i < capVertices.Length; ++i)
+            for (int i = 1 + hasUvSplit; i < capVertices.Length - (uvSides * hasUvSplit); ++i)
             {
-                int sideModulo = (i - 1) % (tesselations / uvSides);
+                int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
                 if (sideModulo == 0)
                 {
 
                     vertices[curVert] = vertices[i];
                     vertices[curVert].TextureCoordinate = new Vector2(0.5f);
                     var ip = curVert++;
-
-                    vertices[curVert] = vertices[i + 1];
-                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
-                    var ip1= curVert++;
 
                     vertices[curVert] = vertices[i + capVertices.Length];
                     vertices[curVert].TextureCoordinate = new Vector2(0.5f);
@@ -1007,7 +1035,7 @@ namespace DebugRendering
         static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4)
         {
 
-            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, 0);
+            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits);
             VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length * 2];
             int[] indices = new int[bottomIndices.Length * 2];
 
@@ -1025,8 +1053,7 @@ namespace DebugRendering
 
             // extrude middle vertex of center of first circle triangle fan
             vertices[0].Position.Y = height;
-            vertices[0].TextureCoordinate.X = 1.0f;
-            vertices[0].TextureCoordinate.Y = 1.0f;
+            vertices[1].Position.Y = height;
 
             return (vertices, indices);
 
@@ -1036,7 +1063,7 @@ namespace DebugRendering
         {
 
             var (capVertices, capIndices) = GenerateCircle(radius, tesselation, 4, yOffset: height);
-            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselation, uvSides: uvSplits, uvSidesForCircle: 0);
+            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselation, uvSides: uvSplits);
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length + midVertices.Length];
             int[] indices = new int[capIndices.Length + midIndices.Length];
@@ -1382,7 +1409,7 @@ namespace DebugRendering
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
-            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
+            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.Default : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = FillMode.Wireframe;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
             pipelineState.State.BlendState = BlendStates.NonPremultiplied;
