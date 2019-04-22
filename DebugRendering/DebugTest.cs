@@ -6,6 +6,7 @@ using Xenko.Core.Collections;
 using Xenko.Core.Mathematics;
 using Xenko.Core.Threading;
 using Xenko.Engine;
+using Xenko.Physics;
 
 namespace DebugRendering 
 {
@@ -47,6 +48,8 @@ namespace DebugRendering
         FastList<Vector3> primitiveVelocities = new FastList<Vector3>(InitialNumPrimitives);
         FastList<Vector3> primitiveRotVelocities = new FastList<Vector3>(InitialNumPrimitives);
         FastList<Color> primitiveColors = new FastList<Color>(InitialNumPrimitives);
+
+        public CameraComponent CurrentCamera;
 
         private void InitializePrimitives(int from, int to)
         {
@@ -96,7 +99,7 @@ namespace DebugRendering
 
             debugSystem = new DebugSystem(Services);
             debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.MaxPrimitives = currentNumPrimitives*2 + 3;
+            debugSystem.MaxPrimitives = currentNumPrimitives*2 + 6;
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
@@ -160,7 +163,7 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                debugSystem.MaxPrimitives = newAmountOfBoxes*2 + 3;
+                debugSystem.MaxPrimitives = newAmountOfBoxes*2 + 6;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
@@ -285,7 +288,7 @@ namespace DebugRendering
                         debugSystem.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Arrow:
-                        debugSystem.DrawArrow(position, velocity, color, 0.0f, useDepthTesting);
+                        debugSystem.DrawArrow(position, velocity, color: color, duration: 0.0f, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.None:
                         break;
@@ -296,6 +299,24 @@ namespace DebugRendering
             debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), color: Color.White);
             debugSystem.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), color: Color.White);
             debugSystem.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
+
+
+            if (Input.IsMouseButtonDown(Xenko.Input.MouseButton.Left)) {
+                var clickPos = Input.MousePosition;
+                var result = Utils.ScreenPositionToWorldPositionRaycast(clickPos, CurrentCamera, this.GetSimulation());
+                if (result.Succeeded)
+                {
+                    CurrentCamera.Entity.Transform.UpdateLocalMatrix();
+                    CurrentCamera.Entity.Transform.UpdateWorldMatrix();
+                    var cameraWorldPos = CurrentCamera.Entity.Transform.WorldMatrix.TranslationVector;
+                    var cameraUp = CurrentCamera.Entity.Transform.LocalMatrix.Up;
+                    var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
+                    debugSystem.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 0.0f);
+                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 0.0f);
+                }
+            }
+
+            debugSystem.DrawCone(new Vector3(0, 0.5f, 0), 2.0f, 0.5f, color: Color.HotPink);
 
         }
 
