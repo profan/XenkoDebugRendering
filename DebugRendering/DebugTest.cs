@@ -30,14 +30,14 @@ namespace DebugRendering
         }
 
         const int ChangePerSecond = 8192 + 2048;
-        const int InitialNumPrimitives = 32768;
+        const int InitialNumPrimitives = 1024;
         const int AreaSize = 64;
         
         [DataMemberIgnore]
         DebugSystem debugSystem;
 
         int minNumberofPrimitives = 0;
-        int maxNumbeOfPrimitives = InitialNumPrimitives * 10;
+        int maxNumbeOfPrimitives = 327680;
         int currentNumPrimitives = InitialNumPrimitives;
         CurRenderMode mode = CurRenderMode.All;
         bool useDepthTesting = true;
@@ -301,7 +301,7 @@ namespace DebugRendering
             debugSystem.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
 
 
-            if (Input.IsMouseButtonDown(Xenko.Input.MouseButton.Left)) {
+            if (Input.IsMouseButtonPressed(Xenko.Input.MouseButton.Left)) {
                 var clickPos = Input.MousePosition;
                 var result = Utils.ScreenPositionToWorldPositionRaycast(clickPos, CurrentCamera, this.GetSimulation());
                 if (result.Succeeded)
@@ -311,8 +311,9 @@ namespace DebugRendering
                     var cameraWorldPos = CurrentCamera.Entity.Transform.WorldMatrix.TranslationVector;
                     var cameraUp = CurrentCamera.Entity.Transform.LocalMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
-                    debugSystem.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 0.0f);
-                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 0.0f);
+                    debugSystem.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 1.0f);
+                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 1.0f);
+                    System.Diagnostics.Debug.WriteLine(result.Normal);
                 }
             }
 
