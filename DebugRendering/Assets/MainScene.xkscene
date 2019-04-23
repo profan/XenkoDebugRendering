@@ -13,6 +13,7 @@ Hierarchy:
         - ref!! 12efe63c-e0ff-4719-b400-311cc588d037
         - ref!! 3b5afce7-2ef8-4f70-8bcd-78fd828aa690
         - ref!! c06fdf2f-ca33-408c-b897-c40899b42061
+        - ref!! b5fcbba5-3203-403b-8450-90d35337241b
     Parts:
         -   Entity:
                 Id: 0109b3e4-fda4-439f-a48a-46a990c658f7
@@ -103,10 +104,10 @@ Hierarchy:
                         CcdSweptSphereRadius: 0.0
                         IsTrigger: false
                         ColliderShapes:
-                            8c110a5e928a8648a6b2f5ab891998dd: !BoxColliderShapeDesc
+                            764563240595697bf1747d9653fc3d82: !BoxColliderShapeDesc
                                 Is2D: false
-                                Size: {X: 10.0, Y: 0.0, Z: 10.0}
-                                LocalOffset: {X: 0.0, Y: 0.0, Z: 0.0}
+                                Size: {X: 10.0, Y: 1.0, Z: 10.0}
+                                LocalOffset: {X: 0.0, Y: -0.5, Z: 0.0}
                                 LocalRotation: {X: 0.0, Y: 0.0, Z: 0.0, W: 1.0}
         -   Entity:
                 Id: 51ad9aae-041e-4329-935f-4ec7d441b720
@@ -149,6 +150,35 @@ Hierarchy:
                         Id: 9e10ebb7-82a7-414a-8c3b-c65220bd8fae
                         Type: !LightSkybox
                             Skybox: 1089ff84-26ba-4502-81e6-c008f01774ad:Skybox
+        -   Entity:
+                Id: b5fcbba5-3203-403b-8450-90d35337241b
+                Name: Cube
+                Components:
+                    4921e05342bb98321a778143b2248dc8: !TransformComponent
+                        Id: 793a5785-4b8a-4b7d-8e40-8790d5f032f2
+                        Position: {X: 0.0, Y: 2.0, Z: 0.0}
+                        Rotation: {X: 0.0, Y: 0.0, Z: 0.0, W: 1.0}
+                        Scale: {X: 1.0, Y: 1.0, Z: 1.0}
+                        Children: {}
+                    d5fc2b2af9b981419ea39dc59c9b3089: !ModelComponent
+                        Id: 40ef9b87-ec64-415a-a248-4d833efaa404
+                        Model: 24c8bf21-8408-40d5-a6e7-fc9323ae0a4c:Cube
+                        Materials: {}
+                    2840ef8be888c7693f8a0d2dc303f38b: !StaticColliderComponent
+                        Id: c497842f-ffbe-4ff0-a06e-f703168552d2
+                        CanSleep: false
+                        Restitution: 0.0
+                        Friction: 0.5
+                        RollingFriction: 0.0
+                        CcdMotionThreshold: 0.0
+                        CcdSweptSphereRadius: 0.0
+                        IsTrigger: false
+                        ColliderShapes:
+                            cb503a320131ea60e8a0b6389a9ee183: !BoxColliderShapeDesc
+                                Is2D: false
+                                Size: {X: 1.0, Y: 1.0, Z: 1.0}
+                                LocalOffset: {X: 0.0, Y: 0.0, Z: 0.0}
+                                LocalRotation: {X: 0.0, Y: 0.0, Z: 0.0, W: 1.0}
         -   Entity:
                 Id: c06fdf2f-ca33-408c-b897-c40899b42061
                 Name: Profiler
