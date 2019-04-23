@@ -314,7 +314,7 @@ namespace DebugRendering
                     var cameraUp = CurrentCamera.Entity.Transform.LocalMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
                     debugSystem.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 1.0f);
-                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f / 2, coneRadius: 0.125f / 2, color: Color.HotPink, duration: 1.0f);
+                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 1.0f);
                     System.Diagnostics.Debug.WriteLine(result.Normal);
                 }
             }
