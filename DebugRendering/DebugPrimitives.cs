@@ -106,7 +106,8 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCube(float size = 1.0f) {
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCube(float size = 1.0f)
+        {
 
             var cubeMeshData = GeometricPrimitive.Cube.New(size);
             VertexPositionTexture[] vertices = new VertexPositionTexture[cubeMeshData.Vertices.Length];
@@ -118,7 +119,8 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16, int uvSplits = 4) {
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16, int uvSplits = 4)
+        {
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[1];
             int[] indices = new int[1];
