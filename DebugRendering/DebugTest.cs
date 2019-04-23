@@ -303,7 +303,8 @@ namespace DebugRendering
             debugSystem.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
 
 
-            if (Input.IsMouseButtonPressed(Xenko.Input.MouseButton.Left)) {
+            if (Input.IsMouseButtonPressed(Xenko.Input.MouseButton.Left))
+            {
                 var clickPos = Input.MousePosition;
                 var result = Utils.ScreenPositionToWorldPositionRaycast(clickPos, CurrentCamera, this.GetSimulation());
                 if (result.Succeeded)
