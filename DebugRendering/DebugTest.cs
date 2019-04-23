@@ -34,13 +34,14 @@ namespace DebugRendering
         const int AreaSize = 64;
         
         [DataMemberIgnore]
-        DebugSystem debugSystem;
+        DebugSystem DebugDraw; // this is here to make it look like it should when properly integrated
 
         int minNumberofPrimitives = 0;
         int maxNumbeOfPrimitives = 327680;
         int currentNumPrimitives = InitialNumPrimitives;
         CurRenderMode mode = CurRenderMode.All;
         bool useDepthTesting = true;
+        bool useWireframe = true;
         bool running = true;
 
         FastList<Vector3> primitivePositions = new FastList<Vector3>(InitialNumPrimitives);
@@ -97,10 +98,10 @@ namespace DebugRendering
 
         public override void Start() {
 
-            debugSystem = new DebugSystem(Services);
-            debugSystem.PrimitiveColor = Color.Green;
-            debugSystem.MaxPrimitives = currentNumPrimitives*2 + 6;
-            debugSystem.MaxPrimitivesWithLifetime = currentNumPrimitives*2 + 6;
+            DebugDraw = new DebugSystem(Services);
+            DebugDraw.PrimitiveColor = Color.Green;
+            DebugDraw.MaxPrimitives = currentNumPrimitives*2 + 6;
+            DebugDraw.MaxPrimitivesWithLifetime = currentNumPrimitives*2 + 6;
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
@@ -109,16 +110,16 @@ namespace DebugRendering
             {
                 var newDebugRenderFeature = new DebugRenderFeature();
                 SceneSystem.GraphicsCompositor.RenderFeatures.Add(newDebugRenderFeature);
-                debugSystem.PrimitiveRenderer = newDebugRenderFeature;
+                DebugDraw.PrimitiveRenderer = newDebugRenderFeature;
             } else
             {
-                debugSystem.PrimitiveRenderer = debugRenderFeatures.First();
+                DebugDraw.PrimitiveRenderer = debugRenderFeatures.First();
             }
 
             // keep DebugText visible in release builds too
             DebugText.Visible = true;
-            Services.AddService(debugSystem);
-            Game.GameSystems.Add(debugSystem);
+            Services.AddService(DebugDraw);
+            Game.GameSystems.Add(DebugDraw);
 
             InitializePrimitives(0, currentNumPrimitives);
 
@@ -150,22 +151,29 @@ namespace DebugRendering
             {
                 mode = (CurRenderMode)(((int)mode + 1) % ((int)CurRenderMode.None + 1));
             }
-            
-            if (Input.IsKeyPressed(Xenko.Input.Keys.Space))
-            {
-                running = !running;
-            }
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.LeftCtrl))
             {
                 useDepthTesting = !useDepthTesting;
             }
 
+            if (Input.IsKeyPressed(Xenko.Input.Keys.Tab))
+            {
+                useWireframe = !useWireframe;
+                if (useWireframe) DebugDraw.RenderMode = DebugSystem.RenderingMode.Wireframe;
+                else DebugDraw.RenderMode = DebugSystem.RenderingMode.Solid;
+            }
+
+            if (Input.IsKeyPressed(Xenko.Input.Keys.Space))
+            {
+                running = !running;
+            }
+
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                debugSystem.MaxPrimitivesWithLifetime = newAmountOfBoxes*2 + 6;
-                debugSystem.MaxPrimitives = newAmountOfBoxes*2 + 6;
+                DebugDraw.MaxPrimitivesWithLifetime = newAmountOfBoxes*2 + 6;
+                DebugDraw.MaxPrimitives = newAmountOfBoxes*2 + 6;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
@@ -176,7 +184,8 @@ namespace DebugRendering
             DebugText.Print($"Primitive Count: {currentNumPrimitives} (scrollwheel to adjust)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 32));
             DebugText.Print($" - Render Mode: {mode} (left alt to switch)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 48));
             DebugText.Print($" - Depth Testing: {(useDepthTesting ? "On " : "Off")} (left ctrl to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 64));
-            DebugText.Print($" - State: {(running ? "Simulating" : "Paused")} (space to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 80));
+            DebugText.Print($" - Fillmode: {(useWireframe ? "Wireframe" : "Solid")} (tab to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 80));
+            DebugText.Print($" - State: {(running ? "Simulating" : "Paused")} (space to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 96));
 
             if (running)
             {
@@ -220,7 +229,6 @@ namespace DebugRendering
             }
 
             int currentShape = 0;
-            var ds = debugSystem;
 
             for (int i = 0; i < currentNumPrimitives; ++i)
             {
@@ -237,28 +245,28 @@ namespace DebugRendering
                         switch (currentShape++)
                         {
                             case 0: // sphere
-                                debugSystem.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
                                 break;
                             case 1: // cube
-                                debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 2: // capsule
-                                debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 3: // cylinder
-                                debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 4: // cone
-                                debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 5: // ray
-                                debugSystem.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
                                 break;
                             case 6: // quad
-                                debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
                                 break;
                             case 7: // circle
-                                debugSystem.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
                                 currentShape = 0;
                                 break;
                             default:
@@ -266,31 +274,31 @@ namespace DebugRendering
                         }
                         break;
                     case CurRenderMode.Quad:
-                        debugSystem.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Circle:
-                        debugSystem.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Sphere:
-                        debugSystem.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Cube:
-                        debugSystem.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Capsule:
-                        debugSystem.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Cylinder:
-                        debugSystem.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Cone:
-                        debugSystem.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Ray:
-                        debugSystem.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
                         break;
                     case CurRenderMode.Arrow:
-                        debugSystem.DrawArrow(position, velocity, color: color, duration: 0.0f, depthTest: useDepthTesting);
+                        DebugDraw.DrawArrow(position, velocity, color: color, duration: 0.0f, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.None:
                         break;
@@ -298,9 +306,9 @@ namespace DebugRendering
             }
 
             // CUBE OF ORIGIN!!
-            debugSystem.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), color: Color.White);
-            debugSystem.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), color: Color.White);
-            debugSystem.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
+            DebugDraw.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), color: Color.White);
+            DebugDraw.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), color: Color.White);
+            DebugDraw.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
 
 
             if (Input.IsMouseButtonPressed(Xenko.Input.MouseButton.Left))
@@ -314,13 +322,13 @@ namespace DebugRendering
                     var cameraWorldPos = CurrentCamera.Entity.Transform.WorldMatrix.TranslationVector;
                     var cameraUp = CurrentCamera.Entity.Transform.LocalMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
-                    debugSystem.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 1.0f);
-                    debugSystem.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 1.0f);
+                    DebugDraw.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 1.0f);
+                    DebugDraw.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 1.0f);
                     System.Diagnostics.Debug.WriteLine(result.Normal);
                 }
             }
 
-            debugSystem.DrawCone(new Vector3(0, 0.5f, 0), 2.0f, 0.5f, color: Color.HotPink);
+            DebugDraw.DrawCone(new Vector3(0, 0.5f, 0), 2.0f, 0.5f, color: Color.HotPink);
 
         }
 

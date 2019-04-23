@@ -17,6 +17,8 @@
         StructuredBuffer<ColorData> Colors;
         int InstanceOffset;
 
+        float LineWidthMultiplier = 1.0f;
+
         stream float3 Position : POSITION;
         stream float2 Uv : TEXCOORD0;
 
@@ -32,7 +34,7 @@
 
             // streams.ColorTarget = streams.Color;
 
-            float lineWidth = 0.001f;
+            float lineWidth = 0.001f * LineWidthMultiplier;
 
             float2 uv = streams.Uv;
             float lx = step(lineWidth, uv.x);
