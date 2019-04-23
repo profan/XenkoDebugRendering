@@ -202,6 +202,12 @@ namespace DebugRendering
         /* FIXME: this is set from outside atm, bit of a hack */
         public DebugRenderFeature PrimitiveRenderer;
 
+        public Color PrimitiveColor { get { return primitiveColor; } set { primitiveColor = value; } }
+        private Color primitiveColor = Color.LightGreen;
+
+        public int MaxPrimitives { get; set; } = 100;
+        public int MaxPrimitivesWithLifetime { get; set; } = 100;
+
         public DebugSystem(IServiceRegistry registry) : base(registry)
         {
             Enabled = true;
@@ -235,7 +241,7 @@ namespace DebugRendering
 
         public void DrawLine(Vector3 start, Vector3 end, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawLine { Start = start, End = end, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawLine { Start = start, End = end, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
@@ -247,82 +253,76 @@ namespace DebugRendering
             {
                 ref var v1 = ref vertices[i];
                 ref var v2 = ref vertices[i];
-                DrawLine(v1, v2, color ?? PrimitiveColor, duration, depthTest);
+                DrawLine(v1, v2, color ?? primitiveColor, duration, depthTest);
             }
         }
 
         public void DrawRay(Vector3 start, Vector3 dir, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawLine(start, start + dir, color == default ? PrimitiveColor : color, duration, depthTest);
+            DrawLine(start, start + dir, color == default ? primitiveColor : color, duration, depthTest);
         }
 
         public void DrawArrow(Vector3 from, Vector3 to, float coneHeight = 1.0f, float coneRadius = 0.5f, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
             DrawRay(from, to, color, duration, depthTest);
-            DrawCone(from + to, coneHeight, coneRadius, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color == default ? PrimitiveColor : color, duration, depthTest);
+            DrawCone(from + to, coneHeight, coneRadius, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color == default ? primitiveColor : color, duration, depthTest);
         }
 
         public void DrawSphere(Vector3 position, float radius, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
         public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
         public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
         public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
         public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
         public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
         public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
         public void DrawCircle(Vector3 position, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? primitiveColor : color };
             var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
-
-        public ref Color PrimitiveColor { get { return ref primitiveColor; } }
-        private Color primitiveColor = Color.LightGreen;
-
-        public int MaxPrimitives { get; set; } = 100;
-        public int MaxPrimitivesWithLifetime { get; set; } = 100;
 
         public override void Update(GameTime gameTime)
         {
