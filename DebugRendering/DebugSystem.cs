@@ -437,6 +437,8 @@ namespace DebugRendering
     public class DebugRenderFeature : RootRenderFeature
     {
 
+        public override Type SupportedRenderObjectType => typeof(DummyDebugRenderObject);
+
         internal struct Primitives
         {
 
@@ -473,8 +475,6 @@ namespace DebugRendering
             public Color Color;
 
         }
-
-        public override Type SupportedRenderObjectType => typeof(DummyDebugRenderObject);
 
         internal enum RenderableType : byte
         {
