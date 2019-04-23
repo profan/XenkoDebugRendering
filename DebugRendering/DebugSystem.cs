@@ -711,7 +711,7 @@ namespace DebugRendering
         private readonly FastList<LineVertex> lineVertices = new FastList<LineVertex>(1);
 
         /* state set from outside */
-        FillMode currentFillMode = FillMode.Wireframe;
+        private FillMode currentFillMode = FillMode.Wireframe;
 
         public DebugRenderFeature()
         {
