@@ -153,7 +153,6 @@ namespace DebugRendering
         {
             public Vector3 Start;
             public Vector3 End;
-            public Quaternion Rotation;
             public Color Color;
         }
 
