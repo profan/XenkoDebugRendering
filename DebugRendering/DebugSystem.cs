@@ -198,9 +198,6 @@ namespace DebugRendering
             public Color Color;
         }
 
-        static private readonly Comparer<DebugRenderable> renderableComparer =
-            Comparer<DebugRenderable>.Create((a, b) => a.Lifetime > b.Lifetime ? 1 : a.Lifetime < b.Lifetime ? -1 : 0);
-
         private readonly FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
         private readonly FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
 
