@@ -37,6 +37,11 @@ namespace DebugRendering {
         public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f)
         {
 
+            if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
+            {
+                throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
+            }
+
             int hasUvSplits = (uvSplits > 0 ? 1 : 0);
             VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + (hasUvSplits + (hasUvSplits * uvSplits)))];
             int[] indices = new int[tesselations * 3 + 3 + uvSplits * 3];
@@ -131,7 +136,13 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 4, int? uvSidesForCircle = null) {
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 4, int? uvSidesForCircle = null)
+        {
+
+            if (uvSides != 0 && tesselations % uvSides != 0) // FIXME: this can read a lot nicer i think?
+            {
+                throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
+            }
 
             var hasUvSplit = (uvSides > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
@@ -218,6 +229,16 @@ namespace DebugRendering {
         public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4, int uvSplitsBottom = 0)
         {
 
+            if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
+            {
+                throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
+            }
+
+            if (uvSplitsBottom != 0 && tesselations % uvSplitsBottom != 0) // FIXME: this can read a lot nicer i think?
+            {
+                throw new ArgumentException("expected the desired number of uv splits for the bottom to be a divisor of the number of tesselations");
+            }
+
             var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits);
             var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom);
             VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length * 2];
@@ -253,11 +274,16 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselation, int uvSplits = 4)
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations, int uvSplits = 4)
         {
 
-            var (capVertices, capIndices) = GenerateCircle(radius, tesselation, 4, yOffset: height);
-            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselation, uvSides: uvSplits);
+            if (tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
+            {
+                throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
+            }
+
+            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSplits: 4, yOffset: height);
+            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselations, uvSides: uvSplits, uvSidesForCircle: 0);
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length + midVertices.Length];
             int[] indices = new int[capIndices.Length + midIndices.Length];
