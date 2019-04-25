@@ -317,12 +317,10 @@ namespace DebugRendering
                 var result = Utils.ScreenPositionToWorldPositionRaycast(clickPos, CurrentCamera, this.GetSimulation());
                 if (result.Succeeded)
                 {
-                    CurrentCamera.Entity.Transform.UpdateLocalMatrix();
-                    CurrentCamera.Entity.Transform.UpdateWorldMatrix();
                     var cameraWorldPos = CurrentCamera.Entity.Transform.WorldMatrix.TranslationVector;
-                    var cameraUp = CurrentCamera.Entity.Transform.LocalMatrix.Up;
+                    var cameraWorldUp = CurrentCamera.Entity.Transform.WorldMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
-                    DebugDraw.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
+                    DebugDraw.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraWorldUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
                     DebugDraw.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 5.0f);
                     System.Diagnostics.Debug.WriteLine(result.Normal);
                 }

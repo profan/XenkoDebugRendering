@@ -1,31 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Xenko.Engine" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles;analyzers" />
-
     <PackageReference Include="Xenko.Video" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles;analyzers" />
     <PackageReference Include="Xenko.Physics" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles;analyzers" />
     <PackageReference Include="Xenko.Navigation" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles;analyzers" />
     <PackageReference Include="Xenko.Particles" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles;analyzers" />
     <PackageReference Include="Xenko.UI" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles;analyzers" />
     <PackageReference Include="Xenko.Core" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles;analyzers" />
-
     <PackageReference Include="Xenko.Core.Assets.CompilerApp" Version="3.1.0.1-beta02-0550" PrivateAssets="contentfiles; analyzers" IncludeAssets="build" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Effects\LinePrimitiveShader.cs">
       <DesignTime>True</DesignTime>
@@ -40,7 +34,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <None Update="Effects\LinePrimitiveShader.xksl">
       <Generator>XenkoShaderKeyGenerator</Generator>
