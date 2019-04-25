@@ -44,7 +44,7 @@ namespace DebugRendering {
 
             int hasUvSplits = (uvSplits > 0 ? 1 : 0);
             VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + (hasUvSplits + (hasUvSplits * uvSplits)))];
-            int[] indices = new int[tesselations * 3 + 3 + uvSplits * 3];
+            int[] indices = new int[tesselations * 3 + 3 + (uvSplits * 3)];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -147,8 +147,8 @@ namespace DebugRendering {
             var hasUvSplit = (uvSides > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + tesselations * 4];
-            int[] indices = new int[capIndices.Length * 2 + tesselations * 6];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + (tesselations * 2) + (tesselations * uvSides)];
+            int[] indices = new int[capIndices.Length * 2 + (tesselations*6)];
 
             // copy vertices
             for (int i = 0; i < capVertices.Length; ++i)
