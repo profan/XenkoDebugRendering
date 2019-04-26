@@ -160,8 +160,9 @@ namespace DebugRendering
             if (Input.IsKeyPressed(Xenko.Input.Keys.Tab))
             {
                 useWireframe = !useWireframe;
-                if (useWireframe) DebugDraw.RenderMode = DebugSystem.RenderingMode.Wireframe;
-                else DebugDraw.RenderMode = DebugSystem.RenderingMode.Solid;
+                DebugDraw.RenderMode = (useWireframe) ?
+                    DebugSystem.RenderingMode.Wireframe :
+                    DebugSystem.RenderingMode.Solid;
             }
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.Space))
@@ -181,11 +182,21 @@ namespace DebugRendering
                 currentNumPrimitives = newAmountOfBoxes;
             }
 
-            DebugText.Print($"Primitive Count: {currentNumPrimitives} (scrollwheel to adjust)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 32));
-            DebugText.Print($" - Render Mode: {mode} (left alt to switch)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 48));
-            DebugText.Print($" - Depth Testing: {(useDepthTesting ? "On " : "Off")} (left ctrl to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 64));
-            DebugText.Print($" - Fillmode: {(useWireframe ? "Wireframe" : "Solid")} (tab to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 80));
-            DebugText.Print($" - State: {(running ? "Simulating" : "Paused")} (space to toggle)", new Int2((int)Input.Mouse.SurfaceSize.X - 384, 96));
+            int textPositionX = (int)Input.Mouse.SurfaceSize.X - 384;
+            DebugText.Print($"Primitive Count: {currentNumPrimitives} (scrollwheel to adjust)",
+                new Int2(textPositionX, 32));
+
+            DebugText.Print($" - Render Mode: {mode} (left alt to switch)",
+                new Int2(textPositionX, 48));
+
+            DebugText.Print($" - Depth Testing: {(useDepthTesting ? "On " : "Off")} (left ctrl to toggle)",
+                new Int2(textPositionX, 64));
+
+            DebugText.Print($" - Fillmode: {(useWireframe ? "Wireframe" : "Solid")} (tab to toggle)",
+                new Int2(textPositionX, 80));
+
+            DebugText.Print($" - State: {(running ? "Simulating" : "Paused")} (space to toggle)",
+                new Int2(textPositionX, 96));
 
             if (running)
             {
