@@ -12,7 +12,6 @@ using Xenko.Core.Mathematics;
 using Xenko.Core.Threading;
 using Xenko.Games;
 using Xenko.Graphics;
-using Xenko.Graphics.GeometricPrimitives;
 using Xenko.Rendering;
 
 using Buffer = Xenko.Graphics.Buffer;
