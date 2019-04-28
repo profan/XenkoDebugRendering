@@ -274,26 +274,166 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float height, float radius, int tesselations, int uvSplits = 4)
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float length, float radius, int tesselation, int uvSplits = 4)
         {
 
-            if (tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
+            if (uvSplits != 0 && tesselation % uvSplits != 0) // FIXME: this can read a lot nicer i think?
             {
                 throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
             }
 
-            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSplits: 4, yOffset: height);
-            var (midVertices, midIndices) = GenerateCylinder(height, radius, tesselations, uvSides: uvSplits, uvSidesForCircle: 0);
+            if (tesselation < 3) tesselation = 3;
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length + midVertices.Length];
-            int[] indices = new int[capIndices.Length + midIndices.Length];
+            int verticalSegments = 2 * tesselation;
+            int horizontalSegments = 4 * tesselation;
+            int hasUvSplit = (uvSplits > 0) ? 1 : 0;
 
-            /*
-            var capsuleData = GeometricPrimitive.Capsule.New(height, radius, tesselation);
-            VertexPositionTexture[] vertices = new VertexPositionTexture[capsuleData.Vertices.Length];
-            int[] indices = new int[capsuleData.Indices.Length];
-            CopyFromGeometricPrimitive(capsuleData, ref vertices, ref indices);
-            */
+            // FIXME: i tried figuring out a closed form solution for this bugger here, but i feel like i'm missing something crucial...
+            //  it basically is just here to calculate how many extra vertices are needed to create the wireframe topology we want
+            // if *you* can figure out a closed form solution, have at it! you are very welcome!
+            int extraVertexCount = 0;
+            for (int i = 0; i < verticalSegments - 1; i++) 
+            {
+                for (int j = 0; j <= horizontalSegments; j++)
+                {
+                    int vertModulo = (i - 1) % (verticalSegments / uvSplits);
+                    int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                    if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                    {
+                        extraVertexCount += 4;
+                    } else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0))
+                    {
+                        extraVertexCount += 2;
+                    }
+                }
+            }
+
+            var vertices = new VertexPositionTexture[verticalSegments * (horizontalSegments + 1) + extraVertexCount];
+            var indices = new int[(verticalSegments - 1) * (horizontalSegments + 1) * 6];
+            
+            var vertexCount = 0;
+            // Create rings of vertices at progressively higher latitudes.
+            for (int i = 0; i < verticalSegments; i++) {
+                float deltaY;
+                float latitude;
+
+                if (i < verticalSegments / 2) {
+                    deltaY = -length / 2;
+                    latitude = (float)((i * Math.PI / (verticalSegments - 2)) - Math.PI / 2.0);
+                } else {
+                    deltaY = length / 2;
+                    latitude = (float)(((i - 1) * Math.PI / (verticalSegments - 2)) - Math.PI / 2.0);
+                }
+
+                var dy = (float)Math.Sin(latitude);
+                var dxz = (float)Math.Cos(latitude);
+
+                // Create a single ring of vertices at this latitude.
+                for (int j = 0; j <= horizontalSegments; j++) {
+
+                    var longitude = (float)(j * 2.0 * Math.PI / horizontalSegments);
+                    var dx = (float)Math.Sin(longitude);
+                    var dz = (float)Math.Cos(longitude);
+
+                    dx *= dxz;
+                    dz *= dxz;
+
+                    var normal = new Vector3(dx, dy, dz);
+                    var textureCoordinate = new Vector2(0.5f);
+                    var position = radius * normal + new Vector3(0, deltaY, 0);
+
+                    vertices[vertexCount++] = new VertexPositionTexture(position, textureCoordinate);
+                }
+            }
+
+            // Fill the index buffer with triangles joining each pair of latitude rings.
+            int stride = horizontalSegments + 1;
+
+            int indexCount = 0;
+            int newVertexCount = vertexCount;
+            for (int i = 0; i < verticalSegments - 1; i++) {
+                for (int j = 0; j <= horizontalSegments; j++) {
+                    int nextI = i + 1;
+                    int nextJ = (j + 1) % stride;
+                    int vertModulo = (i - 1) % (verticalSegments / uvSplits);
+                    int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                    if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                    {
+
+                        vertices[newVertexCount] = vertices[(i * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        indices[indexCount++] = (i * stride + nextJ);
+
+
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+                    else if (hasUvSplit > 0 && vertModulo == 0)
+                    {
+
+                        indices[indexCount++] = (i * stride + j);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+                    else if (hasUvSplit > 0 && horizModulo == 0)
+                    {
+
+                        vertices[newVertexCount] = vertices[(i * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        indices[indexCount++] = (i * stride + nextJ);
+
+
+                        indices[indexCount++] = (i * stride + nextJ);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+                    else
+                    {
+
+                        indices[indexCount++] = (i * stride + j);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        indices[indexCount++] = (i * stride + nextJ);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+
+                }
+            }
 
             return (vertices, indices);
 
