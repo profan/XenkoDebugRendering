@@ -96,7 +96,8 @@ namespace DebugRendering
             }
         }
 
-        public override void Start() {
+        public override void Start()
+        {
 
             DebugDraw = new DebugSystem(Services);
             DebugDraw.PrimitiveColor = Color.Green;
@@ -141,7 +142,8 @@ namespace DebugRendering
             }
         }
 
-        public override void Update() {
+        public override void Update()
+        {
 
             var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
             
