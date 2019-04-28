@@ -351,8 +351,10 @@ namespace DebugRendering {
 
             int indexCount = 0;
             int newVertexCount = vertexCount;
-            for (int i = 0; i < verticalSegments - 1; i++) {
-                for (int j = 0; j <= horizontalSegments; j++) {
+            for (int i = 0; i < verticalSegments - 1; i++)
+            {
+                for (int j = 0; j <= horizontalSegments; j++)
+                {
                     int nextI = i + 1;
                     int nextJ = (j + 1) % stride;
                     int vertModulo = (i - 1) % (verticalSegments / uvSplits);
