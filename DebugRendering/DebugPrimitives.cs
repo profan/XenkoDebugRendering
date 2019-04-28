@@ -147,7 +147,7 @@ namespace DebugRendering {
             var hasUvSplit = (uvSides > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + (tesselations * 2) + (tesselations * uvSides)];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + (tesselations * 2) + ((tesselations / uvSides)+2) * 4];
             int[] indices = new int[capIndices.Length * 2 + (tesselations*6)];
 
             // copy vertices
