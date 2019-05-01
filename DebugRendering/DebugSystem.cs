@@ -1176,7 +1176,7 @@ namespace DebugRendering
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
-            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.Default : DepthStencilStates.None;
+            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = currentFillMode;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
             pipelineState.State.BlendState = BlendStates.NonPremultiplied;
