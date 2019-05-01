@@ -994,6 +994,7 @@ namespace DebugRendering
                             break;
                         case RenderableType.Sphere:
                             instances.Items[offsets.Spheres].Position = cmd.SphereData.Position;
+                            instances.Items[offsets.Spheres].Rotation = Quaternion.Identity;
                             instances.Items[offsets.Spheres].Scale = new Vector3(cmd.SphereData.Radius * 2);
                             instances.Items[offsets.Spheres].Color = cmd.SphereData.Color;
                             offsets.Spheres++;
