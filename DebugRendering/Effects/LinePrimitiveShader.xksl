@@ -8,12 +8,10 @@
 
         override stage void VSMain() {
             streams.ShadingPosition = mul(float4(streams.Position, 1), ViewProjection);
-            streams.Color = streams.Color;
         }
 
         override stage void PSMain() {
             streams.ColorTarget = streams.Color;
-            streams.ColorTarget.a = 1.0f;
         }
 
     };

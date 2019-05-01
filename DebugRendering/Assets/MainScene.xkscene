@@ -13,6 +13,7 @@ Hierarchy:
         - ref!! 12efe63c-e0ff-4719-b400-311cc588d037
         - ref!! 3b5afce7-2ef8-4f70-8bcd-78fd828aa690
         - ref!! c06fdf2f-ca33-408c-b897-c40899b42061
+        - ref!! b5fcbba5-3203-403b-8450-90d35337241b
     Parts:
         -   Entity:
                 Id: 0109b3e4-fda4-439f-a48a-46a990c658f7
@@ -53,6 +54,19 @@ Hierarchy:
                         Id: 9c613689-d583-4e08-8fd0-b5b6d4da0c4a
                         Model: f47222ba-85a7-44f8-8246-2f5c7655a4a9:Sphere
                         Materials: {}
+                    fb72cbaf39ab708c8cae165775b150b7: !StaticColliderComponent
+                        Id: 4b68cbbf-1eaf-4039-9071-e16960c8803c
+                        CanSleep: false
+                        Restitution: 0.0
+                        Friction: 0.5
+                        RollingFriction: 0.0
+                        CcdMotionThreshold: 0.0
+                        CcdSweptSphereRadius: 0.0
+                        IsTrigger: false
+                        ColliderShapes:
+                            4afdf02d20d3dc91461fc2973ba142c5: !SphereColliderShapeDesc
+                                Is2D: false
+                                LocalOffset: {X: 0.0, Y: 0.0, Z: 0.0}
         -   Entity:
                 Id: 3b5afce7-2ef8-4f70-8bcd-78fd828aa690
                 Name: DebugTest
@@ -65,6 +79,7 @@ Hierarchy:
                         Children: {}
                     e5f20a3b379f09327abf4c384fbdb590: !DebugRendering.DebugTest,DebugRendering
                         Id: d0945869-7831-40d9-aa0b-9be2907c0bff
+                        CurrentCamera: ref!! 42ec571c-6a76-4fef-9dd6-062e00e050f8
         -   Entity:
                 Id: 3d3685be-c98c-44b0-a9ee-b5034e014981
                 Name: Ground
@@ -79,6 +94,21 @@ Hierarchy:
                         Id: b60c9e03-eb26-44af-88bf-20230817ec8f
                         Model: 7132114e-1665-423e-bf00-d8ac009df2e6:Ground
                         Materials: {}
+                    c5dcd0ccb0bf5f423483d473dcdc9378: !StaticColliderComponent
+                        Id: 21c7dd63-b28a-4133-9ea2-f3a11530da62
+                        CanSleep: false
+                        Restitution: 0.0
+                        Friction: 0.5
+                        RollingFriction: 0.0
+                        CcdMotionThreshold: 0.0
+                        CcdSweptSphereRadius: 0.0
+                        IsTrigger: false
+                        ColliderShapes:
+                            764563240595697bf1747d9653fc3d82: !BoxColliderShapeDesc
+                                Is2D: false
+                                Size: {X: 10.0, Y: 1.0, Z: 10.0}
+                                LocalOffset: {X: 0.0, Y: -0.5, Z: 0.0}
+                                LocalRotation: {X: 0.0, Y: 0.0, Z: 0.0, W: 1.0}
         -   Entity:
                 Id: 51ad9aae-041e-4329-935f-4ec7d441b720
                 Name: Camera
@@ -120,6 +150,35 @@ Hierarchy:
                         Id: 9e10ebb7-82a7-414a-8c3b-c65220bd8fae
                         Type: !LightSkybox
                             Skybox: 1089ff84-26ba-4502-81e6-c008f01774ad:Skybox
+        -   Entity:
+                Id: b5fcbba5-3203-403b-8450-90d35337241b
+                Name: Cube
+                Components:
+                    4921e05342bb98321a778143b2248dc8: !TransformComponent
+                        Id: 793a5785-4b8a-4b7d-8e40-8790d5f032f2
+                        Position: {X: 0.0, Y: 2.0, Z: 0.0}
+                        Rotation: {X: 0.0, Y: 0.0, Z: 0.0, W: 1.0}
+                        Scale: {X: 1.0, Y: 1.0, Z: 1.0}
+                        Children: {}
+                    d5fc2b2af9b981419ea39dc59c9b3089: !ModelComponent
+                        Id: 40ef9b87-ec64-415a-a248-4d833efaa404
+                        Model: 24c8bf21-8408-40d5-a6e7-fc9323ae0a4c:Cube
+                        Materials: {}
+                    2840ef8be888c7693f8a0d2dc303f38b: !StaticColliderComponent
+                        Id: c497842f-ffbe-4ff0-a06e-f703168552d2
+                        CanSleep: false
+                        Restitution: 0.0
+                        Friction: 0.5
+                        RollingFriction: 0.0
+                        CcdMotionThreshold: 0.0
+                        CcdSweptSphereRadius: 0.0
+                        IsTrigger: false
+                        ColliderShapes:
+                            cb503a320131ea60e8a0b6389a9ee183: !BoxColliderShapeDesc
+                                Is2D: false
+                                Size: {X: 1.0, Y: 1.0, Z: 1.0}
+                                LocalOffset: {X: 0.0, Y: 0.0, Z: 0.0}
+                                LocalRotation: {X: 0.0, Y: 0.0, Z: 0.0, W: 1.0}
         -   Entity:
                 Id: c06fdf2f-ca33-408c-b897-c40899b42061
                 Name: Profiler

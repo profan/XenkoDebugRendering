@@ -1,15 +1,15 @@
 ﻿namespace DebugRendering
 {
 
-    shader PrimitiveShader : ShaderBase, ColorBase {
+    shader PrimitiveShader : ShaderBase, ColorBase
+    {
 
         struct TransformData {
             float4x4 Matrix;
         };
 
         struct ColorData {
-            [Color]
-            float4 Color;
+            float Color;
         };
 
         float4x4 ViewProjection;
@@ -17,22 +17,24 @@
         StructuredBuffer<ColorData> Colors;
         int InstanceOffset;
 
+        float LineWidthMultiplier = 1.0f;
+
         stream float3 Position : POSITION;
-        stream float3 Normal : NORMAL;
         stream float2 Uv : TEXCOORD0;
 
-        override stage void VSMain() {
+        override stage void VSMain()
+        {
             int offsetInstanceId = streams.InstanceID + InstanceOffset;
             streams.ShadingPosition = mul(mul(float4(streams.Position, 1), Transforms[offsetInstanceId].Matrix), ViewProjection);
-            streams.Normal = mul(mul(float4(streams.Normal, 0), Transforms[offsetInstanceId].Matrix), ViewProjection);
-            streams.Color = Colors[offsetInstanceId].Color;
+            streams.Color = BitsToColor(Colors[offsetInstanceId].Color);
         }
 
-        override stage void PSMain() {
+        override stage void PSMain()
+        {
 
             // streams.ColorTarget = streams.Color;
 
-            float lineWidth = 0.001f;
+            float lineWidth = 0.001f * LineWidthMultiplier;
 
             float2 uv = streams.Uv;
             float lx = step(lineWidth, uv.x);
@@ -40,8 +42,23 @@
             float hx = step(uv.x, 1.0f - lineWidth);
             float hy = step(uv.y, 1.0f - lineWidth);
 
-            streams.ColorTarget = lerp(streams.Color, float4(0.0f, 0.0f, 0.0f, 0.0f), lx*ly*hx*hy);
+            streams.ColorTarget = lerp(streams.Color, float4(streams.Color.rgb, 0.0f), lx*ly*hx*hy);
 
+            // streams.ColorTarget = streams.Color;
+
+        }
+
+        float4 BitsToColor(float f)
+        {
+            uint u = asuint(f);
+            float4 c; // it has to be split up like this, don't change it..
+            c = float4(
+                (u >> 0) % 256,
+                (u >> 8) % 256,
+                (u >> 16) % 256,
+                (u >> 24) % 256
+            ) / 255.0;
+            return c;
         }
 
     };

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Linq;
 
 using Xenko.Core;
 using Xenko.Core.Collections;
@@ -13,7 +12,6 @@ using Xenko.Core.Mathematics;
 using Xenko.Core.Threading;
 using Xenko.Games;
 using Xenko.Graphics;
-using Xenko.Graphics.GeometricPrimitives;
 using Xenko.Rendering;
 
 using Buffer = Xenko.Graphics.Buffer;
@@ -24,67 +22,81 @@ namespace DebugRendering
     public class DebugSystem : GameSystemBase
     {
 
+        public enum RenderingMode
+        {
+            Wireframe,
+            Solid
+        }
+
         internal enum DebugRenderableType : byte
         {
             Quad,
+            QuadNoDepth,
             Circle,
+            CircleNoDepth,
             Line,
+            LineNoDepth,
             Cube,
+            CubeNoDepth,
             Sphere,
+            SphereNoDepth,
             Capsule,
+            CapsuleNoDepth,
             Cylinder,
-            Cone
+            CylinderNoDepth,
+            Cone,
+            ConeNoDepth
         }
 
         [StructLayout(LayoutKind.Explicit)]
         internal struct DebugRenderable
         {
 
-            public DebugRenderable(ref DebugDrawQuad q) : this()
+            public DebugRenderable(ref DebugDrawQuad q, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Quad;
+                Type = (depthTest) ? DebugRenderableType.Quad : DebugRenderableType.QuadNoDepth;
                 QuadData = q;
             }
 
-            public DebugRenderable(ref DebugDrawCircle c) : this()
+            public DebugRenderable(ref DebugDrawCircle c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Circle;
+                Type = (depthTest) ? DebugRenderableType.Circle : DebugRenderableType.CircleNoDepth;
                 CircleData = c;
             }
 
-            public DebugRenderable(ref DebugDrawLine l) : this()
+            public DebugRenderable(ref DebugDrawLine l, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Line;
+                Type = (depthTest) ? DebugRenderableType.Line : DebugRenderableType.LineNoDepth;
                 LineData = l;
             }
 
-            public DebugRenderable(ref DebugDrawCube b) : this()
+            public DebugRenderable(ref DebugDrawCube b, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Cube;
+                Type = (depthTest) ? DebugRenderableType.Cube : DebugRenderableType.CubeNoDepth;
                 CubeData = b;
             }
 
-            public DebugRenderable(ref DebugDrawSphere s) : this()
+            public DebugRenderable(ref DebugDrawSphere s, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Sphere;
+                Type = (depthTest) ? DebugRenderableType.Sphere : DebugRenderableType.SphereNoDepth;
                 SphereData = s;
             }
 
-            public DebugRenderable(ref DebugDrawCapsule c) : this()
+            public DebugRenderable(ref DebugDrawCapsule c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Capsule;
+                Type = (depthTest) ? DebugRenderableType.Capsule : DebugRenderableType.CapsuleNoDepth;
                 CapsuleData = c;
             }
 
-            public DebugRenderable(ref DebugDrawCylinder c) : this()
+            public DebugRenderable(ref DebugDrawCylinder c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Cylinder;
+                Type = (depthTest) ? DebugRenderableType.Cylinder : DebugRenderableType.CylinderNoDepth;
                 CylinderData = c;
             }
 
-            public DebugRenderable(ref DebugDrawCone c) : this()
+            public DebugRenderable(ref DebugDrawCone c, bool depthTest) : this()
             {
-                Type = DebugRenderableType.Cone;
+                Type = (depthTest) ? DebugRenderableType.Cone : DebugRenderableType.ConeNoDepth;
                 ConeData = c;
             }
 
@@ -140,7 +152,6 @@ namespace DebugRendering
         {
             public Vector3 Start;
             public Vector3 End;
-            public Quaternion Rotation;
             public Color Color;
         }
 
@@ -186,14 +197,18 @@ namespace DebugRendering
             public Color Color;
         }
 
-        static private readonly Comparer<DebugRenderable> renderableComparer =
-            Comparer<DebugRenderable>.Create((a, b) => a.Lifetime > b.Lifetime ? 1 : a.Lifetime < b.Lifetime ? -1 : 0);
-
         private readonly FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
         private readonly FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
 
         /* FIXME: this is set from outside atm, bit of a hack */
         public DebugRenderFeature PrimitiveRenderer;
+
+        public RenderingMode RenderMode { get; set; } = RenderingMode.Wireframe;
+
+        public Color PrimitiveColor { get; set; } = Color.LightGreen;
+
+        public int MaxPrimitives { get; set; } = 100;
+        public int MaxPrimitivesWithLifetime { get; set; } = 100;
 
         public DebugSystem(IServiceRegistry registry) : base(registry)
         {
@@ -204,7 +219,6 @@ namespace DebugRendering
             UpdateOrder = -100100; //before script
         }
 
-        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void PushMessage(ref DebugRenderable msg)
         {
             if (msg.Lifetime > 0.0f)
@@ -227,199 +241,102 @@ namespace DebugRendering
             }
         }
 
-        public void DrawLine(Vector3 start, Vector3 end, float duration = 0.0f, bool depthTest = true)
+        public void DrawLine(Vector3 start, Vector3 end, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawLine(start, end, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawLine { Start = start, End = end, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawLine { Start = start, End = end, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawLines(Vector3[] vertices, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawLines(vertices, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawLines(Vector3[] vertices, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawLines(Vector3[] vertices, Color? color = null, float duration = 0.0f, bool depthTest = true)
         {
             var totalVertexPairs = vertices.Length - (vertices.Length % 2);
             for (int i = 0; i < totalVertexPairs; i += 2)
             {
                 ref var v1 = ref vertices[i];
                 ref var v2 = ref vertices[i];
-                DrawLine(v1, v2, color, duration);
+                DrawLine(v1, v2, color ?? PrimitiveColor, duration, depthTest);
             }
         }
 
-        public void DrawRay(Vector3 start, Vector3 dir, float duration = 0.0f, bool depthTest = true)
+        public void DrawRay(Vector3 start, Vector3 dir, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawRay(start, dir, PrimitiveColor, duration, depthTest);
+            DrawLine(start, start + dir, color == default ? PrimitiveColor : color, duration, depthTest);
         }
 
-        public void DrawRay(Vector3 start, Vector3 dir, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawLine(start, start + dir, color, duration, depthTest);
-        }
-
-        public void DrawRays(Vector3[] vertices, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var totalVertexPairs = vertices.Length - (vertices.Length % 2);
-            for (int i = 0; i < totalVertexPairs; i += 2)
-            {
-                ref var v1 = ref vertices[i];
-                ref var v2 = ref vertices[i];
-                DrawLine(v1, v1 + v2, color, duration);
-            }
-        }
-
-        public void DrawArrow(Vector3 from, Vector3 to, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawArrow(from, to, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawArrow(Vector3 from, Vector3 to, Color color, float duration = 0.0f, bool depthTest = true)
+        public void DrawArrow(Vector3 from, Vector3 to, float coneHeight = 1.0f, float coneRadius = 0.5f, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
             DrawRay(from, to, color, duration, depthTest);
-            DrawCone(from + to, 1.0f, 0.5f, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color, duration, depthTest);
+            DrawCone(from + to, coneHeight, coneRadius, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color == default ? PrimitiveColor : color, duration, depthTest);
         }
 
-        public void DrawSphere(Vector3 position, float radius, float duration = 0.0f, bool depthTest = true)
+        public void DrawSphere(Vector3 position, float radius, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawSphere(position, radius, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawSphere(Vector3 position, float radius, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawSpheres(Vector3[] positions, float radius, float duration = 0.0f, bool depthTest = true)
+        public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawSpheres(positions, radius, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawSpheres(Vector3[] positions, float radius, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            for (int i = 0; i < positions.Length; ++i)
-            {
-                ref var pos = ref positions[i];
-                DrawSphere(pos, radius, color, duration, depthTest);
-            }
-        }
-
-        public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawBounds(start, end, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawBounds(Vector3 start, Vector3 end, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawCube { Position = start + ((end - start) / 2), End = end + ((end - start) / 2), Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCube(start, size, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCube(Vector3 start, Vector3 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawCube { Position = start, End = start + size, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCubes(Vector3[] positions, Quaternion[] rotations, Vector3 size, float duration = 0.0f, bool depthTest = true)
+        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCubes(positions, rotations, size, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCubes(Vector3[] positions, Quaternion[] rotations, Vector3 size, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            for (int i = 0; i < positions.Length; ++i)
-            {
-                ref var pos = ref positions[i];
-                ref var rot = ref rotations[i];
-                DrawCube(pos, size, rot, color, duration, depthTest);
-            }
-        }
-
-        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
-        {
-            DrawCapsule(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCylinder(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCylinder(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawCylinder { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCone(position, height, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCone(Vector3 position, float height, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawCone { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawQuad(position, size, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawQuad(Vector3 position, Vector2 size, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawQuad { Position = position, Size = size, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
 
-        public void DrawCircle(Vector3 position, float radius, Quaternion rotation, float duration = 0.0f, bool depthTest = true)
+        public void DrawCircle(Vector3 position, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawCircle(position, radius, rotation, PrimitiveColor, duration, depthTest);
-        }
-
-        public void DrawCircle(Vector3 position, float radius, Quaternion rotation, Color color, float duration = 0.0f, bool depthTest = true)
-        {
-            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation, Color = color };
-            var msg = new DebugRenderable(ref cmd) { Lifetime = duration };
+            var cmd = new DebugDrawCircle { Position = position, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            var msg = new DebugRenderable(ref cmd, depthTest) { Lifetime = duration };
             PushMessage(ref msg);
         }
-
-        public ref Color PrimitiveColor { get { return ref primitiveColor; } }
-        private Color primitiveColor = Color.LightGreen;
-
-        public int MaxPrimitives { get; set; } = 100;
-        public int MaxPrimitivesWithLifetime { get; set; } = 100;
 
         public override void Update(GameTime gameTime)
         {
+
+            switch (RenderMode) {
+                case RenderingMode.Wireframe:
+                    PrimitiveRenderer.SetFillMode(FillMode.Wireframe);
+                    break;
+                case RenderingMode.Solid:
+                    PrimitiveRenderer.SetFillMode(FillMode.Solid);
+                    break;
+            }
 
             HandlePrimitives(gameTime, renderMessages);
             HandlePrimitives(gameTime, renderMessagesWithLifetime);
@@ -427,7 +344,11 @@ namespace DebugRendering
             float delta = (float)gameTime.Elapsed.TotalSeconds;
 
             /* clear out any messages with no lifetime left */
-            renderMessagesWithLifetime.ForEach((msg) => msg.Lifetime -= delta);
+            for (int i = 0; i < renderMessagesWithLifetime.Count; ++i)
+            {
+                renderMessagesWithLifetime.Items[i].Lifetime -= delta;
+            }
+
             renderMessagesWithLifetime.RemoveAll((msg) => msg.Lifetime <= 0.0f);
 
             /* just clear our per-frame array */
@@ -438,7 +359,10 @@ namespace DebugRendering
         private void HandlePrimitives(GameTime gameTime, FastList<DebugRenderable> messages)
         {
 
-            if (messages.Count == 0) return;
+            if (messages.Count == 0)
+            {
+                return;
+            }
 
             for (int i = 0; i < messages.Count; ++i)
             {
@@ -446,28 +370,52 @@ namespace DebugRendering
                 switch (msg.Type)
                 {
                     case DebugRenderableType.Quad:
-                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color);
+                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.QuadNoDepth:
+                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Circle:
-                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color);
+                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CircleNoDepth:
+                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Line:
-                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color);
+                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.LineNoDepth:
+                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cube:
-                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color);
+                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CubeNoDepth:
+                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Sphere:
-                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color);
+                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.SphereNoDepth:
+                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Capsule:
-                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color);
+                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CapsuleNoDepth:
+                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cylinder:
-                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color);
+                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.CylinderNoDepth:
+                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cone:
-                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color);
+                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: true);
+                        break;
+                    case DebugRenderableType.ConeNoDepth:
+                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: false);
                         break;
                 }
             }
@@ -484,17 +432,44 @@ namespace DebugRendering
     public class DebugRenderFeature : RootRenderFeature
     {
 
-        internal struct LineVertex
+        public override Type SupportedRenderObjectType => typeof(DummyDebugRenderObject);
+
+        internal struct Primitives
         {
 
-            public static readonly VertexDeclaration Layout = new VertexDeclaration(VertexElement.Position<Vector3>(), VertexElement.Color<Color4>());
+            public int Quads;
+            public int Circles;
+            public int Spheres;
+            public int Cubes;
+            public int Capsules;
+            public int Cylinders;
+            public int Cones;
+            public int Lines;
 
-            public Vector3 Position;
-            public Color4 Color;
+            public void Clear()
+            {
+                Quads = 0;
+                Circles = 0;
+                Spheres = 0;
+                Cubes = 0;
+                Capsules = 0;
+                Cylinders = 0;
+                Cones = 0;
+                Lines = 0;
+            }
 
         }
 
-        public override Type SupportedRenderObjectType => typeof(DummyDebugRenderObject);
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        internal struct LineVertex
+        {
+
+            public static readonly VertexDeclaration Layout = new VertexDeclaration(VertexElement.Position<Vector3>(), VertexElement.Color<Color>());
+
+            public Vector3 Position;
+            public Color Color;
+
+        }
 
         internal enum RenderableType : byte
         {
@@ -654,6 +629,14 @@ namespace DebugRendering
             public Color Color;
         }
 
+        internal struct InstanceData
+        {
+            public Vector3 Position;
+            public Quaternion Rotation;
+            public Vector3 Scale;
+            public Color Color;
+        }
+
         const float DEFAULT_SPHERE_RADIUS = 0.5f;
         const float DEFAULT_CUBE_SIZE = 1.0f;
         const float DEFAULT_CAPSULE_LENGTH = 1.0f;
@@ -666,42 +649,29 @@ namespace DebugRendering
 
         const int CIRCLE_TESSELATION = 16;
         const int SPHERE_TESSELATION = 8;
-        const int CAPSULE_TESSELATION = 4;
+        const int CAPSULE_TESSELATION = 8;
         const int CYLINDER_TESSELATION = 16;
-        const int CONE_TESSELATION = 6;
+        const int CONE_TESSELATION = 16;
 
         /* mesh data we will use when stuffing things in vertex buffers */
-        private readonly (VertexPositionNormalTexture[], int[]) circle = GenerateCircle(0.5f, CIRCLE_TESSELATION);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> plane = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
-        // private readonly GeometricMeshData<VertexPositionNormalTexture> circle = GeometricPrimitive.Plane.New(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> sphere = GeometricPrimitive.Sphere.New(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> cube = GeometricPrimitive.Cube.New(DEFAULT_CUBE_SIZE);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> capsule = GeometricPrimitive.Capsule.New(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> cylinder = GeometricPrimitive.Cylinder.New(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
-        private readonly GeometricMeshData<VertexPositionNormalTexture> cone = GeometricPrimitive.Cone.New(DEFAULT_CONE_RADIUS, DEFAULT_CONE_HEIGHT, CONE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = DebugPrimitives.GenerateCircle(0.5f, CIRCLE_TESSELATION, 0);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) plane = DebugPrimitives.GenerateQuad(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) sphere = DebugPrimitives.GenerateSphere(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = DebugPrimitives.GenerateCube(DEFAULT_CUBE_SIZE);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) capsule = DebugPrimitives.GenerateCapsule(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = DebugPrimitives.GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = DebugPrimitives.GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION, uvSplits: 8);
 
-        /* gpu side vertex and index buffer for our primitive data */
+        /* vertex and index buffer for our primitive data */
         private Buffer vertexBuffer;
         private Buffer indexBuffer;
 
         /* vertex buffer for line rendering */
         private Buffer lineVertexBuffer;
 
-        private int circleVertexOffset = 0;
-        private int quadVertexOffset = 0;
-        private int sphereVertexOffset = 0;
-        private int cubeVertexOffset = 0;
-        private int capsuleVertexOffset = 0;
-        private int cylinderVertexOffset = 0;
-        private int coneVertexOffset = 0;
-
-        private int circleIndexOffset = 0;
-        private int quadIndexOffset = 0;
-        private int sphereIndexOffset = 0;
-        private int cubeIndexOffset = 0;
-        private int capsuleIndexOffset = 0;
-        private int cylinderIndexOffset = 0;
-        private int coneIndexOffset = 0;
+        /* offsets into our vertex/index buffer */
+        private Primitives primitiveVertexOffsets;
+        private Primitives primitiveIndexOffsets;
 
         /* other gpu related data */
         private MutablePipelineState pipelineState;
@@ -713,196 +683,166 @@ namespace DebugRendering
         private Buffer colorBuffer;
 
         /* messages */
-        private readonly FastList<Renderable> renderables = new FastList<Renderable>();
+        private readonly FastList<Renderable> renderablesWithDepth = new FastList<Renderable>();
+        private readonly FastList<Renderable> renderablesNoDepth = new FastList<Renderable>();
 
         /* accumulators used when data is being pushed to the system */
-        private int totalQuads = 0;
-        private int totalCircles = 0;
-        private int totalSpheres = 0;
-        private int totalCubes = 0;
-        private int totalCapsules = 0;
-        private int totalCylinders = 0;
-        private int totalCones = 0;
-        private int totalLines = 0;
+        private Primitives totalPrimitives, totalPrimitivesNoDepth;
         
         /* used to specify offset into instance data buffers when drawing */
-        private int quadInstanceOffset = 0;
-        private int circleInstanceOffset = 0;
-        private int sphereInstanceOffset = 0;
-        private int cubeInstanceOffset = 0;
-        private int capsuleInstanceOffset = 0;
-        private int cylinderInstanceOffset = 0;
-        private int coneInstanceOffset = 0;
+        private Primitives instanceOffsets, instanceOffsetsNoDepth;
 
         /* used in render stage to know how many of each instance to draw */
-        private int quadsToDraw = 0;
-        private int circlesToDraw = 0;
-        private int spheresToDraw = 0;
-        private int cubesToDraw = 0;
-        private int capsulesToDraw = 0;
-        private int cylindersToDraw = 0;
-        private int conesToDraw = 0;
-        private int linesToDraw = 0;
+        private Primitives primitivesToDraw, primitivesToDrawNoDepth;
 
-        /* message related data */
+        /* intermediate message related data, written to in extract */
+        private readonly FastList<InstanceData> instances = new FastList<InstanceData>(1);
+
+        /* data written to buffers in prepare */
         private readonly FastList<Matrix> transforms = new FastList<Matrix>(1);
-        private readonly FastList<Vector3> positions = new FastList<Vector3>(1);
-        private readonly FastList<Quaternion> rotations = new FastList<Quaternion>(1);
-        private readonly FastList<Vector3> scales = new FastList<Vector3>(1);
-        private readonly FastList<Color4> colors = new FastList<Color4>(1);
+        private readonly FastList<Color> colors = new FastList<Color>(1);
 
         /* data only for line rendering */
         private readonly FastList<LineVertex> lineVertices = new FastList<LineVertex>(1);
+
+        /* state set from outside */
+        private FillMode currentFillMode = FillMode.Wireframe;
 
         public DebugRenderFeature()
         {
         }
 
+        public void SetFillMode(FillMode fillMode)
+        {
+            currentFillMode = fillMode;
+        }
+
         public void DrawQuad(ref Vector3 position, ref Vector2 size, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Quad() { Position = position, Size = size, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalQuads++;
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
+            {
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Quads++;
+            }
+            else
+            {
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Quads++;
+            }
         }
 
         public void DrawCircle(ref Vector3 position, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Circle() { Position = position, Radius = radius, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalCircles++;
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
+            {
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Circles++;
+            }
+            else
+            {
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Circles++;
+            }
         }
 
         public void DrawSphere(ref Vector3 position, float radius, ref Color color, bool depthTest = true)
         {
             var cmd = new Sphere() { Position = position, Radius = radius, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalSpheres++;
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
+            {
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Spheres++;
+            }
+            else
+            {
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Spheres++;
+            }
         }
 
         public void DrawCube(ref Vector3 start, ref Vector3 end, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Cube() { Start = start, End = end, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalCubes++;
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
+            {
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Cubes++;
+            }
+            else
+            {
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Cubes++;
+            }
         }
 
         public void DrawCapsule(ref Vector3 position, float height, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Capsule() { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalCapsules++;
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
+            {
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Capsules++;
+            }
+            else
+            {
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Capsules++;
+            }
         }
 
         public void DrawCylinder(ref Vector3 position, float height, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Cylinder() { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalCylinders++;
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
+            {
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Cylinders++;
+            }
+            else
+            {
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Cylinders++;
+            }
         }
 
         public void DrawCone(ref Vector3 position, float height, float radius, ref Quaternion rotation, ref Color color, bool depthTest = true)
         {
             var cmd = new Cone() { Position = position, Height = height, Radius = radius, Rotation = rotation, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalCones++;
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
+            {
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Cones++;
+            }
+            else
+            {
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Cones++;
+            }
         }
 
         public void DrawLine(ref Vector3 start, ref Vector3 end, ref Color color, bool depthTest = true)
         {
             var cmd = new Line() { Start = start, End = end, Color = color };
-            renderables.Add(new Renderable(ref cmd));
-            totalLines++;
-        }
-
-        (VertexPositionNormalTexture[], int[]) GenerateCube(float size = 1.0f)
-        {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[8];
-            float side = size / 2.0f;
-            
-            // bottom
-            vertices[0].Position = new Vector3(-side, -side, -side);
-            vertices[1].Position = new Vector3(side, -side, -side);
-            vertices[2].Position = new Vector3(side, -side, side);
-            vertices[3].Position = new Vector3(-side, -side, side);
-
-            // top
-            vertices[4].Position = new Vector3(-side, side, -side);
-            vertices[5].Position = new Vector3(side, side, -side);
-            vertices[6].Position = new Vector3(side, side, side);
-            vertices[7].Position = new Vector3(-side, side, side);
-
-            int[] indices = new int[1];
-            return (vertices, indices);
-        }
-
-        static (VertexPositionNormalTexture[], int[]) GenerateCircle(float radius = 0.5f, int tesselations = 16)
-        {
-
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[tesselations + 1];
-            int[] indices = new int[tesselations * 3 + 3];
-
-            double radiansPerSegment = MathUtil.TwoPi / tesselations;
-
-            // center of our circle
-            vertices[0].Position = new Vector3(0.0f);
-            vertices[0].TextureCoordinate = new Vector2(0.5f);
-
-            // in the XZ plane
-            float curX = 0.0f, curZ = 0.0f;
-            for (int i = 1; i < tesselations+1; ++i)
+            var msg = new Renderable(ref cmd);
+            if (depthTest)
             {
-                curX = (float)Math.Cos(i * radiansPerSegment) / 2;
-                curZ = (float)Math.Sin(i * radiansPerSegment) / 2;
-                vertices[i].Position = new Vector3(curX, 0.0f, curZ);
-                vertices[i].TextureCoordinate = new Vector2(1.0f);
+                renderablesWithDepth.Add(msg);
+                totalPrimitives.Lines++;
             }
-
-            int curVert = 1;
-            int lastIndex = 0;
-            for (int i = 0; i < tesselations*3; i += 3)
+            else
             {
-                indices[i] = 0;
-                indices[i + 1] = curVert;
-                indices[i + 2] = curVert + 1;
-                lastIndex = i;
-                curVert++;
+                renderablesNoDepth.Add(msg);
+                totalPrimitivesNoDepth.Lines++;
             }
-
-            // endpoint
-            indices[lastIndex] = 0;
-            indices[lastIndex + 1] = indices[lastIndex - 1];
-            indices[lastIndex + 2] = indices[1];
-
-            return (vertices, indices);
-
-        }
-
-        static (VertexPositionNormalTexture[], int[]) GenerateSphere(float radius = 0.5f, int tesselations = 16)
-        {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
-            int[] indices = new int[1];
-            return (vertices, indices);
-        }
-
-        static  (VertexPositionNormalTexture[], int[]) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16)
-        {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
-            int[] indices = new int[1];
-            return (vertices, indices);
-        }
-
-        static (VertexPositionNormalTexture[], int[]) GenerateCone(float height, float radius, int tesselations)
-        {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
-            int[] indices = new int[1];
-            return (vertices, indices);
-        }
-
-        static  (VertexPositionNormalTexture[], int[]) GenerateCapsule(float height, float radius, int tesselations)
-        {
-            VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[1];
-            int[] indices = new int[1];
-            return (vertices, indices);
         }
 
         protected override void InitializeCore()
@@ -910,7 +850,7 @@ namespace DebugRendering
 
             var device = Context.GraphicsDevice;
 
-            inputElements = VertexPositionNormalTexture.Layout.CreateInputElements();
+            inputElements = VertexPositionTexture.Layout.CreateInputElements();
             lineInputElements = LineVertex.Layout.CreateInputElements();
 
             // create our pipeline state object
@@ -925,8 +865,8 @@ namespace DebugRendering
             lineEffect.UpdateEffect(device);
 
             // create initial vertex and index buffers
-            var vertexData = new VertexPositionNormalTexture[
-                circle.Item1.Length +
+            var vertexData = new VertexPositionTexture[
+                circle.Vertices.Length +
                 plane.Vertices.Length +
                 sphere.Vertices.Length +
                 cube.Vertices.Length +
@@ -939,41 +879,41 @@ namespace DebugRendering
 
             int vertexBufferOffset = 0;
 
-            Array.Copy(circle.Item1, vertexData, circle.Item1.Length);
-            circleVertexOffset = vertexBufferOffset;
-            vertexBufferOffset += circle.Item1.Length;
+            Array.Copy(circle.Vertices, vertexData, circle.Vertices.Length);
+            primitiveVertexOffsets.Circles = vertexBufferOffset;
+            vertexBufferOffset += circle.Vertices.Length;
 
             Array.Copy(plane.Vertices, 0, vertexData, vertexBufferOffset, plane.Vertices.Length);
-            quadVertexOffset = vertexBufferOffset;
+            primitiveVertexOffsets.Quads = vertexBufferOffset;
             vertexBufferOffset += plane.Vertices.Length;
 
             Array.Copy(sphere.Vertices, 0, vertexData, vertexBufferOffset, sphere.Vertices.Length);
-            sphereVertexOffset = vertexBufferOffset;
+            primitiveVertexOffsets.Spheres = vertexBufferOffset;
             vertexBufferOffset += sphere.Vertices.Length;
 
             Array.Copy(cube.Vertices, 0, vertexData, vertexBufferOffset, cube.Vertices.Length);
-            cubeVertexOffset = vertexBufferOffset;
+            primitiveVertexOffsets.Cubes = vertexBufferOffset;
             vertexBufferOffset += cube.Vertices.Length;
 
             Array.Copy(capsule.Vertices, 0, vertexData, vertexBufferOffset, capsule.Vertices.Length);
-            capsuleVertexOffset = vertexBufferOffset;
+            primitiveVertexOffsets.Capsules = vertexBufferOffset;
             vertexBufferOffset += capsule.Vertices.Length;
 
             Array.Copy(cylinder.Vertices, 0, vertexData, vertexBufferOffset, cylinder.Vertices.Length);
-            cylinderVertexOffset = vertexBufferOffset;
+            primitiveVertexOffsets.Cylinders = vertexBufferOffset;
             vertexBufferOffset += cylinder.Vertices.Length;
 
             Array.Copy(cone.Vertices, 0, vertexData, vertexBufferOffset, cone.Vertices.Length);
-            coneVertexOffset = vertexBufferOffset;
+            primitiveVertexOffsets.Cones = vertexBufferOffset;
             vertexBufferOffset += cone.Vertices.Length;
 
-            var newVertexBuffer = Buffer.Vertex.New<VertexPositionNormalTexture>(device, vertexData);
+            var newVertexBuffer = Buffer.Vertex.New<VertexPositionTexture>(device, vertexData);
             vertexBuffer = newVertexBuffer;
 
             /* set up index buffer data */
 
             var indexData = new int[
-                circle.Item2.Length +
+                circle.Indices.Length +
                 plane.Indices.Length +
                 sphere.Indices.Length +
                 cube.Indices.Length +
@@ -984,32 +924,32 @@ namespace DebugRendering
 
             int indexBufferOffset = 0;
 
-            Array.Copy(circle.Item2, indexData, circle.Item2.Length);
-            circleIndexOffset = indexBufferOffset;
-            indexBufferOffset += circle.Item2.Length;
+            Array.Copy(circle.Indices, indexData, circle.Indices.Length);
+            primitiveIndexOffsets.Circles = indexBufferOffset;
+            indexBufferOffset += circle.Indices.Length;
 
             Array.Copy(plane.Indices, 0, indexData, indexBufferOffset, plane.Indices.Length);
-            quadIndexOffset = indexBufferOffset;
+            primitiveIndexOffsets.Quads = indexBufferOffset;
             indexBufferOffset += plane.Indices.Length;
 
             Array.Copy(sphere.Indices, 0, indexData, indexBufferOffset, sphere.Indices.Length);
-            sphereIndexOffset = indexBufferOffset;
+            primitiveIndexOffsets.Spheres = indexBufferOffset;
             indexBufferOffset += sphere.Indices.Length;
 
             Array.Copy(cube.Indices, 0, indexData, indexBufferOffset, cube.Indices.Length);
-            cubeIndexOffset = indexBufferOffset;
+            primitiveIndexOffsets.Cubes = indexBufferOffset;
             indexBufferOffset += cube.Indices.Length;
 
             Array.Copy(capsule.Indices, 0, indexData, indexBufferOffset, capsule.Indices.Length);
-            capsuleIndexOffset = indexBufferOffset;
+            primitiveIndexOffsets.Capsules = indexBufferOffset;
             indexBufferOffset += capsule.Indices.Length;
 
             Array.Copy(cylinder.Indices, 0, indexData, indexBufferOffset, cylinder.Indices.Length);
-            cylinderIndexOffset = indexBufferOffset;
+            primitiveIndexOffsets.Cylinders = indexBufferOffset;
             indexBufferOffset += cylinder.Indices.Length;
 
             Array.Copy(cone.Indices, 0, indexData, indexBufferOffset, cone.Indices.Length);
-            coneIndexOffset = indexBufferOffset;
+            primitiveIndexOffsets.Cones = indexBufferOffset;
             indexBufferOffset += cone.Indices.Length;
 
             var newIndexBuffer = Buffer.Index.New<int>(device, indexData);
@@ -1019,7 +959,7 @@ namespace DebugRendering
             var newTransformBuffer = Buffer.Structured.New<Matrix>(device, 1);
             transformBuffer = newTransformBuffer;
 
-            var newColourBuffer = Buffer.Structured.New<Color4>(device, colors.Items);
+            var newColourBuffer = Buffer.Structured.New<Color>(device, colors.Items);
             colorBuffer = newColourBuffer;
 
             var newLineVertexBuffer = Buffer.Vertex.New<LineVertex>(device, lineVertices.Items, GraphicsResourceUsage.Dynamic);
@@ -1030,129 +970,132 @@ namespace DebugRendering
         public override void Extract()
         {
 
-            /* everything except lines */
-            int totalThingsToDraw =
-                totalQuads
-                + totalCircles
-                + totalSpheres
-                + totalCubes
-                + totalCapsules
-                + totalCylinders
-                + totalCones;
-
-            positions.Resize(totalThingsToDraw, true);
-            rotations.Resize(totalThingsToDraw - totalSpheres, true); // spheres have no rotation
-            scales.Resize(totalThingsToDraw, true);
-            colors.Resize(totalThingsToDraw, true);
-
-            lineVertices.Resize(totalLines * 2, true);
-
-            int sphereIndex = 0;
-            int quadIndex = sphereIndex + totalSpheres;
-            int circleIndex = quadIndex + totalQuads;
-            int cubeIndex = circleIndex + totalCircles;
-            int capsuleIndex = cubeIndex + totalCubes;
-            int cylinderIndex = capsuleIndex + totalCapsules;
-            int coneIndex = cylinderIndex + totalCylinders;
-
-            /* line rendering data, separate buffer */
-            int lineIndex = 0;
-
-            /* save instance offsets before we mutate them as we need them when rendering */
-            quadInstanceOffset = quadIndex;
-            circleInstanceOffset = circleIndex;
-            sphereInstanceOffset = sphereIndex;
-            cubeInstanceOffset = cubeIndex;
-            capsuleInstanceOffset = capsuleIndex;
-            cylinderInstanceOffset = cylinderIndex;
-            coneInstanceOffset = coneIndex;
-
-            for (int i = 0; i < renderables.Count; ++i)
+            void ProcessRenderables(FastList<Renderable> renderables, ref Primitives offsets)
             {
-                ref var cmd = ref renderables.Items[i];
-                switch (cmd.Type)
+
+                for (int i = 0; i < renderables.Count; ++i)
                 {
-                    case RenderableType.Quad:
-                        positions[quadIndex] = cmd.QuadData.Position;
-                        scales[quadIndex] = new Vector3(cmd.QuadData.Size.X, 1.0f, cmd.QuadData.Size.Y);
-                        rotations[quadIndex] = cmd.QuadData.Rotation;
-                        colors[quadIndex] = cmd.QuadData.Color;
-                        quadIndex++;
-                        break;
-                    case RenderableType.Circle:
-                        positions[circleIndex] = cmd.CircleData.Position;
-                        rotations[circleIndex] = cmd.CircleData.Rotation;
-                        scales[circleIndex] = new Vector3(cmd.CircleData.Radius * 2.0f, 0.0f, cmd.CircleData.Radius * 2.0f);
-                        colors[circleIndex] = cmd.CircleData.Color;
-                        circleIndex++;
-                        break;
-                    case RenderableType.Sphere:
-                        positions[sphereIndex] = cmd.SphereData.Position;
-                        scales[sphereIndex] = new Vector3(cmd.SphereData.Radius * 2);
-                        colors[sphereIndex] = cmd.SphereData.Color;
-                        sphereIndex++;
-                        break;
-                    case RenderableType.Cube:
-                        ref var start = ref cmd.CubeData.Start;
-                        ref var end = ref cmd.CubeData.End;
-                        var cubeScale = end - start;
-                        positions[cubeIndex] = start;
-                        rotations[cubeIndex - totalSpheres] = cmd.CubeData.Rotation;
-                        scales[cubeIndex] = cubeScale;
-                        colors[cubeIndex] = cmd.CubeData.Color;
-                        cubeIndex++;
-                        break;
-                    case RenderableType.Capsule:
-                        positions[capsuleIndex] = cmd.CapsuleData.Position;
-                        rotations[capsuleIndex - totalSpheres] = cmd.CapsuleData.Rotation;
-                        scales[capsuleIndex] = new Vector3(cmd.CapsuleData.Radius * 2.0f, cmd.CapsuleData.Height, cmd.CapsuleData.Radius * 2.0f);
-                        colors[capsuleIndex] = cmd.CapsuleData.Color;
-                        capsuleIndex++;
-                        break;
-                    case RenderableType.Cylinder:
-                        positions[cylinderIndex] = cmd.CylinderData.Position;
-                        rotations[cylinderIndex - totalSpheres] = cmd.CylinderData.Rotation;
-                        scales[cylinderIndex] = new Vector3(cmd.CylinderData.Radius * 2.0f, cmd.CylinderData.Height, cmd.CylinderData.Radius * 2.0f);
-                        colors[cylinderIndex] = cmd.CylinderData.Color;
-                        cylinderIndex++;
-                        break;
-                    case RenderableType.Cone:
-                        positions[coneIndex] = cmd.ConeData.Position;
-                        rotations[coneIndex - totalSpheres] = cmd.ConeData.Rotation;
-                        scales[coneIndex] = new Vector3(cmd.ConeData.Radius * 2.0f, cmd.ConeData.Height, cmd.ConeData.Radius * 2.0f);
-                        colors[coneIndex] = cmd.ConeData.Color;
-                        coneIndex++;
-                        break;
-                    case RenderableType.Line:
-                        lineVertices.Items[lineIndex].Position = cmd.LineData.Start;
-                        lineVertices.Items[lineIndex++].Color = cmd.LineData.Color;
-                        lineVertices.Items[lineIndex].Position = cmd.LineData.End;
-                        lineVertices.Items[lineIndex++].Color = cmd.LineData.Color;
-                        break;
+                    ref var cmd = ref renderables.Items[i];
+                    switch (cmd.Type)
+                    {
+                        case RenderableType.Quad:
+                            instances.Items[offsets.Quads].Position = cmd.QuadData.Position;
+                            instances.Items[offsets.Quads].Rotation = cmd.QuadData.Rotation;
+                            instances.Items[offsets.Quads].Scale = new Vector3(cmd.QuadData.Size.X, 1.0f, cmd.QuadData.Size.Y);
+                            instances.Items[offsets.Quads].Color = cmd.QuadData.Color;
+                            offsets.Quads++;
+                            break;
+                        case RenderableType.Circle:
+                            instances.Items[offsets.Circles].Position = cmd.CircleData.Position;
+                            instances.Items[offsets.Circles].Rotation = cmd.CircleData.Rotation;
+                            instances.Items[offsets.Circles].Scale = new Vector3(cmd.CircleData.Radius * 2.0f, 0.0f, cmd.CircleData.Radius * 2.0f);
+                            instances.Items[offsets.Circles].Color = cmd.CircleData.Color;
+                            offsets.Circles++;
+                            break;
+                        case RenderableType.Sphere:
+                            instances.Items[offsets.Spheres].Position = cmd.SphereData.Position;
+                            instances.Items[offsets.Spheres].Rotation = Quaternion.Identity;
+                            instances.Items[offsets.Spheres].Scale = new Vector3(cmd.SphereData.Radius * 2);
+                            instances.Items[offsets.Spheres].Color = cmd.SphereData.Color;
+                            offsets.Spheres++;
+                            break;
+                        case RenderableType.Cube:
+                            ref var start = ref cmd.CubeData.Start;
+                            ref var end = ref cmd.CubeData.End;
+                            instances.Items[offsets.Cubes].Position = start;
+                            instances.Items[offsets.Cubes].Rotation = cmd.CubeData.Rotation;
+                            instances.Items[offsets.Cubes].Scale = end - start;
+                            instances.Items[offsets.Cubes].Color = cmd.CubeData.Color;
+                            offsets.Cubes++;
+                            break;
+                        case RenderableType.Capsule:
+                            instances.Items[offsets.Capsules].Position = cmd.CapsuleData.Position;
+                            instances.Items[offsets.Capsules].Rotation = cmd.CapsuleData.Rotation;
+                            instances.Items[offsets.Capsules].Scale = new Vector3(cmd.CapsuleData.Radius * 2.0f, cmd.CapsuleData.Height, cmd.CapsuleData.Radius * 2.0f);
+                            instances.Items[offsets.Capsules].Color = cmd.CapsuleData.Color;
+                            offsets.Capsules++;
+                            break;
+                        case RenderableType.Cylinder:
+                            instances.Items[offsets.Cylinders].Position = cmd.CylinderData.Position;
+                            instances.Items[offsets.Cylinders].Rotation = cmd.CylinderData.Rotation;
+                            instances.Items[offsets.Cylinders].Scale = new Vector3(cmd.CylinderData.Radius * 2.0f, cmd.CylinderData.Height, cmd.CylinderData.Radius * 2.0f);
+                            instances.Items[offsets.Cylinders].Color = cmd.CylinderData.Color;
+                            offsets.Cylinders++;
+                            break;
+                        case RenderableType.Cone:
+                            instances.Items[offsets.Cones].Position = cmd.ConeData.Position;
+                            instances.Items[offsets.Cones].Rotation = cmd.ConeData.Rotation;
+                            instances.Items[offsets.Cones].Scale = new Vector3(cmd.ConeData.Radius * 2.0f, cmd.ConeData.Height, cmd.ConeData.Radius * 2.0f);
+                            instances.Items[offsets.Cones].Color = cmd.ConeData.Color;
+                            offsets.Cones++;
+                            break;
+                        case RenderableType.Line:
+                            lineVertices.Items[offsets.Lines].Position = cmd.LineData.Start;
+                            lineVertices.Items[offsets.Lines++].Color = cmd.LineData.Color;
+                            lineVertices.Items[offsets.Lines].Position = cmd.LineData.End;
+                            lineVertices.Items[offsets.Lines++].Color = cmd.LineData.Color;
+                            break;
+                    }
                 }
+
             }
 
-            quadsToDraw = totalQuads;
-            circlesToDraw = totalCircles;
-            spheresToDraw = totalSpheres;
-            cubesToDraw = totalCubes;
-            capsulesToDraw = totalCapsules;
-            cylindersToDraw = totalCylinders;
-            conesToDraw = totalCones;
-            linesToDraw = totalLines;
+            int SumBasicPrimitives(ref Primitives primitives)
+            {
+                return primitives.Quads
+                    + primitives.Circles
+                    + primitives.Spheres
+                    + primitives.Cubes
+                    + primitives.Capsules
+                    + primitives.Cylinders
+                    + primitives.Cones;
+            }
 
-            renderables.Clear(true);
-            totalQuads = 0;
-            totalCircles = 0;
-            totalSpheres = 0;
-            totalCubes = 0;
-            totalCapsules = 0;
-            totalCylinders = 0;
-            totalCones = 0;
-            totalLines = 0;
+            Primitives SetupPrimitiveOffsets(ref Primitives counts, int offset = 0)
+            {
+                var offsets = new Primitives();
+                offsets.Quads = 0 + offset;
+                offsets.Circles = offsets.Quads + counts.Quads;
+                offsets.Spheres = offsets.Circles + counts.Circles;
+                offsets.Cubes = offsets.Spheres + counts.Spheres;
+                offsets.Capsules = offsets.Cubes + counts.Cubes;
+                offsets.Cylinders = offsets.Capsules + counts.Capsules;
+                offsets.Cones = offsets.Cylinders + counts.Cylinders;
+                return offsets;
+            }
+
+            /* everything except lines is included here, as lines just get accumulated into a buffer directly */
+            int totalThingsToDraw = SumBasicPrimitives(ref totalPrimitives) + SumBasicPrimitives(ref totalPrimitivesNoDepth);
+
+            instances.Resize(totalThingsToDraw, true);
+
+            lineVertices.Resize((totalPrimitives.Lines * 2) + (totalPrimitivesNoDepth.Lines * 2), true);
+
+            var primitiveOffsets = SetupPrimitiveOffsets(ref totalPrimitives);
+            var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref totalPrimitivesNoDepth, primitiveOffsets.Cones);
+
+            /* line rendering data, separate buffer so offset isnt relative to the other data */
+            primitiveOffsets.Lines = 0;
+            primitiveOffsetsNoDepth.Lines = totalPrimitives.Lines * 2;
+
+            /* save instance offsets before we mutate them as we need them when rendering */
+            instanceOffsets = primitiveOffsets;
+            instanceOffsetsNoDepth = primitiveOffsetsNoDepth;
+
+            ProcessRenderables(renderablesWithDepth, ref primitiveOffsets);
+            ProcessRenderables(renderablesNoDepth, ref primitiveOffsetsNoDepth);
+
+            primitivesToDraw = totalPrimitives;
+            primitivesToDrawNoDepth = totalPrimitivesNoDepth;
+
+            renderablesWithDepth.Clear(true);
+            renderablesNoDepth.Clear(true);
+            totalPrimitives.Clear();
+            totalPrimitivesNoDepth.Clear();
 
         }
-        unsafe static void UpdateBufferIfNecessary(GraphicsDevice device, CommandList commandList, ref Buffer buffer, DataPointer dataPtr, int elementSize)
+
+        private unsafe static void UpdateBufferIfNecessary(GraphicsDevice device, CommandList commandList, ref Buffer buffer, DataPointer dataPtr, int elementSize)
         {
             int neededBufferSize = dataPtr.Size / elementSize;
             if (neededBufferSize > buffer.ElementCount)
@@ -1187,12 +1130,12 @@ namespace DebugRendering
                     );
                 }
 
-                fixed (Color4* colorsPtr = colors.Items)
+                fixed (Color* colorsPtr = colors.Items)
                 {
                     UpdateBufferIfNecessary(
                         context.GraphicsDevice, context.CommandList, buffer: ref colorBuffer,
-                        dataPtr: new DataPointer(colorsPtr, colors.Count * Marshal.SizeOf<Color4>()),
-                        elementSize: Marshal.SizeOf<Color4>()
+                        dataPtr: new DataPointer(colorsPtr, colors.Count * Marshal.SizeOf<Color>()),
+                        elementSize: Marshal.SizeOf<Color>()
                     );
                 }
 
@@ -1212,20 +1155,14 @@ namespace DebugRendering
         public override void Prepare(RenderDrawContext context)
         {
 
-            transforms.Resize(positions.Count, true);
+            transforms.Resize(instances.Count, true);
+            colors.Resize(instances.Count, true);
 
-            /* transform only things without rotation first */
-            Dispatcher.For(0, spheresToDraw, (int i) =>
+            Dispatcher.For(0, transforms.Count, (int i) =>
             {
-                var identQuat = Quaternion.Identity;
-                Matrix.Transformation(ref scales.Items[i], ref identQuat, ref positions.Items[i], out transforms.Items[i]);
-            }
-            );
-
-            /* start next dispatch at lower bound for things that have rotation, at this point only spheres dont */
-            Dispatcher.For(spheresToDraw, transforms.Count, (int i) =>
-            {
-                Matrix.Transformation(ref scales.Items[i], ref rotations.Items[i - spheresToDraw], ref positions.Items[i], out transforms.Items[i]);
+                ref var instance = ref instances.Items[i];
+                Matrix.Transformation(ref instance.Scale, ref instance.Rotation, ref instance.Position, out transforms.Items[i]);
+                colors[i] = instance.Color;
             }
             );
 
@@ -1233,41 +1170,28 @@ namespace DebugRendering
 
         }
 
-        private RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
-        {
-            for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
-            {
-                var stage = renderSystem.RenderStages[i];
-                if (stage.Name == "Transparent")
-                {
-                    return stage;
-                }
-            }
-            return null;
-        }
-
-        private void SetPrimitiveRenderingPipelineState(CommandList commandList)
+        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest)
         {
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
-            pipelineState.State.DepthStencilState = DepthStencilStates.Default;
-            pipelineState.State.RasterizerState.FillMode = FillMode.Wireframe;
+            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
+            pipelineState.State.RasterizerState.FillMode = currentFillMode;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
-            pipelineState.State.BlendState = BlendStates.AlphaBlend;
+            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
         }
 
-        private void SetLineRenderingPipelineState(CommandList commandList)
+        private void SetLineRenderingPipelineState(CommandList commandList, bool depthTest)
         {
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.LineList;
             pipelineState.State.RootSignature = lineEffect.RootSignature;
             pipelineState.State.EffectBytecode = lineEffect.Effect.Bytecode;
-            pipelineState.State.DepthStencilState = DepthStencilStates.Default;
+            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = FillMode.Solid;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
             pipelineState.State.BlendState = BlendStates.AlphaBlend;
@@ -1276,27 +1200,18 @@ namespace DebugRendering
             pipelineState.Update();
         }
 
-        public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
+        private void RenderPrimitives(RenderDrawContext context, RenderView renderView, ref Primitives offsets, ref Primitives counts, bool depthTest)
         {
-
-            // we only want to render in the transparent stage, is there a nicer way to do this?
-            var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
-            var transparentRenderStageIndex = transparentRenderStage.Index;
-
-            // bail out if it's any other stage, this is crude but alas
-            if (renderViewStage.Index != transparentRenderStageIndex) return;
 
             var commandList = context.CommandList;
 
-            // update pipeline state
-            SetPrimitiveRenderingPipelineState(commandList);
-
             // set buffers and our current pipeline state
-            commandList.SetVertexBuffer(0, vertexBuffer, 0, VertexPositionNormalTexture.Layout.VertexStride);
+            commandList.SetVertexBuffer(0, vertexBuffer, 0, VertexPositionTexture.Layout.VertexStride);
             commandList.SetIndexBuffer(indexBuffer, 0, is32bits: true);
             commandList.SetPipelineState(pipelineState.CurrentState);
 
-            // now set our parameters too
+            // we set line width to something absurdly high to avoid having to alter our shader substantially for now
+            primitiveEffect.Parameters.Set(PrimitiveShaderKeys.LineWidthMultiplier, (currentFillMode == FillMode.Solid) ? 10000.0f : 1.0f);
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.ViewProjection, renderView.ViewProjection);
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.Transforms, transformBuffer);
             primitiveEffect.Parameters.Set(PrimitiveShaderKeys.Colors, colorBuffer);
@@ -1304,90 +1219,88 @@ namespace DebugRendering
             primitiveEffect.UpdateEffect(context.GraphicsDevice);
             primitiveEffect.Apply(context.GraphicsContext);
 
-            /* finally render */
-
             // draw spheres
-            if (spheresToDraw > 0)
+            if (counts.Spheres > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, sphereInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Spheres);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(sphere.Indices.Length, spheresToDraw, sphereIndexOffset, sphereVertexOffset);
+                commandList.DrawIndexedInstanced(sphere.Indices.Length, counts.Spheres, primitiveIndexOffsets.Spheres, primitiveVertexOffsets.Spheres);
 
             }
 
             // draw quads
-            if (quadsToDraw > 0)
+            if (counts.Quads > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, quadInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Quads);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(plane.Indices.Length, quadsToDraw, quadIndexOffset, quadVertexOffset);
+                commandList.DrawIndexedInstanced(plane.Indices.Length, counts.Quads, primitiveIndexOffsets.Quads, primitiveVertexOffsets.Quads);
 
             }
 
             // draw circles
-            if (circlesToDraw > 0)
+            if (counts.Circles > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, circleInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Circles);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(circle.Item2.Length, circlesToDraw, circleIndexOffset, circleVertexOffset);
+                commandList.DrawIndexedInstanced(circle.Indices.Length, counts.Circles, primitiveIndexOffsets.Circles, primitiveVertexOffsets.Circles);
 
             }
 
             // draw cubes
-            if (cubesToDraw > 0)
+            if (counts.Cubes > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, cubeInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cubes);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(cube.Indices.Length, cubesToDraw, cubeIndexOffset, cubeVertexOffset);
+                commandList.DrawIndexedInstanced(cube.Indices.Length, counts.Cubes, primitiveIndexOffsets.Cubes, primitiveVertexOffsets.Cubes);
 
             }
 
             // draw capsules
-            if (capsulesToDraw > 0)
+            if (counts.Capsules > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, capsuleInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Capsules);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(capsule.Indices.Length, capsulesToDraw, capsuleIndexOffset, capsuleVertexOffset);
+                commandList.DrawIndexedInstanced(capsule.Indices.Length, counts.Capsules, primitiveIndexOffsets.Capsules, primitiveVertexOffsets.Capsules);
 
             }
 
             // draw cylinders
-            if (cylindersToDraw > 0)
+            if (counts.Cylinders > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, cylinderInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cylinders);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(cylinder.Indices.Length, cylindersToDraw, cylinderIndexOffset, cylinderVertexOffset);
+                commandList.DrawIndexedInstanced(cylinder.Indices.Length, counts.Cylinders, primitiveIndexOffsets.Cylinders, primitiveVertexOffsets.Cylinders);
 
             }
 
             // draw cones
-            if (conesToDraw > 0)
+            if (counts.Cones > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, coneInstanceOffset);
+                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cones);
                 primitiveEffect.Apply(context.GraphicsContext);
 
-                commandList.DrawIndexedInstanced(cone.Indices.Length, conesToDraw, coneIndexOffset, coneVertexOffset);
+                commandList.DrawIndexedInstanced(cone.Indices.Length, counts.Cones, primitiveIndexOffsets.Cones, primitiveVertexOffsets.Cones);
 
             }
 
             // draw lines
-            if (linesToDraw > 0)
+            if (counts.Lines > 0)
             {
 
-                SetLineRenderingPipelineState(commandList);
+                SetLineRenderingPipelineState(commandList, depthTest);
                 commandList.SetVertexBuffer(0, lineVertexBuffer, 0, LineVertex.Layout.VertexStride);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
@@ -1395,9 +1308,47 @@ namespace DebugRendering
                 lineEffect.UpdateEffect(context.GraphicsDevice);
                 lineEffect.Apply(context.GraphicsContext);
 
-                commandList.Draw(linesToDraw * 2);
+                commandList.Draw(counts.Lines * 2, offsets.Lines);
 
             }
+
+        }
+
+        public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
+        {
+
+            RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
+            {
+                for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
+                {
+                    var stage = renderSystem.RenderStages[i];
+                    if (stage.Name == "Transparent")
+                    {
+                        return stage;
+                    }
+                }
+                return null;
+            }
+
+            // we only want to render in the transparent stage, is there a nicer way to do this?
+            var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
+            var transparentRenderStageIndex = transparentRenderStage?.Index;
+
+            // bail out if it's any other stage, this is crude but alas
+            if (renderViewStage.Index != transparentRenderStageIndex)
+            {
+                return;
+            }
+
+            var commandList = context.CommandList;
+
+            // update pipeline state, render with depth test first
+            SetPrimitiveRenderingPipelineState(commandList, depthTest: true);
+            RenderPrimitives(context, renderView, ref instanceOffsets, ref primitivesToDraw, depthTest: true);
+
+            // update pipeline state, render without depth test second
+            SetPrimitiveRenderingPipelineState(commandList, depthTest: false);
+            RenderPrimitives(context, renderView, offsets: ref instanceOffsetsNoDepth, counts: ref primitivesToDrawNoDepth, depthTest: false);
 
         }
 

@@ -22,5 +22,6 @@ namespace DebugRendering
         public static readonly ObjectParameterKey<Buffer> Transforms = ParameterKeys.NewObject<Buffer>();
         public static readonly ObjectParameterKey<Buffer> Colors = ParameterKeys.NewObject<Buffer>();
         public static readonly ValueParameterKey<int> InstanceOffset = ParameterKeys.NewValue<int>();
+        public static readonly ValueParameterKey<float> LineWidthMultiplier = ParameterKeys.NewValue<float>(1.0f);
     }
 }
