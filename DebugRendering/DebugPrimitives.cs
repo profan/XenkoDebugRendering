@@ -127,10 +127,184 @@ namespace DebugRendering {
         public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16, int uvSplits = 4)
         {
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[1];
-            int[] indices = new int[1];
+            if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
+            {
+                throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
+            }
+
+            if (tesselations < 3) tesselations = 3;
+
+            int verticalSegments = tesselations;
+            int horizontalSegments = tesselations * 2;
+            int hasUvSplit = (uvSplits > 0 ? 1 : 0);
+
+            // FIXME: i tried figuring out a closed form solution for this bugger here, but i feel like i'm missing something crucial...
+            //  it basically is just here to calculate how many extra vertices are needed to create the wireframe topology we want
+            // if *you* can figure out a closed form solution, have at it! you are very welcome!
+            int extraVertexCount = 0;
+
+            if (hasUvSplit > 0)
+            {
+                for (int i = 0; i < verticalSegments; i++)
+                {
+                    for (int j = 0; j <= horizontalSegments; j++) {
+                        int vertModulo = (i - 1) % (verticalSegments / uvSplits);
+                        int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                        if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0)) {
+                            extraVertexCount += 4;
+                        } else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0)) {
+                            extraVertexCount += 2;
+                        }
+                    }
+                }
+            }
+
+            var vertices = new VertexPositionTexture[(verticalSegments + 1) * (horizontalSegments + 1) + extraVertexCount];
+            var indices = new int[(verticalSegments) * (horizontalSegments + 1) * 6];
+
+            int vertexCount = 0;
+
+            // generate the first extremity points
+            for (int j = 0; j <= horizontalSegments; j++)
+            {
+                var normal = new Vector3(0, -1, 0);
+                var textureCoordinate = new Vector2(0.5f);
+                vertices[vertexCount++] = new VertexPositionTexture(normal * radius, textureCoordinate);
+            }
+
+            // Create rings of vertices at progressively higher latitudes.
+            for (int i = 1; i < verticalSegments; i++)
+            {
+
+                var latitude = (float)((i * Math.PI / verticalSegments) - Math.PI / 2.0);
+                var dy = (float)Math.Sin(latitude);
+                var dxz = (float)Math.Cos(latitude);
+
+                // the first point
+                var firstNormal = new Vector3(0, dy, dxz);
+                var firstHorizontalVertex = new VertexPositionTexture(firstNormal * radius, new Vector2(0.5f));
+                vertices[vertexCount++] = firstHorizontalVertex;
+
+                // Create a single ring of vertices at this latitude.
+                for (int j = 1; j < horizontalSegments; j++)
+                {
+
+                    var longitude = (float)(j * 2.0 * Math.PI / horizontalSegments);
+                    var dx = (float)Math.Sin(longitude);
+                    var dz = (float)Math.Cos(longitude);
+
+                    dx *= dxz;
+                    dz *= dxz;
+
+                    var normal = new Vector3(dx, dy, dz);
+                    var textureCoordinate = new Vector2(0.5f);
+
+                    vertices[vertexCount++] = new VertexPositionTexture(normal * radius, textureCoordinate);
+                }
+
+                // the last point equal to the first point
+                firstHorizontalVertex.TextureCoordinate = new Vector2(0.5f);
+                vertices[vertexCount++] = firstHorizontalVertex;
+            }
+
+            // generate the end extremity points
+            for (int j = 0; j <= horizontalSegments; j++)
+            {
+                var normal = new Vector3(0, 1, 0);
+                var textureCoordinate = new Vector2(0.5f);
+                vertices[vertexCount++] = new VertexPositionTexture(normal * radius, textureCoordinate);
+            }
+
+            // Fill the index buffer with triangles joining each pair of latitude rings.
+            int stride = horizontalSegments + 1;
+
+            int indexCount = 0;
+            int newVertexCount = vertexCount;
+            for (int i = 0; i < verticalSegments; i++)
+            {
+                for (int j = 0; j <= horizontalSegments; j++)
+                {
+                    int nextI = i + 1;
+                    int nextJ = (j + 1) % stride;
+                    int vertModulo = (i - 1) % (verticalSegments / uvSplits);
+                    int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                    if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                    {
+
+                        vertices[newVertexCount] = vertices[(i * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        indices[indexCount++] = (i * stride + nextJ);
 
 
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+                    else if (hasUvSplit > 0 && vertModulo == 0)
+                    {
+
+                        indices[indexCount++] = (i * stride + j);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+                    else if (hasUvSplit > 0 && horizModulo == 0)
+                    {
+
+                        vertices[newVertexCount] = vertices[(i * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
+
+                        vertices[newVertexCount] = vertices[(nextI * stride + j)];
+                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
+
+                        indices[indexCount++] = (i * stride + nextJ);
+
+
+                        indices[indexCount++] = (i * stride + nextJ);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+                    else
+                    {
+
+                        indices[indexCount++] = (i * stride + j);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (i * stride + nextJ);
+
+                        indices[indexCount++] = (i * stride + nextJ);
+                        indices[indexCount++] = (nextI * stride + j);
+                        indices[indexCount++] = (nextI * stride + nextJ);
+
+                    }
+
+                }
+            }
 
             return (vertices, indices);
 
@@ -146,6 +320,8 @@ namespace DebugRendering {
 
             var hasUvSplit = (uvSides > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
+
+
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + (tesselations * 2) + ((tesselations / uvSides)+2) * 4];
             int[] indices = new int[capIndices.Length * 2 + (tesselations*6)];
@@ -292,18 +468,22 @@ namespace DebugRendering {
             //  it basically is just here to calculate how many extra vertices are needed to create the wireframe topology we want
             // if *you* can figure out a closed form solution, have at it! you are very welcome!
             int extraVertexCount = 0;
-            for (int i = 0; i < verticalSegments - 1; i++) 
+
+            if (hasUvSplit > 0)
             {
-                for (int j = 0; j <= horizontalSegments; j++)
+                for (int i = 0; i < verticalSegments - 1; i++) 
                 {
-                    int vertModulo = (i - 1) % (verticalSegments / uvSplits);
-                    int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
-                    if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                    for (int j = 0; j <= horizontalSegments; j++)
                     {
-                        extraVertexCount += 4;
-                    } else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0))
-                    {
-                        extraVertexCount += 2;
+                        int vertModulo = (i - 1) % (verticalSegments / uvSplits);
+                        int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                        if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                        {
+                            extraVertexCount += 4;
+                        } else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0))
+                        {
+                            extraVertexCount += 2;
+                        }
                     }
                 }
             }
