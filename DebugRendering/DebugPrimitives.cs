@@ -568,14 +568,18 @@ namespace DebugRendering {
             
             var vertexCount = 0;
             // Create rings of vertices at progressively higher latitudes.
-            for (int i = 0; i < verticalSegments; i++) {
+            for (int i = 0; i < verticalSegments; i++)
+            {
                 float deltaY;
                 float latitude;
 
-                if (i < verticalSegments / 2) {
+                if (i < verticalSegments / 2)
+                {
                     deltaY = -length / 2;
                     latitude = (float)((i * Math.PI / (verticalSegments - 2)) - Math.PI / 2.0);
-                } else {
+                }
+                else
+                {
                     deltaY = length / 2;
                     latitude = (float)(((i - 1) * Math.PI / (verticalSegments - 2)) - Math.PI / 2.0);
                 }
@@ -584,7 +588,8 @@ namespace DebugRendering {
                 var dxz = (float)Math.Cos(latitude);
 
                 // Create a single ring of vertices at this latitude.
-                for (int j = 0; j <= horizontalSegments; j++) {
+                for (int j = 0; j <= horizontalSegments; j++)
+                {
 
                     var longitude = (float)(j * 2.0 * Math.PI / horizontalSegments);
                     var dx = (float)Math.Sin(longitude);
