@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 using Xenko.Core;
@@ -8,7 +8,7 @@ using Xenko.Core.Threading;
 using Xenko.Engine;
 using Xenko.Physics;
 
-namespace DebugRendering 
+namespace DebugRendering
 {
 
     public class DebugTest : SyncScript
@@ -32,7 +32,7 @@ namespace DebugRendering
         const int ChangePerSecond = 8192 + 2048;
         const int InitialNumPrimitives = 1024;
         const int AreaSize = 64;
-        
+
         [DataMemberIgnore]
         DebugSystem DebugDraw; // this is here to make it look like it should when properly integrated
 
@@ -101,8 +101,8 @@ namespace DebugRendering
 
             DebugDraw = new DebugSystem(Services);
             DebugDraw.PrimitiveColor = Color.Green;
-            DebugDraw.MaxPrimitives = currentNumPrimitives*2 + 6;
-            DebugDraw.MaxPrimitivesWithLifetime = currentNumPrimitives*2 + 6;
+            DebugDraw.MaxPrimitives = currentNumPrimitives * 2 + 6;
+            DebugDraw.MaxPrimitivesWithLifetime = currentNumPrimitives * 2 + 6;
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
@@ -112,7 +112,8 @@ namespace DebugRendering
                 var newDebugRenderFeature = new DebugRenderFeature();
                 SceneSystem.GraphicsCompositor.RenderFeatures.Add(newDebugRenderFeature);
                 DebugDraw.PrimitiveRenderer = newDebugRenderFeature;
-            } else
+            }
+            else
             {
                 DebugDraw.PrimitiveRenderer = debugRenderFeatures.First();
             }
@@ -146,7 +147,7 @@ namespace DebugRendering
         {
 
             var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
-            
+
             var newAmountOfBoxes = Clamp(currentNumPrimitives + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberofPrimitives, maxNumbeOfPrimitives);
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.LeftAlt))
@@ -175,8 +176,8 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                DebugDraw.MaxPrimitivesWithLifetime = newAmountOfBoxes*2 + 6;
-                DebugDraw.MaxPrimitives = newAmountOfBoxes*2 + 6;
+                DebugDraw.MaxPrimitivesWithLifetime = newAmountOfBoxes * 2 + 6;
+                DebugDraw.MaxPrimitives = newAmountOfBoxes * 2 + 6;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
@@ -333,7 +334,7 @@ namespace DebugRendering
                     var cameraWorldPos = CurrentCamera.Entity.Transform.WorldMatrix.TranslationVector;
                     var cameraWorldUp = CurrentCamera.Entity.Transform.WorldMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
-                    DebugDraw.DrawLine(cameraWorldPos + cameraWorldNormal*-2.0f + (cameraWorldUp * (-0.125f/4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
+                    DebugDraw.DrawLine(cameraWorldPos + cameraWorldNormal * -2.0f + (cameraWorldUp * (-0.125f / 4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
                     DebugDraw.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 5.0f);
                     System.Diagnostics.Debug.WriteLine(result.Normal);
                 }
