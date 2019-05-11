@@ -234,9 +234,9 @@ namespace DebugRendering
                         Quaternion.RotationY(rotVelocity.Y * dt) *
                         Quaternion.RotationZ(rotVelocity.Z * dt);
 
-                    color.R = (byte)((((position.X / AreaSize) + 1f) / 2.0f) * 255.0f);
-                    color.G = (byte)((((position.Y / AreaSize) + 1f) / 2.0f) * 255.0f);
-                    color.B = (byte)((((position.Z / AreaSize) + 1f) / 2.0f) * 255.0f);
+                    color.R = (byte)(((position.X / AreaSize) + 1f) / 2.0f * 255.0f);
+                    color.G = (byte)(((position.Y / AreaSize) + 1f) / 2.0f * 255.0f);
+                    color.B = (byte)(((position.Z / AreaSize) + 1f) / 2.0f * 255.0f);
                     color.A = 255;
 
                 });
