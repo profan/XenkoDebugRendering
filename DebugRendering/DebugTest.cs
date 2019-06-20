@@ -88,9 +88,9 @@ namespace DebugRendering
                 primitiveRotVelocities.Items[i] = ballRotVel;
 
                 ref var color = ref primitiveColors.Items[i];
-                color.R = (byte)((((primitivePositions[i].X / AreaSize) + 1f) / 2.0f) * 255.0f);
-                color.G = (byte)((((primitivePositions[i].Y / AreaSize) + 1f) / 2.0f) * 255.0f);
-                color.B = (byte)((((primitivePositions[i].Z / AreaSize) + 1f) / 2.0f) * 255.0f);
+                color.R = (byte)(((primitivePositions[i].X / AreaSize) + 1f) / 2.0f * 255.0f);
+                color.G = (byte)(((primitivePositions[i].Y / AreaSize) + 1f) / 2.0f * 255.0f);
+                color.B = (byte)(((primitivePositions[i].Z / AreaSize) + 1f) / 2.0f * 255.0f);
                 color.A = 255;
 
             }
@@ -334,9 +334,8 @@ namespace DebugRendering
                     var cameraWorldPos = CurrentCamera.Entity.Transform.WorldMatrix.TranslationVector;
                     var cameraWorldUp = CurrentCamera.Entity.Transform.WorldMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
-                    DebugDraw.DrawLine(cameraWorldPos + cameraWorldNormal * -2.0f + (cameraWorldUp * (-0.125f / 4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
+                    DebugDraw.DrawLine(cameraWorldPos + (cameraWorldNormal * -2.0f) + (cameraWorldUp * (-0.125f / 4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
                     DebugDraw.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 5.0f);
-                    System.Diagnostics.Debug.WriteLine(result.Normal);
                 }
             }
 

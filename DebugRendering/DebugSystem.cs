@@ -637,21 +637,21 @@ namespace DebugRendering
             public Color Color;
         }
 
-        const float DEFAULT_SPHERE_RADIUS = 0.5f;
-        const float DEFAULT_CUBE_SIZE = 1.0f;
-        const float DEFAULT_CAPSULE_LENGTH = 1.0f;
-        const float DEFAULT_CAPSULE_RADIUS = 0.5f;
-        const float DEFAULT_CYLINDER_HEIGHT = 1.0f;
-        const float DEFAULT_CYLINDER_RADIUS = 0.5f;
-        const float DEFAULT_PLANE_SIZE = 1.0f;
-        const float DEFAULT_CONE_RADIUS = 0.5f;
-        const float DEFAULT_CONE_HEIGHT = 1.0f;
+        private const float DEFAULT_SPHERE_RADIUS = 0.5f;
+        private const float DEFAULT_CUBE_SIZE = 1.0f;
+        private const float DEFAULT_CAPSULE_LENGTH = 1.0f;
+        private const float DEFAULT_CAPSULE_RADIUS = 0.5f;
+        private const float DEFAULT_CYLINDER_HEIGHT = 1.0f;
+        private const float DEFAULT_CYLINDER_RADIUS = 0.5f;
+        private const float DEFAULT_PLANE_SIZE = 1.0f;
+        private const float DEFAULT_CONE_RADIUS = 0.5f;
+        private const float DEFAULT_CONE_HEIGHT = 1.0f;
 
-        const int CIRCLE_TESSELATION = 16;
-        const int SPHERE_TESSELATION = 8;
-        const int CAPSULE_TESSELATION = 8;
-        const int CYLINDER_TESSELATION = 16;
-        const int CONE_TESSELATION = 16;
+        private const int CIRCLE_TESSELATION = 16;
+        private const int SPHERE_TESSELATION = 8;
+        private const int CAPSULE_TESSELATION = 8;
+        private const int CYLINDER_TESSELATION = 16;
+        private const int CONE_TESSELATION = 16;
 
         /* mesh data we will use when stuffing things in vertex buffers */
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = DebugPrimitives.GenerateCircle(0.5f, CIRCLE_TESSELATION, 0);
