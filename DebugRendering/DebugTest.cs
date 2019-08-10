@@ -259,28 +259,28 @@ namespace DebugRendering
                         switch (currentShape++)
                         {
                             case 0: // sphere
-                                DebugDraw.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting);
                                 break;
                             case 1: // cube
-                                DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting);
                                 break;
                             case 2: // capsule
-                                DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
                                 break;
                             case 3: // cylinder
-                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
                                 break;
                             case 4: // cone
-                                DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
                                 break;
                             case 5: // ray
-                                DebugDraw.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawRay(position, velocity, color, depthTest: useDepthTesting);
                                 break;
                             case 6: // quad
-                                DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, depthTest: useDepthTesting);
                                 break;
                             case 7: // circle
-                                DebugDraw.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                                DebugDraw.DrawCircle(position, 0.5f, rotation, color, depthTest: useDepthTesting);
                                 currentShape = 0;
                                 break;
                             default:
@@ -288,28 +288,28 @@ namespace DebugRendering
                         }
                         break;
                     case CurRenderMode.Quad:
-                        DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Circle:
-                        DebugDraw.DrawCircle(position, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCircle(position, 0.5f, rotation, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Sphere:
-                        DebugDraw.DrawSphere(position, 0.5f, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Cube:
-                        DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Capsule:
-                        DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Cylinder:
-                        DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Cone:
-                        DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Ray:
-                        DebugDraw.DrawRay(position, velocity, color, 0.0f, useDepthTesting);
+                        DebugDraw.DrawRay(position, velocity, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Arrow:
                         DebugDraw.DrawArrow(position, velocity, color: color, duration: 0.0f, depthTest: useDepthTesting);
