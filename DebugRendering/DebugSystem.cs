@@ -1065,14 +1065,16 @@ namespace DebugRendering
             }
 
             /* everything except lines is included here, as lines just get accumulated into a buffer directly */
-            int totalThingsToDraw = SumBasicPrimitives(ref totalPrimitives) + SumBasicPrimitives(ref totalPrimitivesNoDepth);
+            int primitivesWithDepth = SumBasicPrimitives(ref totalPrimitives);
+            int primitivesWithoutDepth = SumBasicPrimitives(ref totalPrimitivesNoDepth);
+            int totalThingsToDraw = primitivesWithDepth + primitivesWithoutDepth;
 
             instances.Resize(totalThingsToDraw, true);
 
             lineVertices.Resize((totalPrimitives.Lines * 2) + (totalPrimitivesNoDepth.Lines * 2), true);
 
             var primitiveOffsets = SetupPrimitiveOffsets(ref totalPrimitives);
-            var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref totalPrimitivesNoDepth, primitiveOffsets.Cones + totalPrimitives.Cones);
+            var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref totalPrimitivesNoDepth, primitivesWithDepth);
 
             /* line rendering data, separate buffer so offset isnt relative to the other data */
             primitiveOffsets.Lines = 0;

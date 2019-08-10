@@ -101,8 +101,8 @@ namespace DebugRendering
 
             DebugDraw = new DebugSystem(Services);
             DebugDraw.PrimitiveColor = Color.Green;
-            DebugDraw.MaxPrimitives = (currentNumPrimitives * 2) + 7;
-            DebugDraw.MaxPrimitivesWithLifetime = (currentNumPrimitives * 2) + 7;
+            DebugDraw.MaxPrimitives = (currentNumPrimitives * 2) + 8;
+            DebugDraw.MaxPrimitivesWithLifetime = (currentNumPrimitives * 2) + 8;
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
