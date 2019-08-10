@@ -264,10 +264,10 @@ namespace DebugRendering
             DrawLine(start, start + dir, color == default ? PrimitiveColor : color, duration, depthTest);
         }
 
-        public void DrawArrow(Vector3 from, Vector3 to, float coneHeight = 1.0f, float coneRadius = 0.5f, Color color = default, float duration = 0.0f, bool depthTest = true)
+        public void DrawArrow(Vector3 from, Vector3 dir, float coneHeight = 1.0f, float coneRadius = 0.5f, Color color = default, float duration = 0.0f, bool depthTest = true)
         {
-            DrawRay(from, to, color, duration, depthTest);
-            DrawCone(from + to, coneHeight, coneRadius, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), to), color == default ? PrimitiveColor : color, duration, depthTest);
+            DrawRay(from, dir, color, duration, depthTest);
+            DrawCone(from + dir, coneHeight, coneRadius, Quaternion.BetweenDirections(new Vector3(0.0f, 1.0f, 0.0f), dir), color == default ? PrimitiveColor : color, duration, depthTest);
         }
 
         public void DrawSphere(Vector3 position, float radius, Color color = default, float duration = 0.0f, bool depthTest = true)
