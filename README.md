@@ -8,6 +8,6 @@ It consists of:
 
 Run the project to see what it does, or look in the implementation [DebugSystem](DebugRendering/DebugSystem.cs) and the user-side script which uses it for testing it at the moment: [DebugTest](DebugRendering/DebugTest.cs).
 
-Project is currently on **Xenko 3.1.0.1-beta02-0550**.
+Project is currently on **Xenko 3.1.0.1-beta02-0635**.
 
 ![currently](debug_rendering.png "a bunch of primitives in space")

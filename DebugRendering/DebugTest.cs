@@ -101,8 +101,8 @@ namespace DebugRendering
 
             DebugDraw = new DebugSystem(Services);
             DebugDraw.PrimitiveColor = Color.Green;
-            DebugDraw.MaxPrimitives = currentNumPrimitives * 2 + 6;
-            DebugDraw.MaxPrimitivesWithLifetime = currentNumPrimitives * 2 + 6;
+            DebugDraw.MaxPrimitives = (currentNumPrimitives * 2) + 7;
+            DebugDraw.MaxPrimitivesWithLifetime = (currentNumPrimitives * 2) + 7;
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
@@ -176,8 +176,8 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                DebugDraw.MaxPrimitivesWithLifetime = newAmountOfBoxes * 2 + 6;
-                DebugDraw.MaxPrimitives = newAmountOfBoxes * 2 + 6;
+                DebugDraw.MaxPrimitivesWithLifetime = (newAmountOfBoxes * 2) + 7;
+                DebugDraw.MaxPrimitives = (newAmountOfBoxes * 2) + 7;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
