@@ -336,6 +336,7 @@ namespace DebugRendering
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
                     DebugDraw.DrawLine(cameraWorldPos + (cameraWorldNormal * -2.0f) + (cameraWorldUp * (-0.125f / 4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
                     DebugDraw.DrawArrow(result.Point, result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 5.0f);
+                    DebugDraw.DrawArrow(result.Point, Vector3.Reflect(result.Point - cameraWorldPos, result.Normal), coneHeight: 0.25f, coneRadius: 0.125f, color: Color.LimeGreen, duration: 5.0f);
                 }
             }
 
