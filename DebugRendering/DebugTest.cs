@@ -324,7 +324,6 @@ namespace DebugRendering
             DebugDraw.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), color: Color.White);
             DebugDraw.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
 
-
             if (Input.IsMouseButtonPressed(Xenko.Input.MouseButton.Left))
             {
                 var clickPos = Input.MousePosition;
