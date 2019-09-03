@@ -1172,14 +1172,17 @@ namespace DebugRendering
 
         }
 
-        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest)
+        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode)
         {
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
-            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
-            pipelineState.State.RasterizerState.FillMode = currentFillMode;
+            pipelineState.State.DepthStencilState =
+                (depthTest) ?
+                    ((selectedFillMode == FillMode.Solid) ? DepthStencilStates.Default : DepthStencilStates.DepthRead)
+                    : DepthStencilStates.None;
+            pipelineState.State.RasterizerState.FillMode = selectedFillMode;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
             pipelineState.State.BlendState = BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
@@ -1345,11 +1348,11 @@ namespace DebugRendering
             var commandList = context.CommandList;
 
             // update pipeline state, render with depth test first
-            SetPrimitiveRenderingPipelineState(commandList, depthTest: true);
+            SetPrimitiveRenderingPipelineState(commandList, depthTest: true, selectedFillMode: currentFillMode);
             RenderPrimitives(context, renderView, ref instanceOffsets, ref primitivesToDraw, depthTest: true);
 
             // update pipeline state, render without depth test second
-            SetPrimitiveRenderingPipelineState(commandList, depthTest: false);
+            SetPrimitiveRenderingPipelineState(commandList, depthTest: false, selectedFillMode: currentFillMode);
             RenderPrimitives(context, renderView, offsets: ref instanceOffsetsNoDepth, counts: ref primitivesToDrawNoDepth, depthTest: false);
 
         }
