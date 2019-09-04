@@ -169,15 +169,15 @@ namespace DebugRendering {
                 indices[i] = 0;
                 indices[i + 1] = curVert;
                 indices[i + 2] = curVert + 1;
-                lastIndex = i;
+                lastIndex = i + 2;
                 curVert++;
             }
 
             // endpoint
-            indices[lastIndex + 3] = 0;
-            indices[lastIndex + 4] = indices[lastIndex + 1 + hasUvSplits];
-            indices[lastIndex + 5] = indices[1];
-            lastIndex = lastIndex + 5;
+            indices[lastIndex + 1] = 0;
+            indices[lastIndex + 2] = indices[lastIndex - 1 + hasUvSplits];
+            indices[lastIndex + 3] = indices[1];
+            lastIndex = lastIndex + 3;
 
             if (hasUvSplits > 0)
             {
@@ -420,7 +420,7 @@ namespace DebugRendering {
             int extraVertexCount = 0;
             int extraIndexCount = 0;
 
-            for (int i = 1 + hasUvSplit; i < capVertices.Length - (uvSides * hasUvSplit); ++i)
+            for (int i = 1 + hasUvSplit; i < capVertices.Length - (hasUvSplit * uvSides); ++i)
             {
                 int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
                 if (sideModulo == 0)
@@ -454,7 +454,7 @@ namespace DebugRendering {
             // generate sides, using our top and bottom circle triangle fans
             int curVert = capVertices.Length * 2;
             int curIndex = capIndices.Length * 2;
-            for (int i = 1 + hasUvSplit; i < capVertices.Length - (uvSides * hasUvSplit); ++i)
+            for (int i = 1 + hasUvSplit; i < capVertices.Length - (hasUvSplit * uvSides); ++i)
             {
                 int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
                 if (sideModulo == 0)
