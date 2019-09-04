@@ -118,8 +118,26 @@ namespace DebugRendering {
             }
 
             int hasUvSplits = (uvSplits > 0 ? 1 : 0);
-            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + (hasUvSplits + (hasUvSplits * uvSplits)))];
-            int[] indices = new int[tesselations * 3 + 3 + (uvSplits * 3)];
+            int extraVerts = 0;
+            int extraIndices = 0;
+
+            /* another explicit calculation of extra verts required... */
+            if (hasUvSplits > 0)
+            {
+                for (int v = 1 + hasUvSplits; v < tesselations + (hasUvSplits); ++v)
+                {
+                    var splitMod = (v - 1) % (tesselations / uvSplits);
+                    var timeToSplit = (splitMod == 0);
+                    if (timeToSplit)
+                    {
+                        extraVerts += 2;
+                        extraIndices += 3;
+                    }
+                }
+            }
+
+            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + extraVerts)];
+            int[] indices = new int[tesselations * 3 + extraIndices + 3 + 1];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -400,24 +418,23 @@ namespace DebugRendering {
             //  it basically is just here to calculate how many extra vertices are needed to create the wireframe topology we want
             // if *you* can figure out a closed form solution, have at it! you are very welcome!
             int extraVertexCount = 0;
+            int extraIndexCount = 0;
 
-            if (hasUvSplit > 0)
+            for (int i = 1 + hasUvSplit; i < capVertices.Length - (uvSides * hasUvSplit); ++i)
             {
-                for (int i = 1 + hasUvSplit; i < capVertices.Length - (uvSides * hasUvSplit); ++i)
+                int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
+                if (sideModulo == 0)
                 {
-                    int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
-                    if (sideModulo == 0)
-                    {
-                        extraVertexCount += 2;
-                    } else
-                    {
-                        extraVertexCount += 4;
-                    }
+                    extraVertexCount += 2;
+                } else
+                {
+                    extraVertexCount += 4;
                 }
+                extraIndexCount += 6;
             }
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + extraVertexCount];
-            int[] indices = new int[capIndices.Length * 2 + (tesselations * 6)];
+            int[] indices = new int[(capIndices.Length * 2) + extraIndexCount];
 
             // copy vertices
             for (int i = 0; i < capVertices.Length; ++i)
@@ -431,7 +448,7 @@ namespace DebugRendering {
             for (int i = 0; i < capIndices.Length; ++i) 
             {
                 indices[i] = capIndices[i];
-                indices[i + capIndices.Length] = capIndices[i] + capVertices.Length;
+                indices[i + capIndices.Length] = capIndices[i] + capIndices.Length;
             }
 
             // generate sides, using our top and bottom circle triangle fans
@@ -562,21 +579,18 @@ namespace DebugRendering {
             // if *you* can figure out a closed form solution, have at it! you are very welcome!
             int extraVertexCount = 0;
 
-            if (hasUvSplit > 0)
+            for (int i = 0; i < verticalSegments - 1; i++)
             {
-                for (int i = 0; i < verticalSegments - 1; i++) 
+                for (int j = 0; j <= horizontalSegments; j++)
                 {
-                    for (int j = 0; j <= horizontalSegments; j++)
+                    int vertModulo = (i - 1) % (verticalSegments / uvSplits);
+                    int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                    if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
                     {
-                        int vertModulo = (i - 1) % (verticalSegments / uvSplits);
-                        int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
-                        if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
-                        {
-                            extraVertexCount += 4;
-                        } else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0))
-                        {
-                            extraVertexCount += 2;
-                        }
+                        extraVertexCount += 4;
+                    } else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0))
+                    {
+                        extraVertexCount += 2;
                     }
                 }
             }
