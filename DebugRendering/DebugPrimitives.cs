@@ -169,22 +169,22 @@ namespace DebugRendering {
                 indices[i] = 0;
                 indices[i + 1] = curVert;
                 indices[i + 2] = curVert + 1;
-                lastIndex = i + 2;
+                lastIndex = i;
                 curVert++;
             }
 
             // endpoint
-            indices[lastIndex + 1] = 0;
-            indices[lastIndex + 2] = indices[lastIndex - 1 + hasUvSplits];
-            indices[lastIndex + 3] = indices[1];
-            lastIndex = lastIndex + 3;
+            indices[lastIndex + 3] = 0;
+            indices[lastIndex + 4] = indices[lastIndex + 1 + hasUvSplits];
+            indices[lastIndex + 5] = indices[1];
+            lastIndex = lastIndex + 5;
 
             if (hasUvSplits > 0)
             {
                 // draw uv lines
                 int newVert = tesselations + (1 + hasUvSplits);
                 int curNewIndex = lastIndex + 1;
-                for (int v = 1 + hasUvSplits; v < tesselations + (hasUvSplits); ++v)
+                for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
                 {
                     var splitMod = (v - 1) % (tesselations / uvSplits);
                     var timeToSplit = (splitMod == 0);
