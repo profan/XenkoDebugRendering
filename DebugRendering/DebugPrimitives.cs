@@ -124,7 +124,7 @@ namespace DebugRendering {
             /* another explicit calculation of extra verts required... */
             if (hasUvSplits > 0)
             {
-                for (int v = 1 + hasUvSplits; v < tesselations + (hasUvSplits); ++v)
+                for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
                 {
                     var splitMod = (v - 1) % (tesselations / uvSplits);
                     var timeToSplit = (splitMod == 0);
@@ -136,8 +136,8 @@ namespace DebugRendering {
                 }
             }
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + extraVerts)];
-            int[] indices = new int[tesselations * 3 + extraIndices + 3 + 1];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + hasUvSplits + extraVerts)];
+            int[] indices = new int[tesselations * 3 + extraIndices + 3];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -164,11 +164,11 @@ namespace DebugRendering {
 
             int curVert = 1 + hasUvSplits;
             int lastIndex = 0;
-            for (int i = 0; i < tesselations * 3 - (3 * hasUvSplits); i += 3)
+            for (int i = 0; i < tesselations * 3 - (3 * hasUvSplits + 1); i += 3)
             {
                 indices[i] = 0;
                 indices[i + 1] = curVert;
-                indices[i + 2] = curVert + 1;
+                indices[i + 2] = (curVert + 1) % vertices.Length;
                 lastIndex = i;
                 curVert++;
             }
@@ -448,7 +448,7 @@ namespace DebugRendering {
             for (int i = 0; i < capIndices.Length; ++i) 
             {
                 indices[i] = capIndices[i];
-                indices[i + capIndices.Length] = capIndices[i] + capIndices.Length;
+                indices[i + capIndices.Length] = capIndices[i] + capVertices.Length;
             }
 
             // generate sides, using our top and bottom circle triangle fans
@@ -477,7 +477,8 @@ namespace DebugRendering {
                     indices[curIndex++] = i + capVertices.Length + 1;
                     indices[curIndex++] = i + 1;
 
-                } else
+                }
+                else
                 {
 
                     vertices[curVert] = vertices[i];
