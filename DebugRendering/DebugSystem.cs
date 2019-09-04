@@ -1172,7 +1172,7 @@ namespace DebugRendering
 
         }
 
-        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode)
+        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode, bool isOneSided = false)
         {
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
@@ -1183,8 +1183,8 @@ namespace DebugRendering
                     ((selectedFillMode == FillMode.Solid) ? DepthStencilStates.Default : DepthStencilStates.DepthRead)
                     : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = selectedFillMode;
-            pipelineState.State.RasterizerState.CullMode = CullMode.None;
-            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
+            pipelineState.State.RasterizerState.CullMode = (selectedFillMode == FillMode.Solid && !isOneSided) ? CullMode.Back : CullMode.None;
+            pipelineState.State.BlendState = (selectedFillMode == FillMode.Solid) ? BlendStates.AlphaBlend : BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
@@ -1205,7 +1205,7 @@ namespace DebugRendering
             pipelineState.Update();
         }
 
-        private void RenderPrimitives(RenderDrawContext context, RenderView renderView, ref Primitives offsets, ref Primitives counts, bool depthTest)
+        private void RenderPrimitives(RenderDrawContext context, RenderView renderView, ref Primitives offsets, ref Primitives counts, bool depthTest, FillMode fillMode)
         {
 
             var commandList = context.CommandList;
@@ -1228,6 +1228,9 @@ namespace DebugRendering
             if (counts.Spheres > 0)
             {
 
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isOneSided: false);
+                commandList.SetPipelineState(pipelineState.CurrentState);
+
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Spheres);
                 primitiveEffect.Apply(context.GraphicsContext);
 
@@ -1236,68 +1239,84 @@ namespace DebugRendering
             }
 
             // draw quads
-            if (counts.Quads > 0)
+            if (counts.Quads > 0 || counts.Circles > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Quads);
-                primitiveEffect.Apply(context.GraphicsContext);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isOneSided: true);
+                commandList.SetPipelineState(pipelineState.CurrentState);
 
-                commandList.DrawIndexedInstanced(plane.Indices.Length, counts.Quads, primitiveIndexOffsets.Quads, primitiveVertexOffsets.Quads);
+                if (counts.Quads > 0)
+                {
+
+                    primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Quads);
+                    primitiveEffect.Apply(context.GraphicsContext);
+
+                    commandList.DrawIndexedInstanced(plane.Indices.Length, counts.Quads, primitiveIndexOffsets.Quads, primitiveVertexOffsets.Quads);
+
+                }
+
+                // draw circles
+                if (counts.Circles > 0)
+                {
+
+                    primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Circles);
+                    primitiveEffect.Apply(context.GraphicsContext);
+
+                    commandList.DrawIndexedInstanced(circle.Indices.Length, counts.Circles, primitiveIndexOffsets.Circles, primitiveVertexOffsets.Circles);
+
+                }
 
             }
 
-            // draw circles
-            if (counts.Circles > 0)
+            if (counts.Cubes > 0 || counts.Capsules > 0 || counts.Cylinders > 0 || counts.Cones > 0)
             {
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Circles);
-                primitiveEffect.Apply(context.GraphicsContext);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isOneSided: false);
+                commandList.SetPipelineState(pipelineState.CurrentState);
 
-                commandList.DrawIndexedInstanced(circle.Indices.Length, counts.Circles, primitiveIndexOffsets.Circles, primitiveVertexOffsets.Circles);
+                // draw cubes
+                if (counts.Cubes > 0)
+                {
 
-            }
+                    primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cubes);
+                    primitiveEffect.Apply(context.GraphicsContext);
 
-            // draw cubes
-            if (counts.Cubes > 0)
-            {
+                    commandList.DrawIndexedInstanced(cube.Indices.Length, counts.Cubes, primitiveIndexOffsets.Cubes, primitiveVertexOffsets.Cubes);
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cubes);
-                primitiveEffect.Apply(context.GraphicsContext);
+                }
 
-                commandList.DrawIndexedInstanced(cube.Indices.Length, counts.Cubes, primitiveIndexOffsets.Cubes, primitiveVertexOffsets.Cubes);
+                // draw capsules
+                if (counts.Capsules > 0)
+                {
 
-            }
+                    primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Capsules);
+                    primitiveEffect.Apply(context.GraphicsContext);
 
-            // draw capsules
-            if (counts.Capsules > 0)
-            {
+                    commandList.DrawIndexedInstanced(capsule.Indices.Length, counts.Capsules, primitiveIndexOffsets.Capsules, primitiveVertexOffsets.Capsules);
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Capsules);
-                primitiveEffect.Apply(context.GraphicsContext);
+                }
 
-                commandList.DrawIndexedInstanced(capsule.Indices.Length, counts.Capsules, primitiveIndexOffsets.Capsules, primitiveVertexOffsets.Capsules);
+                // draw cylinders
+                if (counts.Cylinders > 0)
+                {
 
-            }
+                    primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cylinders);
+                    primitiveEffect.Apply(context.GraphicsContext);
 
-            // draw cylinders
-            if (counts.Cylinders > 0)
-            {
+                    commandList.DrawIndexedInstanced(cylinder.Indices.Length, counts.Cylinders, primitiveIndexOffsets.Cylinders, primitiveVertexOffsets.Cylinders);
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cylinders);
-                primitiveEffect.Apply(context.GraphicsContext);
+                }
 
-                commandList.DrawIndexedInstanced(cylinder.Indices.Length, counts.Cylinders, primitiveIndexOffsets.Cylinders, primitiveVertexOffsets.Cylinders);
+                // draw cones
+                if (counts.Cones > 0)
+                {
 
-            }
+                    primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cones);
+                    primitiveEffect.Apply(context.GraphicsContext);
 
-            // draw cones
-            if (counts.Cones > 0)
-            {
+                    commandList.DrawIndexedInstanced(cone.Indices.Length, counts.Cones, primitiveIndexOffsets.Cones, primitiveVertexOffsets.Cones);
 
-                primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Cones);
-                primitiveEffect.Apply(context.GraphicsContext);
-
-                commandList.DrawIndexedInstanced(cone.Indices.Length, counts.Cones, primitiveIndexOffsets.Cones, primitiveVertexOffsets.Cones);
+                }
 
             }
 
@@ -1349,11 +1368,11 @@ namespace DebugRendering
 
             // update pipeline state, render with depth test first
             SetPrimitiveRenderingPipelineState(commandList, depthTest: true, selectedFillMode: currentFillMode);
-            RenderPrimitives(context, renderView, ref instanceOffsets, ref primitivesToDraw, depthTest: true);
+            RenderPrimitives(context, renderView, ref instanceOffsets, ref primitivesToDraw, depthTest: true, fillMode: currentFillMode);
 
-            // update pipeline state, render without depth test second
+            // render without depth test second
             SetPrimitiveRenderingPipelineState(commandList, depthTest: false, selectedFillMode: currentFillMode);
-            RenderPrimitives(context, renderView, offsets: ref instanceOffsetsNoDepth, counts: ref primitivesToDrawNoDepth, depthTest: false);
+            RenderPrimitives(context, renderView, offsets: ref instanceOffsetsNoDepth, counts: ref primitivesToDrawNoDepth, depthTest: false, fillMode: currentFillMode);
 
         }
 

@@ -312,7 +312,7 @@ namespace DebugRendering
                         DebugDraw.DrawRay(position, velocity, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Arrow:
-                        DebugDraw.DrawArrow(position, velocity, color: color, duration: 0.0f, depthTest: useDepthTesting);
+                        DebugDraw.DrawArrow(position, velocity, color: color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.None:
                         break;
@@ -320,7 +320,7 @@ namespace DebugRendering
             }
 
             // CUBE OF ORIGIN!!
-            DebugDraw.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), color: Color.White);
+            DebugDraw.DrawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), color: new Color(255, 255, 255, 125));
             DebugDraw.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), color: Color.White);
             DebugDraw.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
 
