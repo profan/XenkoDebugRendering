@@ -1,4 +1,4 @@
-﻿// Copyright (c) Xenko contributors (https://xenko.com)
+// Copyright (c) Xenko contributors (https://xenko.com)
 // Distributed under the MIT license. See the LICENSE.md file in the project root for more information.
 //
 // Copyright (c) 2010-2013 SharpDX - Alexandre Mutel
@@ -492,8 +492,8 @@ namespace DebugRendering {
 
             var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits);
             var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom);
-            VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length * 2];
-            int[] indices = new int[bottomIndices.Length * 2];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length + topVertices.Length];
+            int[] indices = new int[topIndices.Length + bottomIndices.Length];
 
             // copy vertices from circle
             for (int i = 0; i < bottomVertices.Length; ++i)
