@@ -161,12 +161,12 @@ namespace DebugRendering {
             indices[lastIndex + 5] = indices[1];
             lastIndex = lastIndex + 5;
 
-            // draw uv lines
-            int newVert = tesselations + (1 + hasUvSplits);
-            int curNewIndex = lastIndex + 1;
-            for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
+            if (hasUvSplits > 0)
             {
-                if (hasUvSplits > 0)
+                // draw uv lines
+                int newVert = tesselations + (1 + hasUvSplits);
+                int curNewIndex = lastIndex + 1;
+                for (int v = 1 + hasUvSplits; v < tesselations + (hasUvSplits); ++v)
                 {
                     var splitMod = (v - 1) % (tesselations / uvSplits);
                     var timeToSplit = (splitMod == 0);
