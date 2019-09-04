@@ -385,7 +385,7 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 4, int? uvSidesForCircle = null)
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 4, int? uvSidesForCircle = null)
         {
 
             if (uvSides != 0 && tesselations % uvSides != 0) // FIXME: this can read a lot nicer i think?
@@ -396,10 +396,28 @@ namespace DebugRendering {
             var hasUvSplit = (uvSides > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
 
+            // FIXME: i tried figuring out a closed form solution for this bugger here, but i feel like i'm missing something crucial...
+            //  it basically is just here to calculate how many extra vertices are needed to create the wireframe topology we want
+            // if *you* can figure out a closed form solution, have at it! you are very welcome!
+            int extraVertexCount = 0;
 
+            if (hasUvSplit > 0)
+            {
+                for (int i = 1 + hasUvSplit; i < capVertices.Length - (uvSides * hasUvSplit); ++i)
+                {
+                    int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
+                    if (sideModulo == 0)
+                    {
+                        extraVertexCount += 2;
+                    } else
+                    {
+                        extraVertexCount += 4;
+                    }
+                }
+            }
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[capVertices.Length * 2 + (tesselations * 2) + ((tesselations / uvSides)+2) * 4];
-            int[] indices = new int[capIndices.Length * 2 + (tesselations*6)];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + extraVertexCount];
+            int[] indices = new int[capIndices.Length * 2 + (tesselations * 6)];
 
             // copy vertices
             for (int i = 0; i < capVertices.Length; ++i)
@@ -477,7 +495,7 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4, int uvSplitsBottom = 0)
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4, int uvSplitsBottom = 0)
         {
 
             if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
@@ -525,7 +543,7 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float length, float radius, int tesselation, int uvSplits = 4)
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float length, float radius, int tesselation, int uvSplits = 4)
         {
 
             if (uvSplits != 0 && tesselation % uvSplits != 0) // FIXME: this can read a lot nicer i think?
