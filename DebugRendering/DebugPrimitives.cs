@@ -82,6 +82,18 @@ using Xenko.Graphics;
 namespace DebugRendering {
     public class DebugPrimitives {
 
+        static private Vector2 noLineUv = new Vector2(0.5f);
+        static private Vector2 lineUv = new Vector2(1.0f);
+
+        public static Vector3 GetCircleVector(int i, int tessellation)
+        {
+            var angle = (float)(i * 2.0 * Math.PI / tessellation);
+            var dx = (float)Math.Sin(angle);
+            var dz = (float)Math.Cos(angle);
+
+            return new Vector3(dx, 0, dz);
+        }
+
         public static void CopyFromGeometricPrimitive(GeometricMeshData<VertexPositionNormalTexture> primitiveData, ref VertexPositionTexture[] vertices, ref int[] indices)
         {
             for (int i = 0; i < vertices.Length; ++i)
@@ -109,7 +121,50 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false)
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false)
+        {
+
+            if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
+            {
+                throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
+            }
+
+            int hasUvSplits = (uvSplits > 0 ? 1 : 0);
+            VertexPositionTexture[] vertices = new VertexPositionTexture[(tesselations + 1) + hasUvSplits];
+            int[] indices = new int[((tesselations + 1) * 3) + hasUvSplits];
+
+            double radiansPerSegment = MathUtil.TwoPi / tesselations;
+
+            // center of our circle
+            vertices[0].Position = new Vector3(0.0f, yOffset, 0.0f);
+            vertices[0].TextureCoordinate = noLineUv;
+
+            // center, but with uv coords set
+            if (hasUvSplits > 0)
+            {
+                vertices[1].Position = new Vector3(0.0f, yOffset, 0.0f);
+                vertices[1].TextureCoordinate = lineUv;
+            }
+
+            int curVert = 0;
+            int offset = 1 + hasUvSplits;
+            for (int i = 0; i <= tesselations; ++i)
+            {
+                var normal = GetCircleVector(i, tesselations);
+                vertices[i].Position = normal * radius;
+                vertices[i].TextureCoordinate = noLineUv;
+            }
+
+            if (isFlipped)
+            {
+                Array.Reverse(indices); // flip the winding if it's a bottom piece
+            }
+
+            return (vertices, indices);
+
+        }
+
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCircleOld(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false)
         {
 
             if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
@@ -143,13 +198,13 @@ namespace DebugRendering {
 
             // center of our circle
             vertices[0].Position = new Vector3(0.0f, yOffset, 0.0f);
-            vertices[0].TextureCoordinate = new Vector2(0.5f);
+            vertices[0].TextureCoordinate = noLineUv;
 
             // center, but with uv coords set
             if (hasUvSplits > 0)
             {
                 vertices[1].Position = new Vector3(0.0f, yOffset, 0.0f);
-                vertices[1].TextureCoordinate = new Vector2(1.0f);
+                vertices[1].TextureCoordinate = lineUv;
             }
 
             // in the XZ plane
@@ -159,7 +214,7 @@ namespace DebugRendering {
                 curX = (float)(Math.Cos(i * radiansPerSegment) * (2.0f * radius)) / 2.0f;
                 curZ = (float)(Math.Sin(i * radiansPerSegment) * (2.0f * radius)) / 2.0f;
                 vertices[i].Position = new Vector3(curX, yOffset, curZ);
-                vertices[i].TextureCoordinate = new Vector2(1.0f);
+                vertices[i].TextureCoordinate = lineUv;
             }
 
             int curVert = 1 + hasUvSplits;
@@ -191,7 +246,7 @@ namespace DebugRendering {
                     if (timeToSplit)
                     {
                         vertices[newVert] = vertices[v + 1];
-                        vertices[newVert].TextureCoordinate = new Vector2(0.5f);
+                        vertices[newVert].TextureCoordinate = noLineUv;
                         indices[curNewIndex] = 1;
                         indices[curNewIndex + 1] = v;
                         indices[curNewIndex + 2] = newVert++;
@@ -294,13 +349,13 @@ namespace DebugRendering {
                     dz *= dxz;
 
                     var normal = new Vector3(dx, dy, dz);
-                    var textureCoordinate = new Vector2(0.5f);
+                    var textureCoordinate = noLineUv;
 
                     vertices[vertexCount++] = new VertexPositionTexture(normal * radius, textureCoordinate);
                 }
 
                 // the last point equal to the first point
-                firstHorizontalVertex.TextureCoordinate = new Vector2(0.5f);
+                firstHorizontalVertex.TextureCoordinate = noLineUv;
                 vertices[vertexCount++] = firstHorizontalVertex;
             }
 
@@ -308,7 +363,7 @@ namespace DebugRendering {
             for (int j = 0; j <= horizontalSegments; j++)
             {
                 var normal = new Vector3(0, 1, 0);
-                var textureCoordinate = new Vector2(0.5f);
+                var textureCoordinate = noLineUv;
                 vertices[vertexCount++] = new VertexPositionTexture(normal * radius, textureCoordinate);
             }
 
@@ -329,11 +384,11 @@ namespace DebugRendering {
                     {
 
                         vertices[newVertexCount] = vertices[(i * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         indices[indexCount++] = (i * stride + nextJ);
@@ -342,11 +397,11 @@ namespace DebugRendering {
                         indices[indexCount++] = (i * stride + nextJ);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
 
                     }
@@ -360,11 +415,11 @@ namespace DebugRendering {
                         indices[indexCount++] = (i * stride + nextJ);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
 
                     }
@@ -372,11 +427,11 @@ namespace DebugRendering {
                     {
 
                         vertices[newVertexCount] = vertices[(i * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         indices[indexCount++] = (i * stride + nextJ);
@@ -405,15 +460,6 @@ namespace DebugRendering {
 
             return (vertices, indices);
 
-        }
-
-        private static Vector3 GetCircleVector(int i, int tessellation)
-        {
-            var angle = (float)(i * 2.0 * Math.PI / tessellation);
-            var dx = (float)Math.Sin(angle);
-            var dz = (float)Math.Cos(angle);
-
-            return new Vector3(dx, 0, dz);
         }
 
         public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 8, int? uvSidesForCircle = 4)
@@ -466,21 +512,21 @@ namespace DebugRendering {
                 int sideModulo = i % (tesselations / uvSides);
 
                 vertices[curVert].Position = curBottomPos;
-                vertices[curVert].TextureCoordinate = new Vector2((sideModulo == 0) ? 1.0f : 0.5f);
+                vertices[curVert].TextureCoordinate = (sideModulo == 0) ? lineUv : noLineUv;
                 var ip = curVert++;
 
                 var nextBottomNormal = GetCircleVector(i + 1, tesselations) * radius;
                 vertices[curVert].Position = nextBottomNormal;
-                vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                vertices[curVert].TextureCoordinate = noLineUv;
                 var ip1 = curVert++;
 
                 vertices[curVert].Position = curTopPos;
-                vertices[curVert].TextureCoordinate = new Vector2((sideModulo == 0) ? 1.0f : 0.5f);
+                vertices[curVert].TextureCoordinate = (sideModulo == 0) ? lineUv : noLineUv;
                 var ipv = curVert++;
 
                 var nextTopNormal = (GetCircleVector(i + 1, tesselations) * radius) + (Vector3.UnitY * height);
                 vertices[curVert].Position = nextTopNormal;
-                vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                vertices[curVert].TextureCoordinate = noLineUv;
                 var ipv1 = curVert++;
 
                 // reuse the old stuff yo
@@ -617,7 +663,7 @@ namespace DebugRendering {
                     dz *= dxz;
 
                     var normal = new Vector3(dx, dy, dz);
-                    var textureCoordinate = new Vector2(0.5f);
+                    var textureCoordinate = noLineUv;
                     var position = radius * normal + new Vector3(0, deltaY, 0);
 
                     vertices[vertexCount++] = new VertexPositionTexture(position, textureCoordinate);
@@ -641,11 +687,11 @@ namespace DebugRendering {
                     {
 
                         vertices[newVertexCount] = vertices[(i * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         indices[indexCount++] = (i * stride + nextJ);
@@ -654,11 +700,11 @@ namespace DebugRendering {
                         indices[indexCount++] = (i * stride + nextJ);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
 
                     }
@@ -672,11 +718,11 @@ namespace DebugRendering {
                         indices[indexCount++] = (i * stride + nextJ);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + nextJ)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + nextJ);
 
                     }
@@ -684,11 +730,11 @@ namespace DebugRendering {
                     {
 
                         vertices[newVertexCount] = vertices[(i * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (i * stride + j);
 
                         vertices[newVertexCount] = vertices[(nextI * stride + j)];
-                        vertices[newVertexCount].TextureCoordinate = new Vector2(1.0f);
+                        vertices[newVertexCount].TextureCoordinate = lineUv;
                         indices[indexCount++] = newVertexCount++; // indices[indexCount++] = (nextI * stride + j);
 
                         indices[indexCount++] = (i * stride + nextJ);
