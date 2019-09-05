@@ -1,4 +1,4 @@
-﻿namespace DebugRendering
+namespace DebugRendering
 {
 
     shader PrimitiveShader : ShaderBase, ColorBase
@@ -32,8 +32,6 @@
         override stage void PSMain()
         {
 
-            // streams.ColorTarget = streams.Color;
-
             float lineWidth = 0.001f * LineWidthMultiplier;
 
             float2 uv = streams.Uv;
@@ -43,8 +41,6 @@
             float hy = step(uv.y, 1.0f - lineWidth);
 
             streams.ColorTarget = lerp(streams.Color, float4(streams.Color.rgb, 0.0f), lx*ly*hx*hy);
-
-            // streams.ColorTarget = streams.Color;
 
         }
 

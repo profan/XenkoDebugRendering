@@ -190,10 +190,10 @@ namespace DebugRendering {
                     var timeToSplit = (splitMod == 0);
                     if (timeToSplit)
                     {
-                        indices[curNewIndex] = 1;
-                        indices[curNewIndex + 1] = v;
                         vertices[newVert] = vertices[v + 1];
                         vertices[newVert].TextureCoordinate = new Vector2(0.5f);
+                        indices[curNewIndex] = 1;
+                        indices[curNewIndex + 1] = v;
                         indices[curNewIndex + 2] = newVert++;
                         curNewIndex += 3;
                     }
