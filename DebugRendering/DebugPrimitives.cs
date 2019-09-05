@@ -124,7 +124,7 @@ namespace DebugRendering {
             /* another explicit calculation of extra verts required... */
             if (hasUvSplits > 0)
             {
-                for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
+                for (int v = 1 + hasUvSplits; v < tesselations; ++v)
                 {
                     var splitMod = (v - 1) % (tesselations / uvSplits);
                     var timeToSplit = (splitMod == 0);
@@ -403,7 +403,16 @@ namespace DebugRendering {
 
         }
 
-        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 4, int? uvSidesForCircle = null)
+        private static Vector3 GetCircleVector(int i, int tessellation)
+        {
+            var angle = (float)(i * 2.0 * Math.PI / tessellation);
+            var dx = (float)Math.Sin(angle);
+            var dz = (float)Math.Cos(angle);
+
+            return new Vector3(dx, 0, dz);
+        }
+
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 8, int? uvSidesForCircle = 4)
         {
 
             if (uvSides != 0 && tesselations % uvSides != 0) // FIXME: this can read a lot nicer i think?
@@ -414,99 +423,71 @@ namespace DebugRendering {
             var hasUvSplit = (uvSides > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
 
-            // FIXME: i tried figuring out a closed form solution for this bugger here, but i feel like i'm missing something crucial...
-            //  it basically is just here to calculate how many extra vertices are needed to create the wireframe topology we want
-            // if *you* can figure out a closed form solution, have at it! you are very welcome!
-            int extraVertexCount = 0;
-            int extraIndexCount = 0;
+            VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + ((tesselations+1) * 4)];
+            int[] indices = new int[(capIndices.Length * 2) + ((tesselations+1) * 6)];
 
-            for (int i = 1 + hasUvSplit; i < capVertices.Length - (hasUvSplit * uvSides); ++i)
-            {
-                int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
-                if (sideModulo == 0)
-                {
-                    extraVertexCount += 2;
-                } else
-                {
-                    extraVertexCount += 4;
-                }
-                extraIndexCount += 6;
-            }
-
-            VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + extraVertexCount];
-            int[] indices = new int[(capIndices.Length * 2) + extraIndexCount];
+            int bottomVertsOffset = (vertices.Length - capVertices.Length);
+            int topVertsOffset = (vertices.Length - capVertices.Length * 2);
+            int bottomIndicesOffset = (indices.Length - capIndices.Length);
+            int topIndicesOffset = (indices.Length - capIndices.Length * 2);
 
             // copy vertices
             for (int i = 0; i < capVertices.Length; ++i)
             {
-                vertices[i] = capVertices[i];
-                vertices[i + capVertices.Length] = capVertices[i];
-                vertices[i + capVertices.Length].Position.Y = height;
+                vertices[bottomVertsOffset + i] = capVertices[i];
+                vertices[topVertsOffset + i] = capVertices[i];
+                vertices[topVertsOffset + i].Position.Y = height;
             }
 
             // copy indices
             for (int i = 0; i < capIndices.Length; ++i) 
             {
-                indices[i] = capIndices[i];
-                indices[i + capIndices.Length] = capIndices[i] + capVertices.Length;
+                indices[bottomIndicesOffset + i] = capIndices[i] + bottomVertsOffset;
+                indices[topIndicesOffset + i] = capIndices[i] + topVertsOffset;
             }
 
+            // correct winding order so backface is inwards for bottom part
+            Array.Reverse(indices, bottomIndicesOffset, capIndices.Length);
+
             // generate sides, using our top and bottom circle triangle fans
-            int curVert = capVertices.Length * 2;
-            int curIndex = capIndices.Length * 2;
-            for (int i = 1 + hasUvSplit; i < capVertices.Length - (hasUvSplit * uvSides); ++i)
+            int curVert = 0;
+            int curIndex = 0;
+            for (int i = 0; i <= tesselations; ++i)
             {
-                int sideModulo = (i - 1 - hasUvSplit) % (tesselations / uvSides);
-                if (sideModulo == 0)
-                {
 
-                    vertices[curVert] = vertices[i];
-                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
-                    var ip = curVert++;
+                var normal = GetCircleVector(i, tesselations);
+                var curTopPos = (normal * radius) + (Vector3.UnitY * height);
+                var curBottomPos = (normal * radius);
 
-                    vertices[curVert] = vertices[i + capVertices.Length];
-                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
-                    var ipv = curVert++;
+                int sideModulo = i % (tesselations / uvSides);
 
-                    // make some fresh vertex shit yo
-                    indices[curIndex++] = ip;
-                    indices[curIndex++] = i + 1;
-                    indices[curIndex++] = ipv;
+                vertices[curVert].Position = curBottomPos;
+                vertices[curVert].TextureCoordinate = new Vector2((sideModulo == 0) ? 1.0f : 0.5f);
+                var ip = curVert++;
 
-                    indices[curIndex++] = ipv;
-                    indices[curIndex++] = i + capVertices.Length + 1;
-                    indices[curIndex++] = i + 1;
+                var nextBottomNormal = GetCircleVector(i + 1, tesselations) * radius;
+                vertices[curVert].Position = nextBottomNormal;
+                vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                var ip1 = curVert++;
 
-                }
-                else
-                {
+                vertices[curVert].Position = curTopPos;
+                vertices[curVert].TextureCoordinate = new Vector2((sideModulo == 0) ? 1.0f : 0.5f);
+                var ipv = curVert++;
 
-                    vertices[curVert] = vertices[i];
-                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
-                    var ip = curVert++;
+                var nextTopNormal = (GetCircleVector(i + 1, tesselations) * radius) + (Vector3.UnitY * height);
+                vertices[curVert].Position = nextTopNormal;
+                vertices[curVert].TextureCoordinate = new Vector2(0.5f);
+                var ipv1 = curVert++;
 
-                    vertices[curVert] = vertices[i + 1];
-                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
-                    var ip1 = curVert++;
+                // reuse the old stuff yo
+                indices[curIndex++] = ipv;
+                indices[curIndex++] = ip1;
+                indices[curIndex++] = ip;
 
-                    vertices[curVert] = vertices[i + capVertices.Length];
-                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
-                    var ipv = curVert++;
+                indices[curIndex++] = ipv;
+                indices[curIndex++] = ipv1;
+                indices[curIndex++] = ip1;
 
-                    vertices[curVert] = vertices[i + 1 + capVertices.Length];
-                    vertices[curVert].TextureCoordinate = new Vector2(0.5f);
-                    var ipv1 = curVert++;
-
-                    // reuse the old stuff yo
-                    indices[curIndex++] = ip;
-                    indices[curIndex++] = ip1;
-                    indices[curIndex++] = ipv;
-
-                    indices[curIndex++] = ipv;
-                    indices[curIndex++] = ipv1;
-                    indices[curIndex++] = ip1;
-
-                }
             }
 
             return (vertices, indices);
