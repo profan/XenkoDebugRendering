@@ -109,7 +109,7 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f)
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false)
         {
 
             if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
@@ -124,13 +124,13 @@ namespace DebugRendering {
             /* another explicit calculation of extra verts required... */
             if (hasUvSplits > 0)
             {
-                for (int v = 1 + hasUvSplits; v < tesselations; ++v)
+                for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
                 {
                     var splitMod = (v - 1) % (tesselations / uvSplits);
                     var timeToSplit = (splitMod == 0);
                     if (timeToSplit)
                     {
-                        extraVerts += 2;
+                        extraVerts++;
                         extraIndices += 3;
                     }
                 }
@@ -164,7 +164,7 @@ namespace DebugRendering {
 
             int curVert = 1 + hasUvSplits;
             int lastIndex = 0;
-            for (int i = 0; i < tesselations * 3 - (3 * hasUvSplits + 1); i += 3)
+            for (int i = 0; i < tesselations * 3 - (3 * hasUvSplits); i += 3)
             {
                 indices[i] = 0;
                 indices[i + 1] = curVert;
@@ -198,6 +198,10 @@ namespace DebugRendering {
                         curNewIndex += 3;
                     }
                 }
+            }
+
+            if (isFlipped) {
+                Array.Reverse(indices); // flip the winding if it's a bottom piece
             }
 
             return (vertices, indices);
@@ -507,7 +511,7 @@ namespace DebugRendering {
                 throw new ArgumentException("expected the desired number of uv splits for the bottom to be a divisor of the number of tesselations");
             }
 
-            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits);
+            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits, isFlipped: true);
             var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom);
             VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length + topVertices.Length];
             int[] indices = new int[topIndices.Length + bottomIndices.Length];

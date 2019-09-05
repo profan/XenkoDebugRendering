@@ -654,7 +654,7 @@ namespace DebugRendering
         private const int CONE_TESSELATION = 16;
 
         /* mesh data we will use when stuffing things in vertex buffers */
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = DebugPrimitives.GenerateCircle(0.5f, CIRCLE_TESSELATION, uvSplits: 4);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = DebugPrimitives.GenerateCircle(0.5f, CIRCLE_TESSELATION);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) plane = DebugPrimitives.GenerateQuad(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) sphere = DebugPrimitives.GenerateSphere(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
         private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = DebugPrimitives.GenerateCube(DEFAULT_CUBE_SIZE);
