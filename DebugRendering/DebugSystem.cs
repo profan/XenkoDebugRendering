@@ -1184,7 +1184,7 @@ namespace DebugRendering
                     : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = selectedFillMode;
             pipelineState.State.RasterizerState.CullMode = (selectedFillMode == FillMode.Solid && !isOneSided) ? CullMode.Back : CullMode.None;
-            pipelineState.State.BlendState = (selectedFillMode == FillMode.Solid) ? BlendStates.AlphaBlend : BlendStates.NonPremultiplied;
+            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
