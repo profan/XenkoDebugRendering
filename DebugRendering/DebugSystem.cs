@@ -1172,7 +1172,7 @@ namespace DebugRendering
 
         }
 
-        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode, bool isOneSided = false)
+        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode, bool isDoubleSided = false)
         {
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
@@ -1183,7 +1183,7 @@ namespace DebugRendering
                     ((selectedFillMode == FillMode.Solid) ? DepthStencilStates.Default : DepthStencilStates.DepthRead)
                     : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = selectedFillMode;
-            pipelineState.State.RasterizerState.CullMode = (selectedFillMode == FillMode.Solid && !isOneSided) ? CullMode.Back : CullMode.None;
+            pipelineState.State.RasterizerState.CullMode = (selectedFillMode == FillMode.Solid && !isDoubleSided) ? CullMode.Back : CullMode.None;
             pipelineState.State.BlendState = BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
@@ -1228,7 +1228,7 @@ namespace DebugRendering
             if (counts.Spheres > 0)
             {
 
-                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isOneSided: false);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isDoubleSided: false);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Spheres);
@@ -1242,7 +1242,7 @@ namespace DebugRendering
             if (counts.Quads > 0 || counts.Circles > 0)
             {
 
-                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isOneSided: true);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isDoubleSided: true);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
                 if (counts.Quads > 0)
@@ -1271,7 +1271,7 @@ namespace DebugRendering
             if (counts.Cubes > 0 || counts.Capsules > 0 || counts.Cylinders > 0 || counts.Cones > 0)
             {
 
-                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isOneSided: false);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isDoubleSided: false);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
                 // draw cubes
