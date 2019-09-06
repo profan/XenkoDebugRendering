@@ -130,8 +130,23 @@ namespace DebugRendering {
             }
 
             int hasUvSplits = (uvSplits > 0 ? 1 : 0);
-            VertexPositionTexture[] vertices = new VertexPositionTexture[(tesselations + 1) + hasUvSplits];
-            int[] indices = new int[((tesselations + 1) * 3) + hasUvSplits];
+            int extraVertices = 0;
+
+            if (hasUvSplits > 0)
+            {
+                for (int i = 0; i <= tesselations * 3; i += 3)
+                {
+                    int splitMod = (i - 1) % (tesselations / uvSplits);
+                    var timeToSplit = splitMod == 0;
+                    if (timeToSplit)
+                    {
+                        extraVertices++;
+                    }
+                }
+            }
+
+            VertexPositionTexture[] vertices = new VertexPositionTexture[(tesselations + 1) + hasUvSplits + extraVertices];
+            int[] indices = new int[((tesselations + 1) * 3)];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -146,117 +161,37 @@ namespace DebugRendering {
                 vertices[1].TextureCoordinate = lineUv;
             }
 
-            int curVert = 0;
             int offset = 1 + hasUvSplits;
-            for (int i = 0; i <= tesselations; ++i)
+            for (int i = 0; i < tesselations; ++i)
             {
                 var normal = GetCircleVector(i, tesselations);
-                vertices[i].Position = normal * radius;
-                vertices[i].TextureCoordinate = noLineUv;
+                vertices[offset + i].Position = normal * radius;
+                vertices[offset + i].TextureCoordinate = lineUv;
             }
 
-            if (isFlipped)
+            int curVert = tesselations + offset;
+            for (int i = 0; i <= tesselations * 3; i += 3)
             {
-                Array.Reverse(indices); // flip the winding if it's a bottom piece
-            }
-
-            return (vertices, indices);
-
-        }
-
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateCircleOld(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false)
-        {
-
-            if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
-            {
-                throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
-            }
-
-            int hasUvSplits = (uvSplits > 0 ? 1 : 0);
-            int extraVerts = 0;
-            int extraIndices = 0;
-
-            /* another explicit calculation of extra verts required... */
-            if (hasUvSplits > 0)
-            {
-                for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
+                int? splitMod = (uvSplits > 0) ? ((i - 1) % (tesselations / uvSplits)) : (int?)null;
+                var timeToSplit = splitMod == 0;
+                if (timeToSplit)
                 {
-                    var splitMod = (v - 1) % (tesselations / uvSplits);
-                    var timeToSplit = (splitMod == 0);
-                    if (timeToSplit)
-                    {
-                        extraVerts++;
-                        extraIndices += 3;
-                    }
+                    indices[i] = 1;
+                    indices[i + 1] = curVert;
+                    vertices[curVert] = vertices[offset + ((i / 3) % tesselations)];
+                    vertices[curVert++].TextureCoordinate = lineUv;
+                    indices[i + 2] = offset + (((i / 3) + 1) % tesselations);
+                } else
+                {
+                    indices[i] = 0;
+                    indices[i + 1] = offset + ((i / 3) % tesselations);
+                    indices[i + 2] = offset + (((i / 3)+1) % tesselations);
                 }
             }
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[tesselations + (1 + hasUvSplits + extraVerts)];
-            int[] indices = new int[tesselations * 3 + extraIndices + 3];
-
-            double radiansPerSegment = MathUtil.TwoPi / tesselations;
-
-            // center of our circle
-            vertices[0].Position = new Vector3(0.0f, yOffset, 0.0f);
-            vertices[0].TextureCoordinate = noLineUv;
-
-            // center, but with uv coords set
-            if (hasUvSplits > 0)
+            if (!isFlipped)
             {
-                vertices[1].Position = new Vector3(0.0f, yOffset, 0.0f);
-                vertices[1].TextureCoordinate = lineUv;
-            }
-
-            // in the XZ plane
-            float curX = 0.0f, curZ = 0.0f;
-            for (int i = 1 + hasUvSplits; i < tesselations + (1 + hasUvSplits); ++i)
-            {
-                curX = (float)(Math.Cos(i * radiansPerSegment) * (2.0f * radius)) / 2.0f;
-                curZ = (float)(Math.Sin(i * radiansPerSegment) * (2.0f * radius)) / 2.0f;
-                vertices[i].Position = new Vector3(curX, yOffset, curZ);
-                vertices[i].TextureCoordinate = lineUv;
-            }
-
-            int curVert = 1 + hasUvSplits;
-            int lastIndex = 0;
-            for (int i = 0; i < tesselations * 3 - (3 * hasUvSplits); i += 3)
-            {
-                indices[i] = 0;
-                indices[i + 1] = curVert;
-                indices[i + 2] = (curVert + 1) % vertices.Length;
-                lastIndex = i;
-                curVert++;
-            }
-
-            // endpoint
-            indices[lastIndex + 3] = 0;
-            indices[lastIndex + 4] = indices[lastIndex + 1 + hasUvSplits];
-            indices[lastIndex + 5] = indices[1];
-            lastIndex = lastIndex + 5;
-
-            if (hasUvSplits > 0)
-            {
-                // draw uv lines
-                int newVert = tesselations + (1 + hasUvSplits);
-                int curNewIndex = lastIndex + 1;
-                for (int v = 1 + hasUvSplits; v < tesselations + (1 + hasUvSplits); ++v)
-                {
-                    var splitMod = (v - 1) % (tesselations / uvSplits);
-                    var timeToSplit = (splitMod == 0);
-                    if (timeToSplit)
-                    {
-                        vertices[newVert] = vertices[v + 1];
-                        vertices[newVert].TextureCoordinate = noLineUv;
-                        indices[curNewIndex] = 1;
-                        indices[curNewIndex + 1] = v;
-                        indices[curNewIndex + 2] = newVert++;
-                        curNewIndex += 3;
-                    }
-                }
-            }
-
-            if (isFlipped) {
-                Array.Reverse(indices); // flip the winding if it's a bottom piece
+                Array.Reverse(indices); // flip the winding if it's a top piece
             }
 
             return (vertices, indices);
