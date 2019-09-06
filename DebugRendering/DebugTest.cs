@@ -7,6 +7,7 @@ using Xenko.Core.Mathematics;
 using Xenko.Core.Threading;
 using Xenko.Engine;
 using Xenko.Physics;
+using Xenko.Rendering;
 
 namespace DebugRendering
 {
@@ -37,7 +38,7 @@ namespace DebugRendering
         DebugSystem DebugDraw; // this is here to make it look like it should when properly integrated
 
         int minNumberofPrimitives = 0;
-        int maxNumbeOfPrimitives = 327680;
+        int maxNumberOfPrimitives = 327680;
         int currentNumPrimitives = InitialNumPrimitives;
         CurRenderMode mode = CurRenderMode.All;
         bool useDepthTesting = true;
@@ -148,7 +149,7 @@ namespace DebugRendering
 
             var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
 
-            var newAmountOfBoxes = Clamp(currentNumPrimitives + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberofPrimitives, maxNumbeOfPrimitives);
+            var newAmountOfBoxes = Clamp(currentNumPrimitives + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberofPrimitives, maxNumberOfPrimitives);
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.LeftAlt))
             {

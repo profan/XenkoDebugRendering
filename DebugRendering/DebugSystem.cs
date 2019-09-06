@@ -210,6 +210,8 @@ namespace DebugRendering
         public int MaxPrimitives { get; set; } = 100;
         public int MaxPrimitivesWithLifetime { get; set; } = 100;
 
+        public RenderGroupMask RenderGroup { get; set; } = RenderGroupMask.All;
+
         public DebugSystem(IServiceRegistry registry) : base(registry)
         {
             Enabled = true;
@@ -328,6 +330,8 @@ namespace DebugRendering
 
         public override void Update(GameTime gameTime)
         {
+
+            PrimitiveRenderer.RenderGroup = RenderGroup;
 
             switch (RenderMode) {
                 case RenderingMode.Wireframe:
@@ -707,6 +711,9 @@ namespace DebugRendering
 
         /* state set from outside */
         private FillMode currentFillMode = FillMode.Wireframe;
+
+        /* where do we render? */
+        public RenderGroupMask RenderGroup { get; set; } = RenderGroupMask.All;
 
         public DebugRenderFeature()
         {
@@ -1359,7 +1366,7 @@ namespace DebugRendering
             var transparentRenderStageIndex = transparentRenderStage?.Index;
 
             // bail out if it's any other stage, this is crude but alas
-            if (renderViewStage.Index != transparentRenderStageIndex)
+            if (renderViewStage.Index != transparentRenderStageIndex || ((RenderGroupMask)(1U << (int)RenderGroup) & renderView.CullingMask) == 0)
             {
                 return;
             }
