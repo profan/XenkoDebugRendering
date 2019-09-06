@@ -140,7 +140,7 @@ namespace DebugRendering {
                     var timeToSplit = splitMod == 0;
                     if (timeToSplit)
                     {
-                        extraVertices++;
+                        extraVertices += 2;
                     }
                 }
             }
@@ -176,16 +176,22 @@ namespace DebugRendering {
                 var timeToSplit = splitMod == 0;
                 if (timeToSplit)
                 {
+
                     indices[i] = 1;
+
                     indices[i + 1] = curVert;
                     vertices[curVert] = vertices[offset + ((i / 3) % tesselations)];
                     vertices[curVert++].TextureCoordinate = lineUv;
-                    indices[i + 2] = offset + (((i / 3) + 1) % tesselations);
+
+                    indices[i + 2] = curVert;
+                    vertices[curVert] = vertices[offset + (((i / 3) + 1) % tesselations)];
+                    vertices[curVert++].TextureCoordinate = lineUv;
+
                 } else
                 {
                     indices[i] = 0;
                     indices[i + 1] = offset + ((i / 3) % tesselations);
-                    indices[i + 2] = offset + (((i / 3)+1) % tesselations);
+                    indices[i + 2] = offset + (((i / 3) + 1) % tesselations);
                 }
             }
 
