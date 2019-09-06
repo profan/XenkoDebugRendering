@@ -320,7 +320,7 @@ namespace DebugRendering
             }
 
             // CUBE OF ORIGIN!!
-            DebugDraw.DrawQuad(new Vector3(0, 1.0f, 0), new Vector2(1.0f, 1.0f), color: Color.White);
+            DebugDraw.DrawCube(new Vector3(0, 0, 0), new Vector3(1.0f, 1.0f, 1.0f), color: Color.White);
             DebugDraw.DrawBounds(new Vector3(-5, 0, -5), new Vector3(5, 5, 5), color: Color.White);
             DebugDraw.DrawBounds(new Vector3(-AreaSize), new Vector3(AreaSize), color: Color.HotPink);
 
