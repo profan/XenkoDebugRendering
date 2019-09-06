@@ -424,13 +424,13 @@ namespace DebugRendering
 
     }
 
-    internal class DummyDebugRenderObject : RenderObject
-    {
-
-    }
-
     public class DebugRenderFeature : RootRenderFeature
     {
+
+        internal class DummyDebugRenderObject : RenderObject
+        {
+
+        }
 
         public override Type SupportedRenderObjectType => typeof(DummyDebugRenderObject);
 
@@ -637,30 +637,30 @@ namespace DebugRendering
             public Color Color;
         }
 
-        private const float DEFAULT_SPHERE_RADIUS = 0.5f;
-        private const float DEFAULT_CUBE_SIZE = 1.0f;
-        private const float DEFAULT_CAPSULE_LENGTH = 1.0f;
-        private const float DEFAULT_CAPSULE_RADIUS = 0.5f;
-        private const float DEFAULT_CYLINDER_HEIGHT = 1.0f;
-        private const float DEFAULT_CYLINDER_RADIUS = 0.5f;
-        private const float DEFAULT_PLANE_SIZE = 1.0f;
-        private const float DEFAULT_CONE_RADIUS = 0.5f;
-        private const float DEFAULT_CONE_HEIGHT = 1.0f;
+        private const float DefaultSphereRadius = 0.5f;
+        private const float DefaultCubeSize = 1.0f;
+        private const float DefaultCapsuleLength = 1.0f;
+        private const float DefaultCapsuleRadius = 0.5f;
+        private const float DefaultCylinderHeight = 1.0f;
+        private const float DefaultCylinderRadius = 0.5f;
+        private const float DefaultPlaneSize = 1.0f;
+        private const float DefaultConeRadius = 0.5f;
+        private const float DefaultConeHeight = 1.0f;
 
-        private const int CIRCLE_TESSELATION = 16;
-        private const int SPHERE_TESSELATION = 8;
-        private const int CAPSULE_TESSELATION = 8;
-        private const int CYLINDER_TESSELATION = 16;
-        private const int CONE_TESSELATION = 16;
+        private const int CircleTesselation = 16;
+        private const int SphereTesselation = 8;
+        private const int CapsuleTesselation = 8;
+        private const int CylinderTesselation = 16;
+        private const int ConeTesselation = 16;
 
         /* mesh data we will use when stuffing things in vertex buffers */
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = DebugPrimitives.GenerateCircle(0.5f, CIRCLE_TESSELATION);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) plane = DebugPrimitives.GenerateQuad(DEFAULT_PLANE_SIZE, DEFAULT_PLANE_SIZE);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) sphere = DebugPrimitives.GenerateSphere(DEFAULT_SPHERE_RADIUS, SPHERE_TESSELATION);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = DebugPrimitives.GenerateCube(DEFAULT_CUBE_SIZE);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) capsule = DebugPrimitives.GenerateCapsule(DEFAULT_CAPSULE_LENGTH, DEFAULT_CAPSULE_RADIUS, CAPSULE_TESSELATION);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = DebugPrimitives.GenerateCylinder(DEFAULT_CYLINDER_HEIGHT, DEFAULT_CYLINDER_RADIUS, CYLINDER_TESSELATION);
-        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = DebugPrimitives.GenerateCone(DEFAULT_CONE_HEIGHT, DEFAULT_CONE_RADIUS, CONE_TESSELATION, uvSplits: 8);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) circle = DebugPrimitives.GenerateCircle(0.5f, CircleTesselation);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) plane = DebugPrimitives.GenerateQuad(DefaultPlaneSize, DefaultPlaneSize);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) sphere = DebugPrimitives.GenerateSphere(DefaultSphereRadius, SphereTesselation);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cube = DebugPrimitives.GenerateCube(DefaultCubeSize);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) capsule = DebugPrimitives.GenerateCapsule(DefaultCapsuleLength, DefaultCapsuleRadius, CapsuleTesselation);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cylinder = DebugPrimitives.GenerateCylinder(DefaultCylinderHeight, DefaultCylinderRadius, CylinderTesselation);
+        private readonly (VertexPositionTexture[] Vertices, int[] Indices) cone = DebugPrimitives.GenerateCone(DefaultConeHeight, DefaultConeRadius, ConeTesselation, uvSplits: 8);
 
         /* vertex and index buffer for our primitive data */
         private Buffer vertexBuffer;
