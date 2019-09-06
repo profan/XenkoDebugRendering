@@ -124,6 +124,8 @@ namespace DebugRendering {
         public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false)
         {
 
+            if (tesselations < 3) tesselations = 3;
+
             if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
             {
                 throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
@@ -413,6 +415,8 @@ namespace DebugRendering {
         public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 8, int? uvSidesForCircle = 4)
         {
 
+            if (tesselations < 3) tesselations = 3;
+
             if (uvSides != 0 && tesselations % uvSides != 0) // FIXME: this can read a lot nicer i think?
             {
                 throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
@@ -495,6 +499,8 @@ namespace DebugRendering {
         public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCone(float height, float radius, int tesselations, int uvSplits = 4, int uvSplitsBottom = 0)
         {
 
+            if (tesselations < 3) tesselations = 3;
+
             if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
             {
                 throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
@@ -543,12 +549,12 @@ namespace DebugRendering {
         public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCapsule(float length, float radius, int tesselation, int uvSplits = 4)
         {
 
+            if (tesselation < 3) tesselation = 3;
+
             if (uvSplits != 0 && tesselation % uvSplits != 0) // FIXME: this can read a lot nicer i think?
             {
                 throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
             }
-
-            if (tesselation < 3) tesselation = 3;
 
             int verticalSegments = 2 * tesselation;
             int horizontalSegments = 4 * tesselation;
