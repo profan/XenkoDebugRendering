@@ -117,6 +117,13 @@ namespace DebugRendering {
 
             CopyFromGeometricPrimitive(quadMeshData, ref vertices, ref indices);
 
+            /* transform it because in its default orientation it isnt flat to the normal up */
+            Quaternion rotation = Quaternion.BetweenDirections(Vector3.UnitZ, Vector3.UnitY);
+            for (int i = 0; i < vertices.Length; ++i)
+            {
+                vertices[i].Position = Vector3.Transform(vertices[i].Position, rotation);
+            }
+
             return (vertices, indices);
 
         }
