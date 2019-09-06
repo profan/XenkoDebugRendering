@@ -131,22 +131,24 @@ namespace DebugRendering {
 
             int hasUvSplits = (uvSplits > 0 ? 1 : 0);
             int extraVertices = 0;
+            int extraIndices = 0;
 
             if (hasUvSplits > 0)
             {
                 for (int i = 0; i <= tesselations * 3; i += 3)
                 {
-                    int splitMod = (i - 1) % (tesselations / uvSplits);
+                    int splitMod = (i / 3) % (tesselations / uvSplits);
                     var timeToSplit = splitMod == 0;
                     if (timeToSplit)
                     {
                         extraVertices += 2;
+                        extraIndices += 3;
                     }
                 }
             }
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[(tesselations + 1) + hasUvSplits + extraVertices];
-            int[] indices = new int[((tesselations + 1) * 3)];
+            int[] indices = new int[((tesselations + 1) * 3) + extraIndices];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -170,9 +172,10 @@ namespace DebugRendering {
             }
 
             int curVert = tesselations + offset;
+            int curIdx = (tesselations + 1) * 3;
             for (int i = 0; i <= tesselations * 3; i += 3)
             {
-                int? splitMod = (uvSplits > 0) ? ((i - 1) % (tesselations / uvSplits)) : (int?)null;
+                int? splitMod = (uvSplits > 0) ? ((i / 3) % (tesselations / uvSplits)) : (int?)null;
                 var timeToSplit = splitMod == 0;
                 if (timeToSplit)
                 {
@@ -185,7 +188,11 @@ namespace DebugRendering {
 
                     indices[i + 2] = curVert;
                     vertices[curVert] = vertices[offset + (((i / 3) + 1) % tesselations)];
-                    vertices[curVert++].TextureCoordinate = lineUv;
+                    vertices[curVert++].TextureCoordinate = noLineUv;
+
+                    indices[curIdx++] = 0;
+                    indices[curIdx++] = offset + ((i / 3) % tesselations);
+                    indices[curIdx++] = offset + (((i / 3) + 1) % tesselations);
 
                 } else
                 {
