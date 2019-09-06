@@ -121,7 +121,7 @@ namespace DebugRendering {
 
         }
 
-        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false)
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCircle(float radius = 0.5f, int tesselations = 16, int uvSplits = 0, float yOffset = 0.0f, bool isFlipped = false, int uvOffset = 0)
         {
 
             if (tesselations < 3) tesselations = 3;
@@ -139,7 +139,7 @@ namespace DebugRendering {
             {
                 for (int i = 0; i <= tesselations * 3; i += 3)
                 {
-                    int splitMod = (i / 3) % (tesselations / uvSplits);
+                    int splitMod = ((i / 3) - uvOffset) % (tesselations / uvSplits);
                     var timeToSplit = splitMod == 0;
                     if (timeToSplit)
                     {
@@ -177,7 +177,7 @@ namespace DebugRendering {
             int curIdx = (tesselations + 1) * 3;
             for (int i = 0; i <= tesselations * 3; i += 3)
             {
-                int? splitMod = (uvSplits > 0) ? ((i / 3) % (tesselations / uvSplits)) : (int?)null;
+                int? splitMod = (uvSplits > 0) ? (((i / 3) - uvOffset) % (tesselations / uvSplits)) : (int?)null;
                 var timeToSplit = splitMod == 0;
                 if (timeToSplit)
                 {
@@ -412,7 +412,7 @@ namespace DebugRendering {
 
         }
 
-        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 8, int? uvSidesForCircle = 4)
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 4, int? uvSidesForCircle = null)
         {
 
             if (tesselations < 3) tesselations = 3;
@@ -423,7 +423,7 @@ namespace DebugRendering {
             }
 
             var hasUvSplit = (uvSides > 0 ? 1 : 0);
-            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides);
+            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides, uvOffset: 1);
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + ((tesselations+1) * 4)];
             int[] indices = new int[(capIndices.Length * 2) + ((tesselations+1) * 6)];
