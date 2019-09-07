@@ -1245,13 +1245,13 @@ namespace DebugRendering
 
             }
 
-            // draw quads
             if (counts.Quads > 0 || counts.Circles > 0)
             {
 
                 SetPrimitiveRenderingPipelineState(commandList, depthTest, currentFillMode, isDoubleSided: true);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
+                // draw quads
                 if (counts.Quads > 0)
                 {
 
