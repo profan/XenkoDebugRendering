@@ -659,9 +659,8 @@ namespace DebugRendering
 
             // TODO: check if we actually have an object first next here
 
-            if (ObjectNodeReferences.Count <= 0) return;
-            ObjectNode objectNode = GetObjectNode(ObjectNodeReferences[0]);
-            DebugRenderObject debugObject = (DebugRenderObject)objectNode.RenderObject;
+            if (RenderObjects.Count <= 0) return;
+            DebugRenderObject debugObject = (DebugRenderObject)RenderObjects[0];
 
             /* everything except lines is included here, as lines just get accumulated into a buffer directly */
             int primitivesWithDepth = SumBasicPrimitives(ref debugObject.totalPrimitives);
@@ -937,13 +936,12 @@ namespace DebugRendering
 
         }
 
-        public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
+        public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage, int startIndex, int endIndex)
         {
 
             // TODO: check if we actually have one first next
-            if (ObjectNodeReferences.Count <= 0) return;
-            ObjectNode objectNode = GetObjectNode(ObjectNodeReferences[0]);
-            DebugRenderObject debugObject = (DebugRenderObject)objectNode.RenderObject;
+            if (RenderObjects.Count <= 0) return;
+            DebugRenderObject debugObject = (DebugRenderObject)RenderObjects[0];
 
             RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
             {
