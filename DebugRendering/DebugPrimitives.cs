@@ -335,8 +335,8 @@ namespace DebugRendering {
                 {
                     int nextI = i + 1;
                     int nextJ = (j + 1) % stride;
-                    int vertModulo = (i - 0) % (verticalSegments / uvSplits);
-                    int horizModulo = (j - 0) % (horizontalSegments / uvSplits);
+                    int? vertModulo = (uvSplits > 0) ? ((i - 0) % (verticalSegments / uvSplits)) : (int?)null;
+                    int? horizModulo = (uvSplits > 0) ? ((j - 0) % (horizontalSegments / uvSplits)) : (int?)null;
                     if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
                     {
 
@@ -419,18 +419,18 @@ namespace DebugRendering {
 
         }
 
-        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSides = 4, int? uvSidesForCircle = null)
+        public static (VertexPositionTexture[] Vertices, int[] Indices) GenerateCylinder(float height = 1.0f, float radius = 0.5f, int tesselations = 16, int uvSplits = 4, int? uvSidesForCircle = null)
         {
 
             if (tesselations < 3) tesselations = 3;
 
-            if (uvSides != 0 && tesselations % uvSides != 0) // FIXME: this can read a lot nicer i think?
+            if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
             {
                 throw new ArgumentException("expected the desired number of uv splits to be a divisor of the number of tesselations");
             }
 
-            var hasUvSplit = (uvSides > 0 ? 1 : 0);
-            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSides, uvOffset: 1);
+            var hasUvSplit = (uvSplits > 0 ? 1 : 0);
+            var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSplits, uvOffset: 1);
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + ((tesselations+1) * 4)];
             int[] indices = new int[(capIndices.Length * 2) + ((tesselations+1) * 6)];
@@ -468,7 +468,7 @@ namespace DebugRendering {
                 var curTopPos = (normal * radius) + (Vector3.UnitY * height);
                 var curBottomPos = (normal * radius);
 
-                int sideModulo = i % (tesselations / uvSides);
+                int? sideModulo = (uvSplits > 0) ? (i % (tesselations / uvSplits)) : (int?)null;
 
                 vertices[curVert].Position = curBottomPos;
                 vertices[curVert].TextureCoordinate = (sideModulo == 0) ? lineUv : noLineUv;
@@ -572,18 +572,22 @@ namespace DebugRendering {
             // if *you* can figure out a closed form solution, have at it! you are very welcome!
             int extraVertexCount = 0;
 
-            for (int i = 0; i < verticalSegments - 1; i++)
+            if (hasUvSplit > 0)
             {
-                for (int j = 0; j <= horizontalSegments; j++)
+                for (int i = 0; i < verticalSegments - 1; i++)
                 {
-                    int vertModulo = (i - 1) % (verticalSegments / uvSplits);
-                    int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
-                    if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                    for (int j = 0; j <= horizontalSegments; j++)
                     {
-                        extraVertexCount += 4;
-                    } else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0))
-                    {
-                        extraVertexCount += 2;
+                        int vertModulo = (i - 1) % (verticalSegments / uvSplits);
+                        int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                        if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                        {
+                            extraVertexCount += 4;
+                        }
+                        else if (hasUvSplit > 0 && (vertModulo == 0 || horizModulo == 0))
+                        {
+                            extraVertexCount += 2;
+                        }
                     }
                 }
             }
@@ -642,8 +646,8 @@ namespace DebugRendering {
                 {
                     int nextI = i + 1;
                     int nextJ = (j + 1) % stride;
-                    int vertModulo = (i - 1) % (verticalSegments / uvSplits);
-                    int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                    int? vertModulo = (uvSplits > 0) ? ((i - 1) % (verticalSegments / uvSplits)) : (int?)null;
+                    int? horizModulo = (uvSplits > 0) ? ((j - 1) % (horizontalSegments / uvSplits)) : (int?)null;
                     if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
                     {
 
