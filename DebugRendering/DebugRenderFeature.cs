@@ -430,10 +430,6 @@ namespace DebugRendering
         /* data only for line rendering */
         private readonly FastList<LineVertex> lineVertices = new FastList<LineVertex>(1);
 
-
-        /* where do we render? */
-        public RenderGroupMask RenderGroup { get; set; } = RenderGroupMask.All;
-
         public DebugRenderFeature()
         {
         }
