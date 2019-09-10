@@ -112,11 +112,6 @@ namespace DebugRendering
             {
                 var newDebugRenderFeature = new DebugRenderFeature();
                 SceneSystem.GraphicsCompositor.RenderFeatures.Add(newDebugRenderFeature);
-                DebugDraw.PrimitiveRenderer = newDebugRenderFeature;
-            }
-            else
-            {
-                DebugDraw.PrimitiveRenderer = debugRenderFeatures.First();
             }
 
             // keep DebugText visible in release builds too

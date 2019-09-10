@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using Xenko.Core;
 using Xenko.Core.Collections;
 using Xenko.Core.Mathematics;
+using Xenko.Engine;
 using Xenko.Games;
 using Xenko.Graphics;
 using Xenko.Rendering;
@@ -194,8 +195,7 @@ namespace DebugRendering
         private readonly FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
         private readonly FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
 
-        /* FIXME: this is set from outside atm, bit of a hack */
-        public DebugRenderFeature PrimitiveRenderer;
+        private DebugRenderFeature.DebugRenderObject primitiveRenderer;
 
         public RenderingMode RenderMode { get; set; } = RenderingMode.Wireframe;
 
@@ -325,14 +325,31 @@ namespace DebugRendering
         public override void Update(GameTime gameTime)
         {
 
-            PrimitiveRenderer.RenderGroup = RenderGroup;
+            // PrimitiveRenderer.RenderGroup = RenderGroup;
+            if (primitiveRenderer == null)
+            {
+                SceneSystem sceneSystem = Services.GetService<SceneSystem>();
+                if (sceneSystem != null)
+                {
+                    var groups = sceneSystem.SceneInstance.VisibilityGroups;
+                    if (groups.Count > 0)
+                    {
+                        var newDebugRenderObject = new DebugRenderFeature.DebugRenderObject();
+                        groups[0].RenderObjects.Add(newDebugRenderObject);
+                        primitiveRenderer = newDebugRenderObject;
+                    } else
+                    {
+                        return; // still no visibility group to use
+                    }
+                }
+            }
 
             switch (RenderMode) {
                 case RenderingMode.Wireframe:
-                    PrimitiveRenderer.SetFillMode(FillMode.Wireframe);
+                    primitiveRenderer.SetFillMode(FillMode.Wireframe);
                     break;
                 case RenderingMode.Solid:
-                    PrimitiveRenderer.SetFillMode(FillMode.Solid);
+                    primitiveRenderer.SetFillMode(FillMode.Solid);
                     break;
             }
 
@@ -368,52 +385,52 @@ namespace DebugRendering
                 switch (msg.Type)
                 {
                     case DebugRenderableType.Quad:
-                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: true);
+                        primitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.QuadNoDepth:
-                        PrimitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: false);
+                        primitiveRenderer.DrawQuad(ref msg.QuadData.Position, ref msg.QuadData.Size, ref msg.QuadData.Rotation, ref msg.QuadData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Circle:
-                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: true);
+                        primitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.CircleNoDepth:
-                        PrimitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: false);
+                        primitiveRenderer.DrawCircle(ref msg.CircleData.Position, msg.CircleData.Radius, ref msg.CircleData.Rotation, ref msg.CircleData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Line:
-                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: true);
+                        primitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.LineNoDepth:
-                        PrimitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: false);
+                        primitiveRenderer.DrawLine(ref msg.LineData.Start, ref msg.LineData.End, ref msg.LineData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cube:
-                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: true);
+                        primitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.CubeNoDepth:
-                        PrimitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: false);
+                        primitiveRenderer.DrawCube(ref msg.CubeData.Position, ref msg.CubeData.End, ref msg.CubeData.Rotation, ref msg.CubeData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Sphere:
-                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: true);
+                        primitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.SphereNoDepth:
-                        PrimitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: false);
+                        primitiveRenderer.DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Capsule:
-                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: true);
+                        primitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.CapsuleNoDepth:
-                        PrimitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: false);
+                        primitiveRenderer.DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cylinder:
-                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: true);
+                        primitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.CylinderNoDepth:
-                        PrimitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: false);
+                        primitiveRenderer.DrawCylinder(ref msg.CylinderData.Position, msg.CylinderData.Height, msg.CylinderData.Radius, ref msg.CylinderData.Rotation, ref msg.CylinderData.Color, depthTest: false);
                         break;
                     case DebugRenderableType.Cone:
-                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: true);
+                        primitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: true);
                         break;
                     case DebugRenderableType.ConeNoDepth:
-                        PrimitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: false);
+                        primitiveRenderer.DrawCone(ref msg.ConeData.Position, msg.ConeData.Height, msg.ConeData.Radius, ref msg.ConeData.Rotation, ref msg.ConeData.Color, depthTest: false);
                         break;
                 }
             }
