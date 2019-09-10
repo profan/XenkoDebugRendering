@@ -100,6 +100,19 @@ namespace DebugRendering
         public override void Start()
         {
 
+            RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
+            {
+                for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
+                {
+                    var stage = renderSystem.RenderStages[i];
+                    if (stage.Name == "Transparent")
+                    {
+                        return stage;
+                    }
+                }
+                return null;
+            }
+
             DebugDraw = new DebugSystem(Services);
             DebugDraw.PrimitiveColor = Color.Green;
             DebugDraw.MaxPrimitives = (currentNumPrimitives * 2) + 8;
@@ -107,10 +120,18 @@ namespace DebugRendering
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
+            var transparentRenderStage = FindTransparentRenderStage(SceneSystem.GraphicsCompositor.RenderSystem);
 
             if (!debugRenderFeatures.Any())
             {
-                var newDebugRenderFeature = new DebugRenderFeature();
+                var newDebugRenderFeature = new DebugRenderFeature() {
+                    RenderStageSelectors = {
+                        new SimpleGroupToRenderStageSelector
+                        {
+                            RenderStage = transparentRenderStage
+                        },
+                    }
+                };
                 SceneSystem.GraphicsCompositor.RenderFeatures.Add(newDebugRenderFeature);
             }
 

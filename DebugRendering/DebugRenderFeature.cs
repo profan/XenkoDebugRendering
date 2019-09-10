@@ -943,29 +943,6 @@ namespace DebugRendering
             if (RenderObjects.Count <= 0) return;
             DebugRenderObject debugObject = (DebugRenderObject)RenderObjects[0];
 
-            RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
-            {
-                for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
-                {
-                    var stage = renderSystem.RenderStages[i];
-                    if (stage.Name == "Transparent")
-                    {
-                        return stage;
-                    }
-                }
-                return null;
-            }
-
-            // we only want to render in the transparent stage, is there a nicer way to do this?
-            var transparentRenderStage = FindTransparentRenderStage(context.RenderContext.RenderSystem);
-            var transparentRenderStageIndex = transparentRenderStage?.Index;
-
-            // bail out if it's any other stage, this is crude but alas
-            if (renderViewStage.Index != transparentRenderStageIndex || ((RenderGroupMask)(1U << (int)RenderGroup) & renderView.CullingMask) == 0)
-            {
-                return;
-            }
-
             var commandList = context.CommandList;
 
             // update pipeline state, render with depth test first
