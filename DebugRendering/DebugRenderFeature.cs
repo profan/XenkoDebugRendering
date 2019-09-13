@@ -781,7 +781,7 @@ namespace DebugRendering
                     : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = selectedFillMode;
             pipelineState.State.RasterizerState.CullMode = (selectedFillMode == FillMode.Solid && !isDoubleSided) ? CullMode.Back : CullMode.None;
-            pipelineState.State.BlendState = (selectedFillMode == FillMode.Solid) ? BlendStates.NonPremultiplied : BlendStates.Additive;
+            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
@@ -796,7 +796,7 @@ namespace DebugRendering
             pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = FillMode.Solid;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
-            pipelineState.State.BlendState = BlendStates.Additive;
+            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = lineInputElements;
             pipelineState.Update();
