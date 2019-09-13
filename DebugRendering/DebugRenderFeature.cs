@@ -769,34 +769,31 @@ namespace DebugRendering
 
         }
 
-        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode, bool isDoubleSided = false)
+        private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode, bool isDoubleSided = false, bool hasTransparency = false)
         {
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
             pipelineState.State.EffectBytecode = primitiveEffect.Effect.Bytecode;
-            pipelineState.State.DepthStencilState =
-                (depthTest) ?
-                    ((selectedFillMode == FillMode.Solid) ? DepthStencilStates.Default : DepthStencilStates.DepthRead)
-                    : DepthStencilStates.None;
+            pipelineState.State.DepthStencilState = (depthTest) ? (hasTransparency ? DepthStencilStates.DepthRead : DepthStencilStates.Default) : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = selectedFillMode;
             pipelineState.State.RasterizerState.CullMode = (selectedFillMode == FillMode.Solid && !isDoubleSided) ? CullMode.Back : CullMode.None;
-            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
+            pipelineState.State.BlendState = (hasTransparency) ? BlendStates.NonPremultiplied : BlendStates.Opaque;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
         }
 
-        private void SetLineRenderingPipelineState(CommandList commandList, bool depthTest)
+        private void SetLineRenderingPipelineState(CommandList commandList, bool depthTest, bool hasTransparency = false)
         {
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.LineList;
             pipelineState.State.RootSignature = lineEffect.RootSignature;
             pipelineState.State.EffectBytecode = lineEffect.Effect.Bytecode;
-            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
+            pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.Default : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = FillMode.Solid;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
-            pipelineState.State.BlendState = BlendStates.NonPremultiplied;
+            pipelineState.State.BlendState = (hasTransparency) ? BlendStates.NonPremultiplied : BlendStates.Opaque;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = lineInputElements;
             pipelineState.Update();

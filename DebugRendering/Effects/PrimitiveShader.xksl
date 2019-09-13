@@ -41,6 +41,7 @@ namespace DebugRendering
             float hy = step(uv.y, 1.0f - lineWidth);
 
             streams.ColorTarget = lerp(streams.Color, float4(streams.Color.rgb, 0.0f), lx*ly*hx*hy);
+            if (streams.ColorTarget.a <= 0.1f) discard;
 
         }
 
