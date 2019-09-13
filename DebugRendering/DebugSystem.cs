@@ -333,7 +333,7 @@ namespace DebugRendering
             PushMessage(ref msg);
         }
 
-        private bool CreateDebugRenderObject()
+        private bool CreateDebugRenderObjects()
         {
 
             var sceneSystem = Services.GetService<SceneSystem>();
@@ -378,7 +378,7 @@ namespace DebugRendering
 
             if (wireframePrimitiveRenderer == null)
             {
-                bool created = CreateDebugRenderObject();
+                bool created = CreateDebugRenderObjects();
                 if (!created) return;
             }
 
