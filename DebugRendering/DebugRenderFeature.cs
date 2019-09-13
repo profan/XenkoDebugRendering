@@ -648,6 +648,7 @@ namespace DebugRendering
                 return offsets;
             }
 
+            int lastOffset = 0;
             foreach (RenderObject renderObject in RenderObjects)
             {
 
@@ -658,12 +659,12 @@ namespace DebugRendering
                 int primitivesWithoutDepth = SumBasicPrimitives(ref debugObject.totalPrimitivesNoDepth);
                 int totalThingsToDraw = primitivesWithDepth + primitivesWithoutDepth;
 
-                instances.Resize(totalThingsToDraw, true);
+                instances.Resize(instances.Count + totalThingsToDraw, true);
 
                 lineVertices.Resize((debugObject.totalPrimitives.Lines * 2) + (debugObject.totalPrimitivesNoDepth.Lines * 2), true);
 
-                var primitiveOffsets = SetupPrimitiveOffsets(ref debugObject.totalPrimitives);
-                var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref debugObject.totalPrimitivesNoDepth, primitivesWithDepth);
+                var primitiveOffsets = SetupPrimitiveOffsets(ref debugObject.totalPrimitives, lastOffset);
+                var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref debugObject.totalPrimitivesNoDepth, primitivesWithDepth + lastOffset);
 
                 /* line rendering data, separate buffer so offset isnt relative to the other data */
                 primitiveOffsets.Lines = 0;
@@ -683,6 +684,9 @@ namespace DebugRendering
                 debugObject.renderablesNoDepth.Clear(true);
                 debugObject.totalPrimitives.Clear();
                 debugObject.totalPrimitivesNoDepth.Clear();
+
+                // store the last offsets, so we can start from there next iteration
+                lastOffset = debugObject.instanceOffsetsNoDepth.Cones;
 
             }
 
@@ -760,6 +764,7 @@ namespace DebugRendering
             );
 
             CheckBuffers(context);
+            instances.Clear(true);
 
         }
 

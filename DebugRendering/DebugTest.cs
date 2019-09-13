@@ -180,9 +180,6 @@ namespace DebugRendering
             if (Input.IsKeyPressed(Xenko.Input.Keys.Tab))
             {
                 useWireframe = !useWireframe;
-                DebugDraw.RenderMode = (useWireframe) ?
-                    DebugSystem.RenderingMode.Wireframe :
-                    DebugSystem.RenderingMode.Solid;
             }
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.Space))
@@ -276,28 +273,28 @@ namespace DebugRendering
                         switch (currentShape++)
                         {
                             case 0: // sphere
-                                DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting);
+                                DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting, solid: useWireframe);
                                 break;
                             case 1: // cube
-                                DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting);
+                                DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                                 break;
                             case 2: // capsule
-                                DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
+                                DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                                 break;
                             case 3: // cylinder
-                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
+                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                                 break;
                             case 4: // cone
-                                DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
+                                DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                                 break;
                             case 5: // ray
                                 DebugDraw.DrawRay(position, velocity, color, depthTest: useDepthTesting);
                                 break;
                             case 6: // quad
-                                DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, depthTest: useDepthTesting);
+                                DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                                 break;
                             case 7: // circle
-                                DebugDraw.DrawCircle(position, 0.5f, rotation, color, depthTest: useDepthTesting);
+                                DebugDraw.DrawCircle(position, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                                 currentShape = 0;
                                 break;
                             default:
@@ -305,31 +302,31 @@ namespace DebugRendering
                         }
                         break;
                     case CurRenderMode.Quad:
-                        DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, depthTest: useDepthTesting);
+                        DebugDraw.DrawQuad(position, new Vector2(1.0f), rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.Circle:
-                        DebugDraw.DrawCircle(position, 0.5f, rotation, color, depthTest: useDepthTesting);
+                        DebugDraw.DrawCircle(position, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.Sphere:
-                        DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting);
+                        DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.Cube:
-                        DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting);
+                        DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.Capsule:
-                        DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
+                        DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.Cylinder:
-                        DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
+                        DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.Cone:
-                        DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting);
+                        DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.Ray:
                         DebugDraw.DrawRay(position, velocity, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Arrow:
-                        DebugDraw.DrawArrow(position, velocity, color: color, depthTest: useDepthTesting);
+                        DebugDraw.DrawArrow(position, velocity, color: color, depthTest: useDepthTesting, solid: useWireframe);
                         break;
                     case CurRenderMode.None:
                         break;
