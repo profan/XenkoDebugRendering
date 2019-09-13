@@ -664,7 +664,7 @@ namespace DebugRendering
                 lineVertices.Resize((debugObject.totalPrimitives.Lines * 2) + (debugObject.totalPrimitivesNoDepth.Lines * 2), true);
 
                 var primitiveOffsets = SetupPrimitiveOffsets(ref debugObject.totalPrimitives, lastOffset);
-                var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref debugObject.totalPrimitivesNoDepth, primitivesWithDepth + lastOffset);
+                var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref debugObject.totalPrimitivesNoDepth, primitiveOffsets.Cones + debugObject.totalPrimitives.Cones);
 
                 /* line rendering data, separate buffer so offset isnt relative to the other data */
                 primitiveOffsets.Lines = 0;
@@ -680,13 +680,14 @@ namespace DebugRendering
                 debugObject.primitivesToDraw = debugObject.totalPrimitives;
                 debugObject.primitivesToDrawNoDepth = debugObject.totalPrimitivesNoDepth;
 
+                // store the last offsets, so we can start from there next iteration
+                lastOffset = debugObject.instanceOffsetsNoDepth.Cones + debugObject.totalPrimitivesNoDepth.Cones;
+
+                // only now clear this data...
                 debugObject.renderablesWithDepth.Clear(true);
                 debugObject.renderablesNoDepth.Clear(true);
                 debugObject.totalPrimitives.Clear();
                 debugObject.totalPrimitivesNoDepth.Clear();
-
-                // store the last offsets, so we can start from there next iteration
-                lastOffset = debugObject.instanceOffsetsNoDepth.Cones;
 
             }
 
@@ -795,7 +796,7 @@ namespace DebugRendering
             pipelineState.State.DepthStencilState = (depthTest) ? DepthStencilStates.DepthRead : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = FillMode.Solid;
             pipelineState.State.RasterizerState.CullMode = CullMode.None;
-            pipelineState.State.BlendState = BlendStates.AlphaBlend;
+            pipelineState.State.BlendState = BlendStates.Additive;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = lineInputElements;
             pipelineState.Update();
