@@ -322,34 +322,50 @@ namespace DebugRendering
             PushMessage(ref msg);
         }
 
+        private bool CreateDebugRenderObject()
+        {
+
+            var sceneSystem = Services.GetService<SceneSystem>();
+            if (sceneSystem == null) return false;
+
+            var sceneInstance = sceneSystem.SceneInstance;
+            VisibilityGroup visibilityGroup = null;
+
+            foreach (var currentVisibilityGroup in sceneInstance.VisibilityGroups)
+            {
+                if (currentVisibilityGroup.RenderSystem == sceneSystem.GraphicsCompositor.RenderSystem)
+                {
+                    visibilityGroup = currentVisibilityGroup;
+                    break;
+                }
+            }
+
+            if (visibilityGroup == null) return false;
+            var newDebugRenderObject = new DebugRenderFeature.DebugRenderObject();
+            visibilityGroup.RenderObjects.Add(newDebugRenderObject);
+            primitiveRenderer = newDebugRenderObject;
+
+            return true;
+
+        }
+
         public override void Update(GameTime gameTime)
         {
 
-            // PrimitiveRenderer.RenderGroup = RenderGroup;
+            if (!Enabled) return;
+
             if (primitiveRenderer == null)
             {
-                SceneSystem sceneSystem = Services.GetService<SceneSystem>();
-                if (sceneSystem != null)
-                {
-                    var groups = sceneSystem.SceneInstance.VisibilityGroups;
-                    if (groups.Count > 0)
-                    {
-                        var newDebugRenderObject = new DebugRenderFeature.DebugRenderObject();
-                        groups[0].RenderObjects.Add(newDebugRenderObject);
-                        primitiveRenderer = newDebugRenderObject;
-                    } else
-                    {
-                        return; // still no visibility group to use
-                    }
-                }
+                bool created = CreateDebugRenderObject();
+                if (!created) return;
             }
 
             switch (RenderMode) {
                 case RenderingMode.Wireframe:
-                    primitiveRenderer.SetFillMode(FillMode.Wireframe);
+                    primitiveRenderer.CurrentFillMode = FillMode.Wireframe;
                     break;
                 case RenderingMode.Solid:
-                    primitiveRenderer.SetFillMode(FillMode.Solid);
+                    primitiveRenderer.CurrentFillMode = FillMode.Solid;
                     break;
             }
 
