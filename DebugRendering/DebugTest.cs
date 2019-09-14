@@ -100,12 +100,12 @@ namespace DebugRendering
         public override void Start()
         {
 
-            RenderStage FindTransparentRenderStage(RenderSystem renderSystem)
+            RenderStage FindRenderStage(RenderSystem renderSystem, string name)
             {
                 for (int i = 0; i < renderSystem.RenderStages.Count; ++i)
                 {
                     var stage = renderSystem.RenderStages[i];
-                    if (stage.Name == "Transparent")
+                    if (stage.Name == name)
                     {
                         return stage;
                     }
@@ -120,7 +120,7 @@ namespace DebugRendering
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
-            var transparentRenderStage = FindTransparentRenderStage(SceneSystem.GraphicsCompositor.RenderSystem);
+            var opaqueRenderStage = FindRenderStage(SceneSystem.GraphicsCompositor.RenderSystem, "Opaque");
 
             if (!debugRenderFeatures.Any())
             {
@@ -128,7 +128,7 @@ namespace DebugRendering
                     RenderStageSelectors = {
                         new SimpleGroupToRenderStageSelector
                         {
-                            RenderStage = transparentRenderStage
+                            RenderStage = opaqueRenderStage
                         },
                     }
                 };
