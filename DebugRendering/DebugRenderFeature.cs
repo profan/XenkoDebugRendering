@@ -427,6 +427,7 @@ namespace DebugRendering
 
         public DebugRenderFeature()
         {
+            SortKey = 0xFF; // render last! .. or things without depth testing in the opaque stage will have the background rendered over them
         }
 
         protected override void InitializeCore()
