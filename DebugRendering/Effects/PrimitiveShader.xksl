@@ -32,7 +32,7 @@ namespace DebugRendering
         override stage void PSMain()
         {
 
-            float lineWidth = 0.001f * LineWidthMultiplier;
+            float lineWidth = (0.001f * LineWidthMultiplier);
 
             float2 uv = streams.Uv;
             float lx = step(lineWidth, uv.x);
