@@ -507,6 +507,11 @@ namespace DebugRendering
                 cone.Indices.Length
             ];
 
+            if (indexData.Length >= 0xFFFF && device.Features.CurrentProfile <= GraphicsProfile.Level_9_3)
+            {
+                throw new InvalidOperationException("Cannot generate more than 65535 indices on feature level HW <= 9.3");
+            }
+
             int indexBufferOffset = 0;
 
             Array.Copy(circle.Indices, indexData, circle.Indices.Length);
