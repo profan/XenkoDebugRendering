@@ -936,6 +936,7 @@ namespace DebugRendering
         public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage, int startIndex, int endIndex)
         {
 
+            // TODO: probably get these objects from renderView?
             foreach (RenderObject renderObject in RenderObjects)
             {
 
