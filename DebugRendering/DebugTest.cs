@@ -35,7 +35,7 @@ namespace DebugRendering
         const int AreaSize = 64;
 
         [DataMemberIgnore]
-        DebugSystem DebugDraw; // this is here to make it look like it should when properly integrated
+        DebugRenderSystem DebugDraw; // this is here to make it look like it should when properly integrated
 
         int minNumberofPrimitives = 0;
         int maxNumberOfPrimitives = 327680;
@@ -113,7 +113,7 @@ namespace DebugRendering
                 return null;
             }
 
-            DebugDraw = new DebugSystem(Services);
+            DebugDraw = new DebugRenderSystem(Services);
             DebugDraw.PrimitiveColor = Color.Green;
             DebugDraw.MaxPrimitives = (currentNumPrimitives * 2) + 8;
             DebugDraw.MaxPrimitivesWithLifetime = (currentNumPrimitives * 2) + 8;

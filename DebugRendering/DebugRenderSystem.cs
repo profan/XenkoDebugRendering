@@ -14,7 +14,7 @@ using Xenko.Rendering;
 namespace DebugRendering
 {
 
-    public class DebugSystem : GameSystemBase
+    public class DebugRenderSystem : GameSystemBase
     {
 
         internal enum DebugRenderableType : byte
@@ -209,7 +209,7 @@ namespace DebugRendering
 
         public RenderGroupMask RenderGroup { get; set; } = RenderGroupMask.All;
 
-        public DebugSystem(IServiceRegistry registry) : base(registry)
+        public DebugRenderSystem(IServiceRegistry registry) : base(registry)
         {
             Enabled = true;
             Visible = Platform.IsRunningDebugAssembly;
@@ -336,22 +336,15 @@ namespace DebugRendering
         private bool CreateDebugRenderObjects()
         {
 
-            var sceneSystem = Services.GetService<SceneSystem>();
-            if (sceneSystem == null) return false;
+            // TODO: is this sane at all? it still seems a bit off.. what happens if the VisibilityGroups stuff gets changed/updated for instance?
+            //  or will that never happen? ask xen2 about this and visibilitygroups again specifically.....
+            var renderContext = RenderContext.GetShared(Services);
+            if (renderContext == null)
+                return false;
 
-            var sceneInstance = sceneSystem.SceneInstance;
-            VisibilityGroup visibilityGroup = null;
-
-            foreach (var currentVisibilityGroup in sceneInstance.VisibilityGroups)
-            {
-                if (currentVisibilityGroup.RenderSystem == sceneSystem.GraphicsCompositor.RenderSystem)
-                {
-                    visibilityGroup = currentVisibilityGroup;
-                    break;
-                }
-            }
-
-            if (visibilityGroup == null) return false;
+            var visibilityGroup = renderContext.VisibilityGroup;
+            if (visibilityGroup == null)
+                return false;
 
             var newSolidRenderObject = new DebugRenderFeature.DebugRenderObject
             {
@@ -374,12 +367,14 @@ namespace DebugRendering
         public override void Update(GameTime gameTime)
         {
 
-            if (!Enabled || !Visible) return;
+            if (!Enabled || !Visible)
+                return;
 
             if (wireframePrimitiveRenderer == null)
             {
                 bool created = CreateDebugRenderObjects();
-                if (!created) return;
+                if (!created)
+                    return;
             }
 
             HandlePrimitives(gameTime, renderMessages);

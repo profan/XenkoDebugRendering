@@ -410,8 +410,8 @@ namespace DebugRendering
         private MutablePipelineState pipelineState;
         private InputElementDescription[] inputElements;
         private InputElementDescription[] lineInputElements;
-        private EffectInstance primitiveEffect;
-        private EffectInstance lineEffect;
+        private DynamicEffectInstance primitiveEffect;
+        private DynamicEffectInstance lineEffect;
         private Buffer transformBuffer;
         private Buffer colorBuffer;
 
@@ -443,10 +443,12 @@ namespace DebugRendering
             pipelineState.State.SetDefaults();
 
             // TODO: create our associated effect
-            primitiveEffect = new EffectInstance(Context.Effects.LoadEffect("PrimitiveShader").WaitForResult());
+            primitiveEffect = new DynamicEffectInstance("PrimitiveShader");
+            primitiveEffect.Initialize(Context.Services);
             primitiveEffect.UpdateEffect(device);
 
-            lineEffect = new EffectInstance(Context.Effects.LoadEffect("LinePrimitiveShader").WaitForResult());
+            lineEffect = new DynamicEffectInstance("LinePrimitiveShader");
+            lineEffect.Initialize(Context.Services);
             lineEffect.UpdateEffect(device);
 
             // create initial vertex and index buffers
