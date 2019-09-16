@@ -190,8 +190,8 @@ namespace DebugRendering
             if (newAmountOfBoxes > currentNumPrimitives)
             {
                 InitializePrimitives(currentNumPrimitives, newAmountOfBoxes);
-                DebugDraw.MaxPrimitivesWithLifetime = (newAmountOfBoxes * 2) + 7;
-                DebugDraw.MaxPrimitives = (newAmountOfBoxes * 2) + 7;
+                DebugDraw.MaxPrimitivesWithLifetime = (newAmountOfBoxes * 2) + 8;
+                DebugDraw.MaxPrimitives = (newAmountOfBoxes * 2) + 8;
                 currentNumPrimitives = newAmountOfBoxes;
             }
             else
