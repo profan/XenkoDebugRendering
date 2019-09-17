@@ -326,7 +326,7 @@ namespace DebugRendering
                         DebugDraw.DrawRay(position, velocity, color, depthTest: useDepthTesting);
                         break;
                     case CurRenderMode.Arrow:
-                        DebugDraw.DrawArrow(position, velocity, color: color, depthTest: useDepthTesting, solid: !useWireframe);
+                        DebugDraw.DrawArrow(position, position + velocity, color: color, depthTest: useDepthTesting, solid: !useWireframe);
                         break;
                     case CurRenderMode.None:
                         break;
@@ -348,8 +348,8 @@ namespace DebugRendering
                     var cameraWorldUp = CurrentCamera.Entity.Transform.WorldMatrix.Up;
                     var cameraWorldNormal = Vector3.Normalize(result.Point - cameraWorldPos);
                     DebugDraw.DrawLine(cameraWorldPos + (cameraWorldNormal * -2.0f) + (cameraWorldUp * (-0.125f / 4.0f)), result.Point, color: Color.HotPink, duration: 5.0f);
-                    DebugDraw.DrawArrow(result.Point, result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 5.0f);
-                    DebugDraw.DrawArrow(result.Point, Vector3.Reflect(result.Point - cameraWorldPos, result.Normal), coneHeight: 0.25f, coneRadius: 0.125f, color: Color.LimeGreen, duration: 5.0f);
+                    DebugDraw.DrawArrow(result.Point, result.Point + result.Normal, coneHeight: 0.25f, coneRadius: 0.125f, color: Color.HotPink, duration: 5.0f);
+                    DebugDraw.DrawArrow(result.Point, result.Point + Vector3.Reflect(result.Point - cameraWorldPos, result.Normal), coneHeight: 0.25f, coneRadius: 0.125f, color: Color.LimeGreen, duration: 5.0f);
                 }
             }
 
