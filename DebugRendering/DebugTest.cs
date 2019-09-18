@@ -279,16 +279,16 @@ namespace DebugRendering
                                 DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 1: // cube
-                                DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color.WithAlpha(75), depthTest: useDepthTesting, solid: !useWireframe);
+                                DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 2: // capsule
                                 DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 3: // cylinder
-                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color.WithAlpha(75), depthTest: useDepthTesting, solid: !useWireframe);
+                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 4: // cone
-                                DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color.WithAlpha(75), depthTest: useDepthTesting, solid: !useWireframe);
+                                DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 5: // ray
                                 DebugDraw.DrawRay(position, velocity, color, depthTest: useDepthTesting);
