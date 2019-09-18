@@ -140,24 +140,22 @@ namespace DebugRendering {
 
             int hasUvSplits = (uvSplits > 0 ? 1 : 0);
             int extraVertices = 0;
-            int extraIndices = 0;
 
             if (hasUvSplits > 0)
             {
-                for (int i = 0; i <= tesselations * 3; i += 3)
+                for (int i = 0; i < tesselations * 3; i += 3)
                 {
                     int splitMod = ((i / 3) - uvOffset) % (tesselations / uvSplits);
                     var timeToSplit = splitMod == 0;
                     if (timeToSplit)
                     {
                         extraVertices += 2;
-                        extraIndices += 3;
                     }
                 }
             }
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[(tesselations + 1) + hasUvSplits + extraVertices];
-            int[] indices = new int[((tesselations + 1) * 3) + extraIndices];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[(tesselations+1) + hasUvSplits + extraVertices];
+            int[] indices = new int[tesselations * 3];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -182,7 +180,7 @@ namespace DebugRendering {
 
             int curVert = tesselations + offset;
             int curIdx = (tesselations + 1) * 3;
-            for (int i = 0; i <= tesselations * 3; i += 3)
+            for (int i = 0; i < tesselations * 3; i += 3)
             {
                 int? splitMod = (uvSplits > 0) ? (((i / 3) - uvOffset) % (tesselations / uvSplits)) : (int?)null;
                 var timeToSplit = splitMod == 0;
@@ -198,10 +196,6 @@ namespace DebugRendering {
                     indices[i + 2] = curVert;
                     vertices[curVert] = vertices[offset + (((i / 3) + 1) % tesselations)];
                     vertices[curVert++].TextureCoordinate = noLineUv;
-
-                    indices[curIdx++] = 0;
-                    indices[curIdx++] = offset + ((i / 3) % tesselations);
-                    indices[curIdx++] = offset + (((i / 3) + 1) % tesselations);
 
                 } else
                 {
@@ -432,8 +426,8 @@ namespace DebugRendering {
             var hasUvSplit = (uvSplits > 0 ? 1 : 0);
             var (capVertices, capIndices) = GenerateCircle(radius, tesselations, uvSidesForCircle ?? uvSplits, uvOffset: 1);
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + ((tesselations+1) * 4)];
-            int[] indices = new int[(capIndices.Length * 2) + ((tesselations+1) * 6)];
+            VertexPositionTexture[] vertices = new VertexPositionTexture[(capVertices.Length * 2) + (tesselations * 4)];
+            int[] indices = new int[(capIndices.Length * 2) + (tesselations * 6)];
 
             int bottomVertsOffset = (vertices.Length - capVertices.Length);
             int topVertsOffset = (vertices.Length - capVertices.Length * 2);
@@ -461,7 +455,7 @@ namespace DebugRendering {
             // generate sides, using our top and bottom circle triangle fans
             int curVert = 0;
             int curIndex = 0;
-            for (int i = 0; i <= tesselations; ++i)
+            for (int i = 0; i < tesselations; ++i)
             {
 
                 var normal = GetCircleVector(i, tesselations);
@@ -518,8 +512,8 @@ namespace DebugRendering {
                 throw new ArgumentException("expected the desired number of uv splits for the bottom to be a divisor of the number of tesselations");
             }
 
-            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits, isFlipped: true);
-            var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom);
+            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits);
+            var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom, isFlipped: true);
             VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length + topVertices.Length];
             int[] indices = new int[topIndices.Length + bottomIndices.Length];
 

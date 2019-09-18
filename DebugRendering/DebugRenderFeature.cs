@@ -2,6 +2,7 @@
 // Distributed under the MIT license. See the LICENSE.md file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Xenko.Core.Collections;
 using Xenko.Core.Mathematics;
@@ -15,6 +16,39 @@ namespace DebugRendering
 {
     public class DebugRenderFeature : RootRenderFeature
     {
+
+        internal enum DebugRenderStage
+        {
+            Opaque,
+            Transparent
+        }
+
+        internal class DebugRenderStageSelector : RenderStageSelector
+        {
+
+            [DefaultValue(RenderGroupMask.All)]
+            public RenderGroupMask RenderGroup { get; set; } = RenderGroupMask.All;
+
+            [DefaultValue(null)]
+            public RenderStage OpaqueRenderStage { get; set; }
+
+            [DefaultValue(null)]
+            public RenderStage TransparentRenderStage { get; set; }
+
+            public override void Process(RenderObject renderObject)
+            {
+                if (((RenderGroupMask)(1U << (int)renderObject.RenderGroup) & RenderGroup) != 0)
+                {
+                    var debugObject = (DebugRenderObject)renderObject;
+                    var renderStage = (debugObject.Stage == DebugRenderStage.Opaque) ? OpaqueRenderStage : TransparentRenderStage;
+                    if (renderStage != null)
+                    {
+                        renderObject.ActiveRenderStages[renderStage.Index] = new ActiveRenderStage(null);
+                    }
+                }
+            }
+
+        }
 
         public class DebugRenderObject : RenderObject
         {
@@ -34,6 +68,8 @@ namespace DebugRendering
 
             /* state set from outside */
             internal FillMode CurrentFillMode { get; set; } = FillMode.Wireframe;
+
+            internal DebugRenderStage Stage { get; set; }
 
             public void DrawQuad(ref Vector3 position, ref Vector2 size, ref Quaternion rotation, ref Color color, bool depthTest = true)
             {
@@ -779,6 +815,7 @@ namespace DebugRendering
 
         private void SetPrimitiveRenderingPipelineState(CommandList commandList, bool depthTest, FillMode selectedFillMode, bool isDoubleSided = false, bool hasTransparency = false)
         {
+
             pipelineState.State.SetDefaults();
             pipelineState.State.PrimitiveType = PrimitiveType.TriangleList;
             pipelineState.State.RootSignature = primitiveEffect.RootSignature;
@@ -786,10 +823,11 @@ namespace DebugRendering
             pipelineState.State.DepthStencilState = (depthTest) ? (hasTransparency ? DepthStencilStates.DepthRead : DepthStencilStates.Default) : DepthStencilStates.None;
             pipelineState.State.RasterizerState.FillMode = selectedFillMode;
             pipelineState.State.RasterizerState.CullMode = (selectedFillMode == FillMode.Solid && !isDoubleSided) ? CullMode.Back : CullMode.None;
-            pipelineState.State.BlendState = (hasTransparency) ? BlendStates.NonPremultiplied : BlendStates.Opaque;
+            pipelineState.State.BlendState = hasTransparency ? BlendStates.NonPremultiplied : BlendStates.Opaque;
             pipelineState.State.Output.CaptureState(commandList);
             pipelineState.State.InputElements = inputElements;
             pipelineState.Update();
+
         }
 
         private void SetLineRenderingPipelineState(CommandList commandList, bool depthTest, bool hasTransparency = false)
@@ -807,7 +845,7 @@ namespace DebugRendering
             pipelineState.Update();
         }
 
-        private void RenderPrimitives(RenderDrawContext context, RenderView renderView, ref Primitives offsets, ref Primitives counts, bool depthTest, FillMode fillMode)
+        private void RenderPrimitives(RenderDrawContext context, RenderView renderView, ref Primitives offsets, ref Primitives counts, bool depthTest, FillMode fillMode, bool hasTransparency)
         {
 
             var commandList = context.CommandList;
@@ -830,7 +868,7 @@ namespace DebugRendering
             if (counts.Spheres > 0)
             {
 
-                SetPrimitiveRenderingPipelineState(commandList, depthTest, fillMode, isDoubleSided: false);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, fillMode, isDoubleSided: false, hasTransparency: hasTransparency);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
                 primitiveEffect.Parameters.Set(PrimitiveShaderKeys.InstanceOffset, offsets.Spheres);
@@ -843,7 +881,7 @@ namespace DebugRendering
             if (counts.Quads > 0 || counts.Circles > 0)
             {
 
-                SetPrimitiveRenderingPipelineState(commandList, depthTest, fillMode, isDoubleSided: true);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, fillMode, isDoubleSided: true, hasTransparency: hasTransparency);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
                 // draw quads
@@ -873,7 +911,7 @@ namespace DebugRendering
             if (counts.Cubes > 0 || counts.Capsules > 0 || counts.Cylinders > 0 || counts.Cones > 0)
             {
 
-                SetPrimitiveRenderingPipelineState(commandList, depthTest, fillMode, isDoubleSided: false);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest, fillMode, isDoubleSided: false, hasTransparency: hasTransparency);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
                 // draw cubes
@@ -926,7 +964,7 @@ namespace DebugRendering
             if (counts.Lines > 0)
             {
 
-                SetLineRenderingPipelineState(commandList, depthTest);
+                SetLineRenderingPipelineState(commandList, depthTest, hasTransparency);
                 commandList.SetVertexBuffer(0, lineVertexBuffer, 0, LineVertex.Layout.VertexStride);
                 commandList.SetPipelineState(pipelineState.CurrentState);
 
@@ -947,16 +985,18 @@ namespace DebugRendering
 
             for (int index = startIndex; index < endIndex; index++)
             {
+
                 var renderNodeReference = renderViewStage.SortedRenderNodes[index].RenderNode;
                 var debugObject = (DebugRenderObject)(GetRenderNode(renderNodeReference).RenderObject);
+                bool objectHasTransparency = debugObject.Stage == DebugRenderStage.Transparent;
 
                 // update pipeline state, render with depth test first
-                SetPrimitiveRenderingPipelineState(commandList, depthTest: true, selectedFillMode: debugObject.CurrentFillMode);
-                RenderPrimitives(context, renderView, ref debugObject.instanceOffsets, ref debugObject.primitivesToDraw, depthTest: true, fillMode: debugObject.CurrentFillMode);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest: true, selectedFillMode: debugObject.CurrentFillMode, hasTransparency: objectHasTransparency);
+                RenderPrimitives(context, renderView, ref debugObject.instanceOffsets, ref debugObject.primitivesToDraw, depthTest: true, fillMode: debugObject.CurrentFillMode, hasTransparency: objectHasTransparency);
 
                 // render without depth test second
-                SetPrimitiveRenderingPipelineState(commandList, depthTest: false, selectedFillMode: debugObject.CurrentFillMode);
-                RenderPrimitives(context, renderView, offsets: ref debugObject.instanceOffsetsNoDepth, counts: ref debugObject.primitivesToDrawNoDepth, depthTest: false, fillMode: debugObject.CurrentFillMode);
+                SetPrimitiveRenderingPipelineState(commandList, depthTest: false, selectedFillMode: debugObject.CurrentFillMode, hasTransparency: objectHasTransparency);
+                RenderPrimitives(context, renderView, offsets: ref debugObject.instanceOffsetsNoDepth, counts: ref debugObject.primitivesToDrawNoDepth, depthTest: false, fillMode: debugObject.CurrentFillMode, hasTransparency: objectHasTransparency);
 
             }
 
