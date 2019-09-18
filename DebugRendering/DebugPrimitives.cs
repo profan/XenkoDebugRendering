@@ -140,6 +140,7 @@ namespace DebugRendering {
 
             int hasUvSplits = (uvSplits > 0 ? 1 : 0);
             int extraVertices = 0;
+            int extraIndices = 0;
 
             if (hasUvSplits > 0)
             {
@@ -150,12 +151,13 @@ namespace DebugRendering {
                     if (timeToSplit)
                     {
                         extraVertices += 2;
+                        extraIndices += 3;
                     }
                 }
             }
 
             VertexPositionTexture[] vertices = new VertexPositionTexture[(tesselations+1) + hasUvSplits + extraVertices];
-            int[] indices = new int[tesselations * 3];
+            int[] indices = new int[((tesselations+1) * 3) + extraIndices];
 
             double radiansPerSegment = MathUtil.TwoPi / tesselations;
 
@@ -196,6 +198,11 @@ namespace DebugRendering {
                     indices[i + 2] = curVert;
                     vertices[curVert] = vertices[offset + (((i / 3) + 1) % tesselations)];
                     vertices[curVert++].TextureCoordinate = noLineUv;
+
+                    // FIXME: this is shit geometry really
+                    indices[curIdx++] = offset + ((i / 3) % tesselations);
+                    indices[curIdx++] = offset + ((i / 3) % tesselations);
+                    indices[curIdx++] = offset + (((i / 3) + 1) % tesselations);
 
                 } else
                 {
@@ -462,7 +469,7 @@ namespace DebugRendering {
                 var curTopPos = (normal * radius) + (Vector3.UnitY * height);
                 var curBottomPos = (normal * radius);
 
-                int? sideModulo = (uvSplits > 0) ? (i % (tesselations / uvSplits)) : (int?)null;
+                int? sideModulo = (uvSplits > 0) ? ((i+1) % (tesselations / uvSplits)) : (int?)null;
 
                 vertices[curVert].Position = curBottomPos;
                 vertices[curVert].TextureCoordinate = (sideModulo == 0) ? lineUv : noLineUv;
