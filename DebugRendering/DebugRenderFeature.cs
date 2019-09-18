@@ -693,6 +693,7 @@ namespace DebugRendering
             }
 
             int lastOffset = 0;
+            int lastLineOffset = 0;
             foreach (RenderObject renderObject in RenderObjects)
             {
 
@@ -705,14 +706,14 @@ namespace DebugRendering
 
                 instances.Resize(instances.Count + totalThingsToDraw, true);
 
-                lineVertices.Resize((debugObject.totalPrimitives.Lines * 2) + (debugObject.totalPrimitivesNoDepth.Lines * 2), true);
+                lineVertices.Resize(lineVertices.Count + (debugObject.totalPrimitives.Lines * 2) + (debugObject.totalPrimitivesNoDepth.Lines * 2), true);
 
                 var primitiveOffsets = SetupPrimitiveOffsets(ref debugObject.totalPrimitives, lastOffset);
                 var primitiveOffsetsNoDepth = SetupPrimitiveOffsets(ref debugObject.totalPrimitivesNoDepth, primitiveOffsets.Cones + debugObject.totalPrimitives.Cones);
 
                 /* line rendering data, separate buffer so offset isnt relative to the other data */
-                primitiveOffsets.Lines = 0;
-                primitiveOffsetsNoDepth.Lines = debugObject.totalPrimitives.Lines * 2;
+                primitiveOffsets.Lines = 0 + lastLineOffset;
+                primitiveOffsetsNoDepth.Lines = debugObject.totalPrimitives.Lines * 2 + lastLineOffset;
 
                 /* save instance offsets before we mutate them as we need them when rendering */
                 debugObject.instanceOffsets = primitiveOffsets;
@@ -726,6 +727,7 @@ namespace DebugRendering
 
                 // store the last offsets, so we can start from there next iteration
                 lastOffset = debugObject.instanceOffsetsNoDepth.Cones + debugObject.totalPrimitivesNoDepth.Cones;
+                lastLineOffset = debugObject.instanceOffsetsNoDepth.Lines + debugObject.totalPrimitivesNoDepth.Lines * 2;
 
                 // only now clear this data...
                 debugObject.renderablesWithDepth.Clear(true);
