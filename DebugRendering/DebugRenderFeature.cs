@@ -811,6 +811,7 @@ namespace DebugRendering
             );
 
             CheckBuffers(context);
+            lineVertices.Clear(true);
             instances.Clear(true);
 
         }
