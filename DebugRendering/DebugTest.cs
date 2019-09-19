@@ -118,6 +118,7 @@ namespace DebugRendering
             DebugDraw.PrimitiveColor = Color.Green;
             DebugDraw.MaxPrimitives = (currentNumPrimitives * 2) + 8;
             DebugDraw.MaxPrimitivesWithLifetime = (currentNumPrimitives * 2) + 8;
+            DebugDraw.Visible = true;
 
             // FIXME
             var debugRenderFeatures = SceneSystem.GraphicsCompositor.RenderFeatures.OfType<DebugRenderFeature>();
@@ -168,7 +169,8 @@ namespace DebugRendering
 
             var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
 
-            var newAmountOfBoxes = Clamp(currentNumPrimitives + (int)(Input.MouseWheelDelta * ChangePerSecond * dt), minNumberofPrimitives, maxNumberOfPrimitives);
+            var speedyDelta = (Input.IsKeyDown(Xenko.Input.Keys.LeftShift)) ? 100.0f : 1.0f;
+            var newAmountOfBoxes = Clamp(currentNumPrimitives + (int)(Input.MouseWheelDelta * ChangePerSecond * speedyDelta  * dt), minNumberofPrimitives, maxNumberOfPrimitives);
 
             if (Input.IsKeyPressed(Xenko.Input.Keys.LeftAlt))
             {
