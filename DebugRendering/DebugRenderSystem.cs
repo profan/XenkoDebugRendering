@@ -199,10 +199,10 @@ namespace DebugRendering
         private readonly FastList<DebugRenderable> renderMessages = new FastList<DebugRenderable>();
         private readonly FastList<DebugRenderable> renderMessagesWithLifetime = new FastList<DebugRenderable>();
 
-        private DebugRenderFeature.DebugRenderObject solidPrimitiveRenderer;
-        private DebugRenderFeature.DebugRenderObject wireframePrimitiveRenderer;
-        private DebugRenderFeature.DebugRenderObject transparentSolidPrimitiveRenderer;
-        private DebugRenderFeature.DebugRenderObject transparentWireframePrimitiveRenderer;
+        private DebugRenderObject solidPrimitiveRenderer;
+        private DebugRenderObject wireframePrimitiveRenderer;
+        private DebugRenderObject transparentSolidPrimitiveRenderer;
+        private DebugRenderObject transparentWireframePrimitiveRenderer;
 
         public Color PrimitiveColor { get; set; } = Color.LightGreen;
 
@@ -348,7 +348,7 @@ namespace DebugRendering
             if (visibilityGroup == null)
                 return false;
 
-            var newSolidRenderObject = new DebugRenderFeature.DebugRenderObject
+            var newSolidRenderObject = new DebugRenderObject
             {
                 CurrentFillMode = FillMode.Solid,
                 Stage = DebugRenderFeature.DebugRenderStage.Opaque
@@ -356,7 +356,7 @@ namespace DebugRendering
             visibilityGroup.RenderObjects.Add(newSolidRenderObject);
             solidPrimitiveRenderer = newSolidRenderObject;
 
-            var newWireframeRenderObject = new DebugRenderFeature.DebugRenderObject
+            var newWireframeRenderObject = new DebugRenderObject
             {
                 CurrentFillMode = FillMode.Wireframe,
                 Stage = DebugRenderFeature.DebugRenderStage.Opaque
@@ -364,7 +364,7 @@ namespace DebugRendering
             visibilityGroup.RenderObjects.Add(newWireframeRenderObject);
             wireframePrimitiveRenderer = newWireframeRenderObject;
 
-            var newTransparentSolidRenderObject = new DebugRenderFeature.DebugRenderObject
+            var newTransparentSolidRenderObject = new DebugRenderObject
             {
                 CurrentFillMode = FillMode.Solid,
                 Stage = DebugRenderFeature.DebugRenderStage.Transparent
@@ -372,7 +372,7 @@ namespace DebugRendering
             visibilityGroup.RenderObjects.Add(newTransparentSolidRenderObject);
             transparentSolidPrimitiveRenderer = newTransparentSolidRenderObject;
 
-            var newTransparentWireframeRenderObject = new DebugRenderFeature.DebugRenderObject
+            var newTransparentWireframeRenderObject = new DebugRenderObject
             {
                 CurrentFillMode = FillMode.Wireframe,
                 Stage = DebugRenderFeature.DebugRenderStage.Transparent
@@ -418,7 +418,7 @@ namespace DebugRendering
         private void HandlePrimitives(GameTime gameTime, FastList<DebugRenderable> messages)
         {
 
-            DebugRenderFeature.DebugRenderObject ChooseRenderer(DebugRenderableFlags flags, byte alpha)
+            DebugRenderObject ChooseRenderer(DebugRenderableFlags flags, byte alpha)
             {
                 if (alpha < 255)
                 {

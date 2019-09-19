@@ -129,7 +129,7 @@ namespace DebugRendering
             {
                 var newDebugRenderFeature = new DebugRenderFeature() {
                     RenderStageSelectors = {
-                        new DebugRenderFeature.DebugRenderStageSelector
+                        new DebugRenderStageSelector
                         {
                             OpaqueRenderStage = opaqueRenderStage,
                             TransparentRenderStage = transparentRenderStage
