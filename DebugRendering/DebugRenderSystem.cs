@@ -209,7 +209,7 @@ namespace DebugRendering
         public int MaxPrimitives { get; set; } = 100;
         public int MaxPrimitivesWithLifetime { get; set; } = 100;
 
-        public RenderGroupMask RenderGroup { get; set; } = RenderGroupMask.All;
+        public RenderGroup RenderGroup { get; set; } = RenderGroup.Group31;
 
         public DebugRenderSystem(IServiceRegistry registry) : base(registry)
         {
@@ -396,6 +396,12 @@ namespace DebugRendering
                 if (!created)
                     return;
             }
+
+            // TODO: check if i'm doing this correctly..
+            solidPrimitiveRenderer.RenderGroup = RenderGroup;
+            wireframePrimitiveRenderer.RenderGroup = RenderGroup;
+            transparentSolidPrimitiveRenderer.RenderGroup = RenderGroup;
+            transparentWireframePrimitiveRenderer.RenderGroup = RenderGroup;
 
             HandlePrimitives(gameTime, renderMessages);
             HandlePrimitives(gameTime, renderMessagesWithLifetime);
