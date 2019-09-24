@@ -582,8 +582,8 @@ namespace DebugRendering {
                 {
                     for (int j = 0; j <= horizontalSegments; j++)
                     {
-                        int vertModulo = (i - 1) % (verticalSegments / uvSplits);
-                        int horizModulo = (j - 1) % (horizontalSegments / uvSplits);
+                        int vertModulo = i % (verticalSegments / uvSplits);
+                        int horizModulo = j % (horizontalSegments / uvSplits);
                         if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
                         {
                             extraVertexCount += 4;
@@ -650,8 +650,8 @@ namespace DebugRendering {
                 {
                     int nextI = i + 1;
                     int nextJ = (j + 1) % stride;
-                    int? vertModulo = (uvSplits > 0) ? ((i - 1) % (verticalSegments / uvSplits)) : (int?)null;
-                    int? horizModulo = (uvSplits > 0) ? ((j - 1) % (horizontalSegments / uvSplits)) : (int?)null;
+                    int? vertModulo = (uvSplits > 0) ? (i % (verticalSegments / uvSplits)) : (int?)null;
+                    int? horizModulo = (uvSplits > 0) ? (j % (horizontalSegments / uvSplits)) : (int?)null;
                     if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
                     {
 
