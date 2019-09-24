@@ -285,10 +285,10 @@ namespace DebugRendering
                                 DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 2: // capsule
-                                DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
+                                DebugDraw.DrawCapsule(position, 2.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 3: // cylinder
-                                DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
+                                DebugDraw.DrawCylinder(position, 2.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                                 break;
                             case 4: // cone
                                 DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
@@ -326,10 +326,10 @@ namespace DebugRendering
                         DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting, solid: !useWireframe && i % 2 == 0);
                         break;
                     case CurRenderMode.Capsule:
-                        DebugDraw.DrawCapsule(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
+                        DebugDraw.DrawCapsule(position, 2.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                         break;
                     case CurRenderMode.Cylinder:
-                        DebugDraw.DrawCylinder(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
+                        DebugDraw.DrawCylinder(position, 2.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
                         break;
                     case CurRenderMode.Cone:
                         DebugDraw.DrawCone(position, 1.0f, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
@@ -383,6 +383,8 @@ namespace DebugRendering
             DebugDraw.DrawCapsule(testPos + new Vector3(5.0f, 0.0f, 0.0f), 1.0f, 0.5f, solid: !useWireframe);
             DebugDraw.DrawCylinder(testPos + new Vector3(6.0f, 0.0f, 0.0f), 1.0f, 0.5f, solid: !useWireframe);
             DebugDraw.DrawCone(testPos + new Vector3(7.0f, 0.0f, 0.0f), 1.0f, 0.5f, solid: !useWireframe);
+            DebugDraw.DrawHalfSphere(testPos + new Vector3(8.0f, 0.0f, 0.0f), 0.5f, solid: !useWireframe);
+            DebugDraw.DrawHalfSphere(testPos + new Vector3(9.0f, 0.0f, 0.0f), 0.5f, rotation: Quaternion.RotationX((float)Math.PI), solid: !useWireframe);
 
             // center cone thing yes
             DebugDraw.DrawCone(new Vector3(0, 0.5f, 0), 2.0f, 0.5f, color: Color.HotPink);
