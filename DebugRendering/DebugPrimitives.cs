@@ -176,7 +176,7 @@ namespace DebugRendering {
             for (int i = 0; i < tesselations; ++i)
             {
                 var normal = GetCircleVector(i, tesselations);
-                vertices[offset + i].Position = normal * radius;
+                vertices[offset + i].Position = (normal * radius) + new Vector3(0.0f, yOffset, 0.0f);
                 vertices[offset + i].TextureCoordinate = lineUv;
             }
 
@@ -445,8 +445,9 @@ namespace DebugRendering {
             for (int i = 0; i < capVertices.Length; ++i)
             {
                 vertices[bottomVertsOffset + i] = capVertices[i];
+                vertices[bottomVertsOffset + i].Position.Y = -(height / 2.0f);
                 vertices[topVertsOffset + i] = capVertices[i];
-                vertices[topVertsOffset + i].Position.Y = height;
+                vertices[topVertsOffset + i].Position.Y = height / 2.0f;
             }
 
             // copy indices
@@ -466,8 +467,8 @@ namespace DebugRendering {
             {
 
                 var normal = GetCircleVector(i, tesselations);
-                var curTopPos = (normal * radius) + (Vector3.UnitY * height);
-                var curBottomPos = (normal * radius);
+                var curTopPos = (normal * radius) + (Vector3.UnitY * (height / 2.0f));
+                var curBottomPos = (normal * radius) - (Vector3.UnitY * (height / 2.0f));
 
                 int? sideModulo = (uvSplits > 0) ? ((i+1) % (tesselations / uvSplits)) : (int?)null;
 
@@ -475,7 +476,7 @@ namespace DebugRendering {
                 vertices[curVert].TextureCoordinate = (sideModulo == 0) ? lineUv : noLineUv;
                 var ip = curVert++;
 
-                var nextBottomNormal = GetCircleVector(i + 1, tesselations) * radius;
+                var nextBottomNormal = GetCircleVector(i + 1, tesselations) * radius - (Vector3.UnitY * (height / 2.0f));
                 vertices[curVert].Position = nextBottomNormal;
                 vertices[curVert].TextureCoordinate = noLineUv;
                 var ip1 = curVert++;
@@ -484,7 +485,7 @@ namespace DebugRendering {
                 vertices[curVert].TextureCoordinate = (sideModulo == 0) ? lineUv : noLineUv;
                 var ipv = curVert++;
 
-                var nextTopNormal = (GetCircleVector(i + 1, tesselations) * radius) + (Vector3.UnitY * height);
+                var nextTopNormal = (GetCircleVector(i + 1, tesselations) * radius) + (Vector3.UnitY * (height / 2.0f));
                 vertices[curVert].Position = nextTopNormal;
                 vertices[curVert].TextureCoordinate = noLineUv;
                 var ipv1 = curVert++;
@@ -519,8 +520,8 @@ namespace DebugRendering {
                 throw new ArgumentException("expected the desired number of uv splits for the bottom to be a divisor of the number of tesselations");
             }
 
-            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits);
-            var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom, isFlipped: true);
+            var (bottomVertices, bottomIndices) = GenerateCircle(radius, tesselations, uvSplits, yOffset: -(height / 2.0f));
+            var (topVertices, topIndices) = GenerateCircle(radius, tesselations, uvSplitsBottom, isFlipped: true, yOffset: -(height / 2.0f));
             VertexPositionTexture[] vertices = new VertexPositionTexture[bottomVertices.Length + topVertices.Length];
             int[] indices = new int[topIndices.Length + bottomIndices.Length];
 
@@ -547,8 +548,8 @@ namespace DebugRendering {
             }
 
             // extrude middle vertex of center of first circle triangle fan
-            vertices[0].Position.Y = height;
-            vertices[1].Position.Y = height;
+            vertices[0].Position.Y = height / 2.0f;
+            vertices[1].Position.Y = height / 2.0f;
 
             return (vertices, indices);
 
