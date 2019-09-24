@@ -297,7 +297,8 @@ namespace DebugRendering
 
         public void DrawCapsule(Vector3 position, float height, float radius, Quaternion rotation = default, Color color = default, float duration = 0.0f, bool depthTest = true, bool solid = false)
         {
-            var cmd = new DebugDrawCapsule { Position = position, Height = height, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
+            // FIXME: height is divided by two here but can probably be solved more elegantly elsewhere yes
+            var cmd = new DebugDrawCapsule { Position = position, Height = height / 2.0f, Radius = radius, Rotation = rotation == default ? Quaternion.Identity : rotation, Color = color == default ? PrimitiveColor : color };
             var renderFlags = (depthTest ? DebugRenderableFlags.DepthTest : 0) | (solid ? DebugRenderableFlags.Solid : DebugRenderableFlags.Wireframe);
             var msg = new DebugRenderable(ref cmd, renderFlags) { Lifetime = duration };
             PushMessage(ref msg);
