@@ -24,6 +24,7 @@ namespace DebugRendering
             Line,
             Cube,
             Sphere,
+            HalfSphere,
             Capsule,
             Cylinder,
             Cone
@@ -75,6 +76,13 @@ namespace DebugRendering
                 SphereData = s;
             }
 
+            public DebugRenderable(ref DebugDrawHalfSphere h, DebugRenderableFlags renderFlags) : this()
+            {
+                Type = DebugRenderableType.HalfSphere;
+                Flags = renderFlags;
+                HalfSphereData = h;
+            }
+
             public DebugRenderable(ref DebugDrawCapsule c, DebugRenderableFlags renderFlags) : this()
             {
                 Type = DebugRenderableType.Capsule;
@@ -119,6 +127,9 @@ namespace DebugRendering
 
             [FieldOffset((sizeof(byte) * 2) + sizeof(float))]
             public DebugDrawSphere SphereData;
+
+            [FieldOffset((sizeof(byte) * 2) + sizeof(float))]
+            public DebugDrawHalfSphere HalfSphereData;
 
             [FieldOffset((sizeof(byte) * 2) + sizeof(float))]
             public DebugDrawCapsule CapsuleData;
@@ -166,6 +177,14 @@ namespace DebugRendering
         {
             public Vector3 Position;
             public float Radius;
+            public Color Color;
+        }
+
+        internal struct DebugDrawHalfSphere
+        {
+            public Vector3 Position;
+            public float Radius;
+            public Quaternion Rotation;
             public Color Color;
         }
 
@@ -274,6 +293,14 @@ namespace DebugRendering
         public void DrawSphere(Vector3 position, float radius, Color color = default, float duration = 0.0f, bool depthTest = true, bool solid = false)
         {
             var cmd = new DebugDrawSphere { Position = position, Radius = radius, Color = color == default ? PrimitiveColor : color };
+            var renderFlags = (depthTest ? DebugRenderableFlags.DepthTest : 0) | (solid ? DebugRenderableFlags.Solid : DebugRenderableFlags.Wireframe);
+            var msg = new DebugRenderable(ref cmd, renderFlags) { Lifetime = duration };
+            PushMessage(ref msg);
+        }
+
+        public void DrawHalfSphere(Vector3 position, float radius, Color color = default, Quaternion rotation = default, float duration = 0.0f, bool depthTest = true, bool solid = false)
+        {
+            var cmd = new DebugDrawHalfSphere { Position = position, Radius = radius, Rotation = rotation, Color = color == default ? PrimitiveColor : color };
             var renderFlags = (depthTest ? DebugRenderableFlags.DepthTest : 0) | (solid ? DebugRenderableFlags.Solid : DebugRenderableFlags.Wireframe);
             var msg = new DebugRenderable(ref cmd, renderFlags) { Lifetime = duration };
             PushMessage(ref msg);
@@ -461,6 +488,9 @@ namespace DebugRendering
                         break;
                     case DebugRenderableType.Sphere:
                         ChooseRenderer(msg.Flags, msg.SphereData.Color.A).DrawSphere(ref msg.SphereData.Position, msg.SphereData.Radius, ref msg.SphereData.Color, depthTest: useDepthTest);
+                        break;
+                    case DebugRenderableType.HalfSphere:
+                        ChooseRenderer(msg.Flags, msg.HalfSphereData.Color.A).DrawHalfSphere(ref msg.HalfSphereData.Position, msg.HalfSphereData.Radius, ref msg.HalfSphereData.Rotation, ref msg.HalfSphereData.Color, depthTest: useDepthTest);
                         break;
                     case DebugRenderableType.Capsule:
                         ChooseRenderer(msg.Flags, msg.CapsuleData.Color.A).DrawCapsule(ref msg.CapsuleData.Position, msg.CapsuleData.Height, msg.CapsuleData.Radius, ref msg.CapsuleData.Rotation, ref msg.CapsuleData.Color, depthTest: useDepthTest);

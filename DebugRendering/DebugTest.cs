@@ -22,6 +22,7 @@ namespace DebugRendering
             Quad,
             Circle,
             Sphere,
+            HalfSphere,
             Cube,
             Capsule,
             Cylinder,
@@ -300,6 +301,9 @@ namespace DebugRendering
                                 break;
                             case 7: // circle
                                 DebugDraw.DrawCircle(position, 0.5f, rotation, color, depthTest: useDepthTesting, solid: !useWireframe);
+                                break;
+                            case 8: // half sphere
+                                DebugDraw.DrawHalfSphere(position, 0.5f, color, rotation, depthTest: useDepthTesting, solid: !useWireframe);
                                 currentShape = 0;
                                 break;
                             default:
@@ -314,6 +318,9 @@ namespace DebugRendering
                         break;
                     case CurRenderMode.Sphere:
                         DebugDraw.DrawSphere(position, 0.5f, color, depthTest: useDepthTesting, solid: !useWireframe);
+                        break;
+                    case CurRenderMode.HalfSphere:
+                        DebugDraw.DrawHalfSphere(position, 0.5f, color, rotation, depthTest: useDepthTesting, solid: !useWireframe);
                         break;
                     case CurRenderMode.Cube:
                         DebugDraw.DrawCube(position, new Vector3(1, 1, 1), rotation, color, depthTest: useDepthTesting, solid: !useWireframe && i % 2 == 0);

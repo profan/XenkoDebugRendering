@@ -234,7 +234,7 @@ namespace DebugRendering {
 
         }
 
-        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16, int uvSplits = 4)
+        public static(VertexPositionTexture[] Vertices, int[] Indices) GenerateSphere(float radius = 0.5f, int tesselations = 16, int uvSplits = 4, int uvSplitOffsetVertical = 0)
         {
 
             if (uvSplits != 0 && tesselations % uvSplits != 0) // FIXME: this can read a lot nicer i think?
@@ -258,7 +258,7 @@ namespace DebugRendering {
                 for (int i = 0; i < verticalSegments; i++)
                 {
                     for (int j = 0; j <= horizontalSegments; j++) {
-                        int vertModulo = i % (verticalSegments / uvSplits);
+                        int vertModulo = (i + uvSplitOffsetVertical) % (verticalSegments / uvSplits);
                         int horizModulo = j % (horizontalSegments / uvSplits);
                         if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0)) {
                             extraVertexCount += 4;
@@ -292,7 +292,7 @@ namespace DebugRendering {
 
                 // the first point
                 var firstNormal = new Vector3(0, dy, dxz);
-                var firstHorizontalVertex = new VertexPositionTexture(firstNormal * radius, new Vector2(0.5f));
+                var firstHorizontalVertex = new VertexPositionTexture(firstNormal * radius, noLineUv);
                 vertices[vertexCount++] = firstHorizontalVertex;
 
                 // Create a single ring of vertices at this latitude.
@@ -336,9 +336,9 @@ namespace DebugRendering {
                 {
                     int nextI = i + 1;
                     int nextJ = (j + 1) % stride;
-                    int? vertModulo = (uvSplits > 0) ? ((i - 0) % (verticalSegments / uvSplits)) : (int?)null;
-                    int? horizModulo = (uvSplits > 0) ? ((j - 0) % (horizontalSegments / uvSplits)) : (int?)null;
-                    if (hasUvSplit > 0 && (vertModulo == 0 && horizModulo == 0))
+                    int? vertModulo = (uvSplits > 0) ? ((i + uvSplitOffsetVertical) % (verticalSegments / uvSplits)) : (int?)null;
+                    int? horizModulo = (uvSplits > 0) ? (j % (horizontalSegments / uvSplits)) : (int?)null;
+                    if (hasUvSplit > 0 && ((vertModulo == 0 && horizModulo == 0)))
                     {
 
                         vertices[newVertexCount] = vertices[(i * stride + j)];
